@@ -10,8 +10,12 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.multipart.FilePart;
 import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
 import org.apache.commons.httpclient.methods.multipart.Part;
+import org.opengeo.data.importer.DataFormat;
 import org.opengeo.data.importer.Directory;
+import org.opengeo.data.importer.GridFormat;
 import org.opengeo.data.importer.ImportContext;
+import org.opengeo.data.importer.ImportData;
+import org.opengeo.data.importer.ImportItem;
 import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.ImporterTestSupport;
 import org.opengeo.data.importer.SpatialFile;
@@ -26,8 +30,10 @@ import java.net.URL;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+
 import org.apache.commons.io.FileUtils;
 import org.geoserver.catalog.impl.DataStoreInfoImpl;
 import org.geotools.data.Transaction;
@@ -286,5 +292,46 @@ public class TaskResourceTest extends ImporterTestSupport {
         assertTrue(task.getData() instanceof SpatialFile);
         assertEquals(ImportTask.State.READY, task.getState());
     }
+    
+    public void testPostGeotiff() throws Exception {
+        String path = "geotiff/EmissiveCampania.tif.bz2";
+        File file = new File(path);
+        InputStream stream = ImporterTestSupport.class.getResourceAsStream("../test-data/" + path);
 
+        MockHttpServletResponse resp = postAsServletResponse("/rest/imports", "");
+        assertEquals(201, resp.getStatusCode());
+        assertNotNull(resp.getHeader("Location"));
+
+        String[] split = resp.getHeader("Location").split("/");
+        Integer id = Integer.parseInt(split[split.length-1]);
+        ImportContext context = importer.getContext(id);
+
+        MockHttpServletRequest req = createRequest("/rest/imports/" + id + "/tasks/" + file.getName());
+        String contentType = "application/zip";
+        req.setContentType(contentType);
+        req.addHeader("Content-Type", contentType);
+        req.setMethod("PUT");
+        req.setBodyContent(org.apache.commons.io.IOUtils.toByteArray(stream));
+        resp = dispatch(req);
+        
+        assertEquals(201, resp.getStatusCode());
+        
+        context = importer.getContext(context.getId());
+        assertNull(context.getData());
+        assertEquals(1, context.getTasks().size());
+
+        ImportTask task = context.getTasks().get(0);
+        assertEquals(ImportTask.State.READY, task.getState());
+
+        ImportData importData = task.getData();
+        assertTrue(importData instanceof SpatialFile);
+
+        DataFormat format = importData.getFormat();
+        assertTrue(format instanceof GridFormat);
+        
+        List<ImportItem> items = task.getItems();
+        assertEquals(1, items.size());
+        ImportItem importItem = items.get(0);
+        assertEquals(ImportItem.State.READY, importItem.getState());
+    }
 }
