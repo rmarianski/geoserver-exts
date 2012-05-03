@@ -121,7 +121,7 @@ public class ImportResource extends AbstractResource {
                 context = importer.createContext(null);
                 context.setUser(getCurrentUser());
 
-                if (getRequest().getEntity().getMediaType().equals(MediaType.APPLICATION_JSON)) {
+                if (MediaType.APPLICATION_JSON.equals(getRequest().getEntity().getMediaType())) {
                     //read representation specified by user, use it to read 
                     ImportContext newContext = 
                         (ImportContext) getFormatPostOrPut().toObject(getRequest().getEntity());
