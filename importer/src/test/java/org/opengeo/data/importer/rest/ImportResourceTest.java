@@ -230,4 +230,9 @@ public class ImportResourceTest extends ImporterTestSupport {
         MockHttpServletResponse resp = postAsServletResponseNoContentType("/rest/imports", "");
         assertEquals(201, resp.getStatusCode());
     }
+
+    public void testImportSessionIdNotInt() throws Exception {
+        MockHttpServletResponse resp = postAsServletResponse("/rest/imports/foo", "");
+        assertEquals(404, resp.getStatusCode());
+    }
 }
