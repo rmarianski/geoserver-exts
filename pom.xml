@@ -314,5 +314,6 @@
     <dashboard.version>1.0.0</dashboard.version>
     <build.profile></build.profile>
     <build.revision>${project.version}</build.revision>
+    <test.maxHeapSize>2G</test.maxHeapSize>
   </properties>
 </project>
