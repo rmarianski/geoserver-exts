@@ -1,0 +1,28 @@
+.apply-link {
+  padding: 2px 0px 2px 20px;
+  background: transparent no-repeat left center;
+  background-image: url(bullet_go.png);
+}
+
+.apply-link {
+  padding: 2px 0px 2px 20px;
+  background: transparent no-repeat left center;
+  background-image: url(bullet_go.png);
+}
+
+.button-group .button-working span {
+  background: url(indicator.gif) no-repeat;
+  display: block;
+  margin: 5px;
+  padding-left: 25px;
+}
+
+ul.horizontal li {
+  display: inline;
+  padding-left:0.4em;
+  border-left:1px solid #ccc;
+}
+ 
+ul.horizontal li:first-child {
+  border-left:none;
+}

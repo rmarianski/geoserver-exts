@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.opengeo</groupId>
+    <artifactId>geoserver-exts</artifactId>
+    <version>2.1.3</version>
+  </parent>
+
+  <groupId>org.opengeo.geoserver</groupId>
+  <artifactId>importer</artifactId>
+  <packaging>jar</packaging>
+  <name>OpenGeo Suite GeoServer Data Importer</name>
+  <version>2.1.3</version>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.geoserver</groupId>
+      <artifactId>main</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.geoserver.web</groupId>
+      <artifactId>web-demo</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.geoserver.web</groupId>
+      <artifactId>web-core</artifactId>
+    </dependency>
+    <!-- org.geoserver.rest.uploader dependencies -->
+    <dependency>
+      <groupId>org.geoserver</groupId>
+      <artifactId>restconfig</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.restlet</groupId>
+      <artifactId>org.restlet.ext.fileupload</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.restlet</groupId>
+      <artifactId>org.restlet.ext.json</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>commons-fileupload</groupId>
+      <artifactId>commons-fileupload</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>commons-vfs</groupId>
+      <artifactId>commons-vfs</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.sleepycat</groupId>
+      <artifactId>je</artifactId>
+      <version>4.1.10</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>11.0.1</version>
+    </dependency>
+    <dependency>
+      <groupId>com.ning</groupId>
+      <artifactId>compress-lzf</artifactId>
+      <version>0.9.1</version>
+    </dependency> 
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-shapefile</artifactId>
+      <version>${gt.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools.jdbc</groupId>
+      <artifactId>gt-jdbc-h2</artifactId>
+      <version>${gt.version}</version>
+    </dependency>
+    <dependency>
+      <!-- This dependency has been added to allow the module to compile the Oracle panels without
+           requiring too much reflection, but the plug-in won't be there at runtime unless the user
+           chose it in the GUI
+      -->
+      <groupId>org.geotools.jdbc</groupId>
+      <artifactId>gt-jdbc-oracle</artifactId>
+      <version>${gt.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <!-- This dependency has been added to allow the module to compile the Sql Server panels without
+           requiring too much reflection, but the plug-in won't be there at runtime unless the user
+           chose it in the GUI
+      -->
+      <groupId>org.geotools.jdbc</groupId>
+      <artifactId>gt-jdbc-sqlserver</artifactId>
+      <version>${gt.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <!-- This dependency has been added to allow the module to compile the SDE panels without
+           requiring too much reflection, but the plug-in won't be there at runtime unless the user
+           chose it in the GUI
+      -->
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-arcsde</artifactId>
+      <version>${gt.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-epsg-hsql</artifactId>
+      <version>${gt.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geoserver</groupId>
+      <artifactId>main</artifactId>
+      <classifier>tests</classifier>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.7</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>commons-net</groupId>
+      <artifactId>commons-net</artifactId>
+      <version>2.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>xmlunit</groupId>
+      <artifactId>xmlunit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.mockrunner</groupId>
+      <artifactId>mockrunner</artifactId>
+      <scope>test</scope>
+    </dependency>
+    
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>org/geoserver/uploader/**</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+    </plugins>
+
+    <testResources>
+      <testResource>
+        <directory>${basedir}/src/test/resources</directory>
+        <includes>
+          <include>**/*</include>
+        </includes>
+      </testResource>
+    </testResources>
+  </build>
+
+</project>

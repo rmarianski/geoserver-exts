@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.opengeo</groupId>
+  <artifactId>geoserver-exts</artifactId>
+  <packaging>pom</packaging>
+  <version>2.1.3</version>
+  <name>OpenGeo Geoserver Extensions</name>
+
+  <organization>
+    <name>OpenGeo</name>
+    <url>http://www.opengeo.org</url>
+  </organization>
+
+  <licenses>
+    <license>
+      <name>General Public License (GPL)</name>
+      <url>http://www.gnu.org/copyleft/gpl.txt</url>
+    </license>
+  </licenses>
+
+  <repositories>
+    <repository>
+      <id>opengeo</id>
+      <name>OpenGeo Maven Repository</name>
+      <url>http://repo.opengeo.org/</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>osgeo</id>
+      <name>Open Source Geospatial Foundation Repository</name>
+      <url>http://download.osgeo.org/webdav/geotools/</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>central</id>
+      <name>Central Maven Repository</name>
+      <url>http://repo1.maven.org/maven2</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>org.mapfish</id>
+      <url>http://dev.mapfish.org/maven/repository</url>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>opengeo</id>
+      <name>OpenGeo Maven Repository</name>
+      <url>http://repo.opengeo.org</url>
+    </pluginRepository>
+  </pluginRepositories>
+
+  <build>
+    <plugins>
+      
+      <!-- compilation -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
+          <debug>true</debug>
+          <encoding>UTF-8</encoding>
+          <!-- 
+               On the win32 build box the compiler oom's due to the compiler accumulating
+               too many classes in the permanent generation, similar to GEOT-2462  
+          -->
+          <fork>true</fork> 
+        </configuration>
+      </plugin>
+
+      <!-- resources -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <configuration>
+          <encoding>UTF-8</encoding>
+        </configuration>
+      </plugin>
+
+      <!-- unit testing -->
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
+          <includes>
+            <include>**/*Test.java</include>
+          </includes>
+          <excludes>
+            <exclude>${test.exclude.pattern}</exclude>
+          </excludes>
+          <forkMode>once</forkMode>
+          <argLine>-Xmx${test.maxHeapSize} -enableassertions -Djava.awt.headless=${java.awt.headless}</argLine>
+          <printSummary>true</printSummary>
+          <testFailureIgnore>${allow.test.failure.ignore}</testFailureIgnore>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <inherited>true</inherited>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <configuration>
+          <attach>true</attach>
+        </configuration>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+  </build>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.mortbay.jetty</groupId>
+        <artifactId>jetty</artifactId>
+        <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mortbay.jetty</groupId>
+        <artifactId>jetty-start</artifactId>
+        <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mortbay.jetty</groupId>
+        <artifactId>jetty-naming</artifactId>
+        <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mortbay.jetty</groupId>
+        <artifactId>jetty-plus</artifactId>
+        <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mortbay.jetty</groupId>
+        <artifactId>jetty-util</artifactId>
+        <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mortbay.jetty</groupId>
+        <artifactId>jsp-2.0</artifactId>
+        <version>${jetty.version}</version>
+        <type>pom</type>
+      </dependency>
+      <dependency>
+        <groupId>ant</groupId>
+        <artifactId>ant</artifactId>
+        <version>${ant.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geoserver.web</groupId>
+        <artifactId>web-core</artifactId>
+        <version>${gs.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geoserver.web</groupId>
+        <artifactId>web-app</artifactId>
+        <version>${gs.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geoserver.web</groupId>
+        <artifactId>web-demo</artifactId>
+        <version>${gs.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geoserver.web</groupId>
+        <artifactId>web-security</artifactId>
+        <version>${gs.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geoserver</groupId>
+        <artifactId>main</artifactId>
+        <version>${gs.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geoserver</groupId>
+        <artifactId>main</artifactId>
+        <classifier>tests</classifier>
+        <version>${gs.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geoserver</groupId>
+        <artifactId>restconfig</artifactId>
+        <version>${gs.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geoserver.extension</groupId>
+        <artifactId>web-wps</artifactId>
+        <version>${gs.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geoserver.extension</groupId>
+        <artifactId>control-flow</artifactId>
+        <version>${gs.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geoserver.extension</groupId>
+        <artifactId>charts</artifactId>
+        <version>${gs.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geoserver.extension</groupId>
+        <artifactId>h2</artifactId>
+        <version>${gs.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geoserver.community</groupId>
+        <artifactId>proxy</artifactId>
+        <version>${gs.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geoserver.community</groupId>
+        <artifactId>printing</artifactId>
+        <version>${gs.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geoserver.community</groupId>
+        <artifactId>monitoring</artifactId>
+        <version>${gs.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geoserver.community</groupId>
+        <artifactId>dbconfig</artifactId>
+        <version>${gs.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-imageio-ext-gdal</artifactId>
+        <version>${gt.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.restlet</groupId>
+        <artifactId>org.restlet.ext.fileupload</artifactId>
+        <version>1.0.8</version>
+      </dependency>
+      <dependency>
+        <groupId>org.restlet</groupId>
+        <artifactId>org.restlet.ext.json</artifactId>
+        <version>1.0.8</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-io</groupId>
+        <artifactId>commons-io</artifactId>
+        <version>1.3.2</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-fileupload</groupId>
+        <artifactId>commons-fileupload</artifactId>
+        <version>1.2.1</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-vfs</groupId>
+        <artifactId>commons-vfs</artifactId>
+        <version>1.0</version>
+      </dependency>
+      <dependency>
+        <groupId>xerces</groupId>
+        <artifactId>xercesImpl</artifactId>
+        <version>2.7.1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.mockrunner</groupId>
+        <artifactId>mockrunner</artifactId>
+        <version>0.3.1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>3.8.1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>xmlunit</groupId>
+        <artifactId>xmlunit</artifactId>
+        <version>1.3</version>
+      </dependency>
+
+    </dependencies>
+  </dependencyManagement>
+
+  <modules>
+    <module>importer</module>
+  </modules>
+
+  <properties>
+    <gs.version>2.1.3</gs.version>
+    <gt.version>2.7.4</gt.version>
+    <gwc.version>1.2.6</gwc.version>
+    <jetty.version>6.1.8</jetty.version>
+    <ant.version>1.6.5</ant.version>
+    <dashboard.version>1.0.0</dashboard.version>
+    <build.profile></build.profile>
+    <build.revision>${project.version}</build.revision>
+  </properties>
+</project>
