@@ -157,7 +157,8 @@ public class ImportPage extends GeoServerSecuredPage {
                                 page = new CoverageStoreEditPage((CoverageStoreInfo)store);
                             }
                             if (page != null) {
-                                page.setReturnPage(ImportPage.this);
+                                // TODO temporarily commented out
+//                                page.setReturnPage(ImportPage.this);
                                 setResponsePage(page);
                             }
                         }
