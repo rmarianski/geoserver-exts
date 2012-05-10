@@ -68,7 +68,7 @@
       <groupId>com.ning</groupId>
       <artifactId>compress-lzf</artifactId>
       <version>0.9.1</version>
-    </dependency> 
+    </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-shapefile</artifactId>
@@ -144,7 +144,7 @@
       <artifactId>mockrunner</artifactId>
       <scope>test</scope>
     </dependency>
-    
+
   </dependencies>
 
   <build>
