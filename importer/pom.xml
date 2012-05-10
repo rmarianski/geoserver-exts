@@ -7,14 +7,14 @@
   <parent>
     <groupId>org.opengeo</groupId>
     <artifactId>geoserver-exts</artifactId>
-    <version>2.1.3</version>
+    <version>${project.version}</version>
   </parent>
 
   <groupId>org.opengeo.geoserver</groupId>
   <artifactId>importer</artifactId>
   <packaging>jar</packaging>
   <name>OpenGeo Suite GeoServer Data Importer</name>
-  <version>2.1.3</version>
+  <version>${project.version}</version>
 
   <dependencies>
     <dependency>
