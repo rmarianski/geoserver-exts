@@ -6,8 +6,15 @@ import org.geoserver.web.data.store.DataAccessEditPage;
 public class DataStoreEditPage extends DataAccessEditPage {
 
     public DataStoreEditPage(DataStoreInfo store) {
-        // TODO temporary hack
-        super(store.getId());
+        super(store);
     }
-    // TODO temporary removal of doSaveStore(CoverageStoreInfo info) override
+
+    @Override
+    protected void doSaveStore(DataStoreInfo info) {
+        if (info.getId() != null) {
+            super.doSaveStore(info);
+        }
+
+        //do nothing, not part of catalog yet
+    }
 }

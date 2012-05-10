@@ -31,6 +31,7 @@ import org.geoserver.catalog.StoreInfo;
 import org.geoserver.catalog.StyleInfo;
 import org.geoserver.catalog.WorkspaceInfo;
 import org.geoserver.config.util.XStreamPersister;
+import org.geoserver.config.util.XStreamPersister.CRSConverter;
 import org.geoserver.config.util.XStreamPersisterFactory;
 import org.geotools.data.DataStore;
 import org.geotools.data.DefaultTransaction;
@@ -49,7 +50,6 @@ import org.opengeo.data.importer.transform.RasterTransformChain;
 import org.opengeo.data.importer.transform.ReprojectTransform;
 import org.opengeo.data.importer.transform.TransformChain;
 import org.opengeo.data.importer.transform.VectorTransformChain;
-import org.opengeo.temp.CRSConverter;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
@@ -966,10 +966,9 @@ public class Importer implements InitializingBean, DisposableBean {
     }
 
     public XStreamPersister initXStreamPersister(XStreamPersister xp, boolean encodeByRef) { 
-        // TODO temporarily commented out
-//        if (encodeByRef) {
-//            xp.setEncodeByReference();
-//        }
+        if (encodeByRef) {
+            xp.setEncodeByReference();
+        }
         xp.setCatalog(catalog);
 
         XStream xs = xp.getXStream();
