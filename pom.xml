@@ -303,6 +303,7 @@
 
   <modules>
     <module>importer</module>
+    <module>analytics</module>
   </modules>
 
   <properties>

@@ -1,0 +1,39 @@
+<html xmlns:wicket="http://wicket.apache.org/">
+ <head>
+  <wicket:head>
+  <style type="text/css">
+    textarea {
+       width: 475px;
+    }
+    .button-copy {
+      float: right;
+      padding-top: 6px;
+      /*padding-left: 2px;*/
+    }
+  </style>
+  
+   <wicket:link>
+     <link rel="stylesheet" type="text/css" href="style.css"/>
+   </wicket:link>
+ 
+  </wicket:head>
+ </head>
+ <body>
+ <wicket:extend>
+ <h1><wicket:message key="request"></wicket:message> <span wicket:id="id"></span></h1>
+ <div wicket:id="header"></div>
+ <form>
+ <ul wicket:id="panels" style="padding-top: 2em;">
+   <li>
+     <fieldset>
+       <legend>
+         <span wicket:id="label"></span>
+       </legend>
+       <div wicket:id="content"></div>
+     </fieldset>
+   </li>
+ </ul>  
+ </form>
+ </wicket:extend>
+ </body>
+</html>

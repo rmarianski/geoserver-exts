@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:tx="http://www.springframework.org/schema/tx"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/tx
+    http://www.springframework.org/schema/tx/spring-tx.xsd" 
+  default-autowire="byName">
+
+  <!-- filter for core geoserver monitor extension -->
+  <bean id="gsMonitorFilter" class="org.opengeo.analytics.web.GeoServerMonitorFilter"/>
+  
+  <bean id="analyticsMenuPage" class="org.geoserver.web.MenuPageInfo">
+      <property name="id" value="analyticsMenuPage"/>
+      <property name="category" ref="aboutStatusCategory"/>
+      <property name="titleKey" value="AnalyticsHomePage.title"/>
+      <property name="descriptionKey" value="AnalyticsHomePage.description"/>
+      <property name="componentClass" value="org.opengeo.analytics.web.AnalyticsHomePage"/>
+      <property name="icon" value="server_chart.png"/>
+      <property name="order" value="11"/>
+  </bean>
+   
+  <bean id="analyticsRequestMapInitializer" class="org.opengeo.analytics.RequestMapInitializer">
+    <constructor-arg ref="monitorDataSource"/>
+  </bean>
+  
+  <bean id="geoIPPostProcessor" class="org.geoserver.monitor.GeoIPPostProcessor">
+     <constructor-arg ref="resourceLoader"/>
+  </bean>
+</beans>

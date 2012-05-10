@@ -1,0 +1,26 @@
+<html>
+ <head>
+  <wicket:head>
+  <wicket:link>
+     <link rel="stylesheet" type="text/css" href="style.css"/>
+   </wicket:link>
+  </wicket:head>
+ </head>
+ <body>
+ <wicket:extend>
+     <h1 wicket:id="title"></h1>
+     <form wicket:id="form">
+       <div class="chartHeader">
+        <a href="#" wicket:id="refresh" class="refresh-link rightwise">Refresh</a>
+        <div wicket:id="timeSpan" class=""></div>
+       </div>
+     </form>
+     <div wicket:id="table"></div>
+     <span class="rightwise">
+       <span>Export as: </span>
+       <a wicket:id="csv" class="csv-link">CSV</a>
+       <a wicket:id="excel" class="excel-link">Excel</a>
+     </span>
+ </wicket:extend>
+ </body>
+</html>

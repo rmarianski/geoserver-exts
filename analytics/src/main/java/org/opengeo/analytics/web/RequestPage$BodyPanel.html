@@ -1,0 +1,28 @@
+<html>
+<head>
+<wicket:head>
+  <style type="text/css">
+  #contentInfo li {
+    padding-right: 1em;
+  }
+  </style>
+</wicket:head>
+</head>
+<body>
+<wicket:panel>
+  <ul id="contentInfo" class="horizontal">
+    <li>
+      <span wicket:id="contentType"></span>
+    </li>
+    <li>
+      <span wicket:id="contentLength"></span> bytes
+    </li>
+  </ul>
+  <textarea wicket:id="body" style="display:block; float:left;">
+  </textarea>
+  <div class="button-group button-copy">
+    <a wicket:id="copy"><wicket:message key="copy">Copy</wicket:message></a>
+  </div>
+</wicket:panel>
+</body>
+</html>

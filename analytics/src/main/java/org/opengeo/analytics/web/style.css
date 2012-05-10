@@ -1,0 +1,111 @@
+.tab-row {
+  margin-bottom: 8px;
+}
+.csv-link, .excel-link, .kml-link, .pdf-link {
+  padding: 2px 0px 2px 20px;
+  background: transparent no-repeat left center;
+}
+.csv-link {
+background-image: url(page_white_text.png);
+}
+.excel-link {
+background-image: url(page_white_excel.png);
+}
+.kml-link {
+background-image: url(kml.png);
+}
+.pdf-link {
+background-image: url(page_white_acrobat.png);
+}
+.button {
+  padding: 4px 10px;
+  margin-right: 4px;
+  border: 1px solid #ccc;
+  background-color: #eee;
+  background-position: center center;
+  background-repeat: no-repeat;
+  -webkit-border-radius: 2px;
+  -moz-border-radius: 2px;
+  border-radius: 2px;
+}
+.button.active {
+  border: 1px solid #999;
+  background-color: #ccc;
+}
+#tableBody {
+    padding: 0 4px;
+}
+#tableBody fieldset {
+  padding-bottom: 20px;
+}
+#tableBody fieldset.leftwise, #tableBody fieldset.rightwise {
+    width: 49%;
+}
+#tableBody fieldset.leftwise td, #tableBody fieldset.rightwise td {
+    max-width: 13em;
+    word-wrap: break-word;
+}
+#tableBody fieldset.fullWidth {
+    width: 99%;
+    clear: both;
+}
+.timeSpan input {
+   border: 1px solid #999;
+   padding: 2px;
+   white-space: nowrap;
+}
+
+.timeButtons {
+  padding-left: 8px;
+}
+
+.chartHeader {
+  padding: 4px 0;
+  border-bottom: 1px solid #eee;
+  position: relative;
+}
+#timeButtons .refresh-link, 
+.chartHeader .refresh-link {
+  margin-left: 8px;
+}
+
+/* For SUMMARY page */
+#chartHeader {
+  padding: 4px 0;
+  border-bottom: 1px solid #eee;
+}
+#chartHeader #chartServices {
+  margin-top: 4px;
+}
+.button-hour {
+  background-image: url(clock.png);
+}
+.button-day {
+  background-image: url(calendar_view_day.png);
+}
+.button-week {
+  background-image: url(calendar_view_week.png);
+}
+.button-month {
+  background-image: url(calendar_view_month.png);
+}
+.button-group-me a.active {
+  /*background-color: darkGray;
+  color: #004f6c;*/
+}
+#chartBody {
+  margin-bottom: 40px;
+}
+#chartBody .lineChart {
+  height: 300px;
+  margin-right: 25px;
+}
+#chartBody .pieChart {
+  height: 320px;
+  width: 200px;
+  margin: 10px 0;
+}
+#chartBody .pieChart div.pie-chart {
+  height: 320px;
+  width: 350px;
+}
