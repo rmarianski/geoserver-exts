@@ -24,8 +24,10 @@ Adding a new extension
 1. In the parent geoserver-exts pom, add a new module to the list.
 1. In the extension's pom, add a parent section to point to the parent pom.
 
-    <parent>
-      <groupId>org.opengeo</groupId>
-      <artifactId>geoserver-exts</artifactId>
-      <version>${project.version}</version>
-    </parent>
+    <pre>
+    &lt;parent&gt;
+      &lt;groupId&gt;org.opengeo&lt;/groupId&gt;
+      &lt;artifactId&gt;geoserver-exts&lt;/artifactId&gt;
+      &lt;version&gt;${project.version}&lt;/version&gt;
+    &lt;/parent&gt;
+    </pre>
