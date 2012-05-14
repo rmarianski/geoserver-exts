@@ -16,18 +16,18 @@ public class DirectoryTest extends ImporterTestSupport {
 
         Directory d = new Directory(dir);
         d.prepare();
-        
+
         List<FileData> files = d.getFiles();
-        
+
         assertEquals(1, files.size());
-        assertTrue( files.get(0) instanceof SpatialFile);
+        assertTrue(files.get(0) instanceof SpatialFile);
 
         SpatialFile spatial = (SpatialFile) files.get(0);
         assertEquals("shp", FilenameUtils.getExtension(spatial.getFile().getName()));
 
         assertNotNull(spatial.getPrjFile().getName());
         assertEquals("prj", FilenameUtils.getExtension(spatial.getPrjFile().getName()));
-        
+
         assertEquals(2, spatial.getSuppFiles().size());
 
         Set<String> exts = new HashSet<String>(Arrays.asList("shx", "dbf"));
@@ -37,44 +37,44 @@ public class DirectoryTest extends ImporterTestSupport {
 
         assertTrue(exts.isEmpty());
     }
-    
+
     public void testShapefileWithMacOSXDirectory() throws Exception {
         File dir = unpack("shape/archsites_epsg_prj.zip");
-        
-        File osxDir = new File(dir,"__MACOSX");
+
+        File osxDir = new File(dir, "__MACOSX");
         osxDir.mkdir();
         new File(osxDir, ".archsites.shp").createNewFile();
         new File(osxDir, ".archsites.dbf").createNewFile();
         new File(osxDir, ".archsites.prj").createNewFile();
-        
+
         Directory d = new Directory(dir);
         d.prepare();
-        
+
         assertNotNull(d.getFormat());
         assertEquals(DataStoreFormat.class, d.getFormat().getClass());
         List<FileData> files = d.getFiles();
         assertEquals(1, files.size());
         assertEquals(DataStoreFormat.class, files.get(0).getFormat().getClass());
     }
-    
+
     public void testShapefileWithExtraFiles() throws Exception {
         File dir = unpack("shape/archsites_epsg_prj.zip");
-        
+
         // 'extra' files
         new File(dir, "archsites.shp.xml").createNewFile();
         new File(dir, "archsites.sbx").createNewFile();
         new File(dir, "archsites.sbn").createNewFile();
-        
+
         Directory d = new Directory(dir);
         d.prepare();
-        
+
         assertNotNull(d.getFormat());
         assertEquals(DataStoreFormat.class, d.getFormat().getClass());
         List<FileData> files = d.getFiles();
         assertEquals(1, files.size());
         assertEquals(DataStoreFormat.class, files.get(0).getFormat().getClass());
     }
-    
+
     public void testMultipleSpatialFile() throws Exception {
         File dir = unpack("shape/archsites_epsg_prj.zip");
         unpack("shape/bugsites_esri_prj.tar.gz", dir);
@@ -83,22 +83,37 @@ public class DirectoryTest extends ImporterTestSupport {
         d.prepare();
 
         assertEquals(2, d.getFiles().size());
-        assertTrue( d.getFiles().get(0) instanceof SpatialFile);
-        assertTrue( d.getFiles().get(1) instanceof SpatialFile);
+        assertTrue(d.getFiles().get(0) instanceof SpatialFile);
+        assertTrue(d.getFiles().get(1) instanceof SpatialFile);
     }
 
     public void testMultipleSpatialASpatialFile() throws Exception {
         File dir = unpack("shape/archsites_epsg_prj.zip");
         unpack("shape/bugsites_esri_prj.tar.gz", dir);
-        FileUtils.touch(new File(dir, "foo.txt")); //TODO: don't rely on alphabetical order 
-        
+        FileUtils.touch(new File(dir, "foo.txt")); // TODO: don't rely on alphabetical order
+
         Directory d = new Directory(dir);
         d.prepare();
-        
+
         assertEquals(3, d.getFiles().size());
-        assertTrue( d.getFiles().get(0) instanceof SpatialFile);
-        assertTrue( d.getFiles().get(1) instanceof SpatialFile);
-        assertTrue( d.getFiles().get(2) instanceof ASpatialFile);
+        assertTrue(d.getFiles().get(0) instanceof SpatialFile);
+        assertTrue(d.getFiles().get(1) instanceof SpatialFile);
+        assertTrue(d.getFiles().get(2) instanceof ASpatialFile);
+    }
+
+    public void testCSVFile() throws Exception {
+        File dir = unpack("shape/locations.zip");
+        Directory d = new Directory(dir);
+        d.prepare();
+
+        List<FileData> files = d.getFiles();
+
+        assertEquals("No files found", 1, files.size());
+        FileData fileData = files.get(0);
+        assertTrue("Did not find csv file", fileData.getFile().getName().endsWith(".csv"));
+        assertTrue("CSV file not recognized as spatial file", fileData instanceof SpatialFile);
+        SpatialFile spatial = (SpatialFile) files.get(0);
+        assertEquals("csv", FilenameUtils.getExtension(spatial.getFile().getName()));
     }
 
 }
