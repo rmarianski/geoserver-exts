@@ -110,6 +110,12 @@
     </dependency>
 
     <dependency>
+        <groupId>org.opengeo.data.csv</groupId>
+        <artifactId>csv</artifactId>
+        <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-epsg-hsql</artifactId>
       <version>${gt.version}</version>

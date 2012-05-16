@@ -304,6 +304,7 @@
   <modules>
     <module>importer</module>
     <module>analytics</module>
+    <module>csv</module>
   </modules>
 
   <properties>
