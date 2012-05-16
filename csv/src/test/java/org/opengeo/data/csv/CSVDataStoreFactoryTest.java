@@ -21,16 +21,24 @@ public class CSVDataStoreFactoryTest {
 
     private CSVDataStoreFactory csvDataStoreFactory;
 
+    private File file;
+
+    private URL locationsResource;
+
     @Before
     public void setUp() {
         csvDataStoreFactory = new CSVDataStoreFactory();
+        locationsResource = CSVDataStoreFactory.class.getResource("locations.csv");
+        assert locationsResource != null : "Could not find locations.csv resource";
+        assertNotNull("Failure finding locations csv file", locationsResource);
+        file = new File(locationsResource.getFile());
     }
 
     @Test
     public void testBasicGetters() throws MalformedURLException {
         assertEquals("CSV", csvDataStoreFactory.getDisplayName());
         assertEquals("Comma delimited text file", csvDataStoreFactory.getDescription());
-        assertTrue(csvDataStoreFactory.canProcess(new URL("file:///tmp/test.csv")));
+        assertTrue(csvDataStoreFactory.canProcess(locationsResource));
         assertTrue(csvDataStoreFactory.getImplementationHints().isEmpty());
         assertArrayEquals(new String[] { ".csv" }, csvDataStoreFactory.getFileExtensions());
         assertNotNull("Invalid Parameter Info", csvDataStoreFactory.getParametersInfo());
@@ -39,15 +47,14 @@ public class CSVDataStoreFactoryTest {
     @Test
     public void testCreateNewDataStore() throws IOException {
         Map<String, Serializable> map = new HashMap<String, Serializable>();
-        map.put("file", new File("/tmp/foo.csv"));
+        map.put("file", file);
         FileDataStore dataStore = csvDataStoreFactory.createDataStore(map);
         assertNotNull("Failure creating data store", dataStore);
     }
 
     @Test
     public void testCreateDataStoreURL() throws MalformedURLException, IOException {
-        FileDataStore dataStore = csvDataStoreFactory
-                .createDataStore(new URL("file:///tmp/foo.csv"));
+        FileDataStore dataStore = csvDataStoreFactory.createDataStore(locationsResource);
         assertNotNull("Failure creating data store", dataStore);
     }
 
