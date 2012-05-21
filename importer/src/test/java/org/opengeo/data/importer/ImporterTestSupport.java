@@ -14,6 +14,8 @@ import org.geoserver.test.GeoServerTestSupport;
 import org.geotools.data.FeatureSource;
 import org.geotools.data.Query;
 import org.geotools.factory.Hints;
+import org.opengis.feature.Feature;
+import org.opengis.feature.type.FeatureType;
 import org.w3c.dom.Document;
 
 import com.mockrunner.mock.web.MockHttpServletResponse;
@@ -96,7 +98,7 @@ public abstract class ImporterTestSupport extends GeoServerTestSupport {
         
         if (layer.getType() == LayerInfo.Type.VECTOR) {
             FeatureTypeInfo featureType = (FeatureTypeInfo) layer.getResource();
-            FeatureSource source = featureType.getFeatureSource(null, null);
+            FeatureSource<? extends FeatureType, ? extends Feature> source = featureType.getFeatureSource(null, null);
             assertTrue(source.getCount(Query.ALL) > 0);
             
             //do a wfs request
