@@ -3,10 +3,10 @@ package org.opengeo.data.csv;
 import java.net.URI;
 
 import org.opengeo.data.csv.parse.CSVStrategy;
-import org.opengeo.data.csv.parse.LatLonCSVStrategy;
+import org.opengeo.data.csv.parse.CSVLatLonStrategy;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
-public class LatLonStrategyFactory implements CSVStrategyFactory {
+public class CSVLatLonStrategyFactory implements CSVStrategyFactory {
 
     private final String name;
 
@@ -14,7 +14,7 @@ public class LatLonStrategyFactory implements CSVStrategyFactory {
 
     private final URI namespace;
 
-    public LatLonStrategyFactory(String name, CoordinateReferenceSystem crs, URI namespace) {
+    public CSVLatLonStrategyFactory(String name, CoordinateReferenceSystem crs, URI namespace) {
         this.name = name;
         this.crs = crs;
         this.namespace = namespace;
@@ -22,7 +22,7 @@ public class LatLonStrategyFactory implements CSVStrategyFactory {
 
     @Override
     public CSVStrategy createCSVStrategy(String[] headers) {
-        return new LatLonCSVStrategy(name, crs, headers, namespace);
+        return new CSVLatLonStrategy(name, crs, headers, namespace);
     }
 
 }

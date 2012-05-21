@@ -12,7 +12,7 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
 
-public class LatLonCSVStrategy implements CSVStrategy {
+public class CSVLatLonStrategy implements CSVStrategy {
 
     private static final String GEOMETRY_COLUMN = "location";
 
@@ -30,11 +30,11 @@ public class LatLonCSVStrategy implements CSVStrategy {
 
     private final URI namespace;
 
-    public LatLonCSVStrategy(String name, CoordinateReferenceSystem crs, String[] headers) {
+    public CSVLatLonStrategy(String name, CoordinateReferenceSystem crs, String[] headers) {
         this(name, crs, headers, null);
     }
 
-    public LatLonCSVStrategy(String name, CoordinateReferenceSystem crs, String[] headers,
+    public CSVLatLonStrategy(String name, CoordinateReferenceSystem crs, String[] headers,
             URI namespace) {
         this.name = name;
         this.crs = crs;

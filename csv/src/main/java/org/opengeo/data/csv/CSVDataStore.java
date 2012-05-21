@@ -62,7 +62,7 @@ public class CSVDataStore extends ContentDataStore implements FileDataStore {
     }
 
     public CSVDataStore(File file, URI namespace, String typeName) throws IOException {
-        this(file, namespace, typeName, new LatLonStrategyFactory(typeName, crs, namespace));
+        this(file, namespace, typeName, new CSVLatLonStrategyFactory(typeName, crs, namespace));
     }
 
     public CSVDataStore(File file, URI namespace, String typeName,

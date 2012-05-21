@@ -16,11 +16,11 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Point;
 
-public class LatLonCSVStrategyTest {
+public class CSVLatLonStrategyTest {
 
     @Test
     public void testBuildFeatureType() {
-        LatLonCSVStrategy strategy = new LatLonCSVStrategy("foo", WGS84, new String[] { "lat",
+        CSVLatLonStrategy strategy = new CSVLatLonStrategy("foo", WGS84, new String[] { "lat",
                 "lon", "quux", "morx" });
         SimpleFeatureType featureType = strategy.getFeatureType();
         assertEquals("Invalid attribute count", 3, featureType.getAttributeCount());
@@ -44,7 +44,7 @@ public class LatLonCSVStrategyTest {
 
     @Test
     public void testBuildFeature() {
-        LatLonCSVStrategy strategy = new LatLonCSVStrategy("bar", WGS84, new String[] { "lat",
+        CSVLatLonStrategy strategy = new CSVLatLonStrategy("bar", WGS84, new String[] { "lat",
                 "lon", "fleem", "zoo" });
 
         SimpleFeature feature = strategy.buildFeature(new String[] { "3", "4", "car", "cdr" });
