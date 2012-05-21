@@ -428,4 +428,22 @@ public class ImporterDataTest extends ImporterTestSupport {
         assertEquals("archsites0", i.getLayer().getName());
         runChecks("archsites0");
     }
+
+    public void testImportCSV() throws Exception {
+        File dir = unpack("shape/locations.zip");
+        ImportContext context = importer.createContext(new SpatialFile(new File(dir,
+                "locations.csv")));
+        importer.run(context);
+
+        Catalog cat = getCatalog();
+        assertNotNull(cat.getLayerByName("locations"));
+        runChecks("locations");
+
+        context = importer.createContext(new SpatialFile(new File(dir, "locations.csv")));
+        importer.run(context);
+
+        ImportItem i = context.getTasks().get(0).getItems().get(0);
+        assertEquals("locations0", i.getLayer().getName());
+        runChecks("locations");
+    }
 }

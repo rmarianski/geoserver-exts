@@ -4,10 +4,12 @@ import java.awt.RenderingHints.Key;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.URI;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
 
+import org.apache.commons.io.FilenameUtils;
 import org.geotools.data.DataStore;
 import org.geotools.data.FileDataStore;
 import org.geotools.data.FileDataStoreFactorySpi;
@@ -17,12 +19,14 @@ public class CSVDataStoreFactory implements FileDataStoreFactorySpi {
 
     private static final String FILE_TYPE = "csv";
 
-    private static final String EXTENSION = "." + FILE_TYPE;
+    public static final String[] EXTENSIONS = new String[] { "." + FILE_TYPE };
 
-    public static final String[] EXTENSIONS = new String[] { EXTENSION };
+    public static final Param FILE_PARAM = new Param("file", File.class, FILE_TYPE + " file", false);
 
-    public static final Param FILE_PARAM = new Param("file", File.class, FILE_TYPE + " file", true,
-            null, new KVP(Param.EXT, FILE_TYPE));
+    public static final Param URL_PARAM = new Param("url", URL.class, FILE_TYPE + " file", false);
+
+    public static final Param NAMESPACEP = new Param("namespace", URI.class,
+            "uri to a the namespace", false, null, new KVP(Param.LEVEL, "advanced"));
 
     public static final Param[] parametersInfo = new Param[] { FILE_PARAM };
 
@@ -41,12 +45,29 @@ public class CSVDataStoreFactory implements FileDataStoreFactorySpi {
         return parametersInfo;
     }
 
+    private boolean canProcessExtension(String filename) {
+        String extension = FilenameUtils.getExtension(filename);
+        return FILE_TYPE.equalsIgnoreCase(extension);
+    }
+
+    private File fileFromParams(Map<String, Serializable> params) throws IOException {
+        File file = (File) FILE_PARAM.lookUp(params);
+        if (file != null) {
+            return file;
+        }
+        URL url = (URL) URL_PARAM.lookUp(params);
+        if (url != null) {
+            return new File(url.getFile());
+        }
+        return null;
+    }
+
     @Override
     public boolean canProcess(Map<String, Serializable> params) {
         try {
-            File file = (File) FILE_PARAM.lookUp(params);
+            File file = fileFromParams(params);
             if (file != null) {
-                return file.getPath().toLowerCase().endsWith(EXTENSION);
+                return canProcessExtension(file.getPath());
             }
         } catch (IOException e) {
         }
@@ -68,14 +89,24 @@ public class CSVDataStoreFactory implements FileDataStoreFactorySpi {
         return Collections.emptyMap();
     }
 
-    private FileDataStore createDataStoreFromFile(File file) throws IOException {
-        return new CSVDataStore(file);
+    public FileDataStore createDataStoreFromFile(File file) throws IOException {
+        return createDataStoreFromFile(file, null);
+    }
+
+    public FileDataStore createDataStoreFromFile(File file, URI namespace) throws IOException {
+        if (file == null) {
+            throw new IllegalArgumentException("Cannot create store from null file");
+        } else if (!file.exists()) {
+            throw new IllegalArgumentException("Cannot create store with file that does not exist");
+        }
+        return new CSVDataStore(file, namespace);
     }
 
     @Override
     public FileDataStore createDataStore(Map<String, Serializable> params) throws IOException {
-        File file = (File) FILE_PARAM.lookUp(params);
-        return createDataStoreFromFile(file);
+        File file = fileFromParams(params);
+        URI namespace = (URI) NAMESPACEP.lookUp(params);
+        return createDataStoreFromFile(file, namespace);
     }
 
     @Override
@@ -96,7 +127,7 @@ public class CSVDataStoreFactory implements FileDataStoreFactorySpi {
 
     @Override
     public boolean canProcess(URL url) {
-        return url.getFile().toLowerCase().endsWith(EXTENSION);
+        return canProcessExtension(url.getFile());
     }
 
     @Override

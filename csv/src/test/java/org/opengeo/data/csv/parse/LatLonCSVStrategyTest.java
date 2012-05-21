@@ -11,8 +11,10 @@ import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
 import org.opengis.feature.type.GeometryDescriptor;
 import org.opengis.feature.type.GeometryType;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Point;
 
 public class LatLonCSVStrategyTest {
 
@@ -35,6 +37,9 @@ public class LatLonCSVStrategyTest {
         GeometryDescriptor geometryDescriptor = featureType.getGeometryDescriptor();
         GeometryType geometryType = geometryDescriptor.getType();
         assertEquals("Invalid geometry name", "location", geometryType.getName().getLocalPart());
+
+        CoordinateReferenceSystem crs = featureType.getCoordinateReferenceSystem();
+        assertEquals("Unknown crs", WGS84, crs);
     }
 
     @Test
@@ -43,9 +48,10 @@ public class LatLonCSVStrategyTest {
                 "lon", "fleem", "zoo" });
 
         SimpleFeature feature = strategy.buildFeature(new String[] { "3", "4", "car", "cdr" });
-        Coordinate geometry = (Coordinate) feature.getDefaultGeometry();
-        assertEquals("Invalid point", 3, geometry.y, 0.1);
-        assertEquals("Invalid point", 4, geometry.x, 0.1);
+        Point geometry = (Point) feature.getDefaultGeometry();
+        Coordinate coordinate = geometry.getCoordinate();
+        assertEquals("Invalid point", 3, coordinate.y, 0.1);
+        assertEquals("Invalid point", 4, coordinate.x, 0.1);
 
         assertEquals("Invalid feature property", "car", feature.getAttribute("fleem").toString());
         assertEquals("Invalid feature property", "cdr", feature.getAttribute("zoo").toString());

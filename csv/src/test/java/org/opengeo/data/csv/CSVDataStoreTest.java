@@ -1,6 +1,7 @@
 package org.opengeo.data.csv;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,13 +13,12 @@ import java.util.List;
 import org.geotools.data.FeatureReader;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengeo.data.csv.CSVDataStore;
-import org.opengeo.data.csv.CSVDataStoreFactory;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.Name;
 
 import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Point;
 
 public class CSVDataStoreTest {
 
@@ -62,8 +62,8 @@ public class CSVDataStoreTest {
 
         while (reader.hasNext()) {
             SimpleFeature feature = reader.next();
-            Coordinate geometry = (Coordinate) feature.getDefaultGeometry();
-            geometries.add(geometry);
+            Point geometry = (Point) feature.getDefaultGeometry();
+            geometries.add(geometry.getCoordinate());
             cities.add(feature.getAttribute("CITY").toString());
             numbers.add(feature.getAttribute("NUMBER").toString());
         }

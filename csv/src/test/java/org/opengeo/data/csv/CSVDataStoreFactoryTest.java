@@ -30,7 +30,6 @@ public class CSVDataStoreFactoryTest {
         csvDataStoreFactory = new CSVDataStoreFactory();
         locationsResource = CSVDataStoreFactory.class.getResource("locations.csv");
         assert locationsResource != null : "Could not find locations.csv resource";
-        assertNotNull("Failure finding locations csv file", locationsResource);
         file = new File(locationsResource.getFile());
     }
 
@@ -45,11 +44,19 @@ public class CSVDataStoreFactoryTest {
     }
 
     @Test
-    public void testCreateNewDataStore() throws IOException {
-        Map<String, Serializable> map = new HashMap<String, Serializable>();
-        map.put("file", file);
-        FileDataStore dataStore = csvDataStoreFactory.createDataStore(map);
-        assertNotNull("Failure creating data store", dataStore);
+    public void testCreateDataStoreFileParams() throws Exception {
+        Map<String, Serializable> fileParams = new HashMap<String, Serializable>(1);
+        fileParams.put("file", file);
+        FileDataStore dataStore = csvDataStoreFactory.createDataStore(fileParams);
+        assertNotNull("Could not create datastore from file params", dataStore);
+    }
+
+    @Test
+    public void testCreateDataStoreURLParams() throws Exception {
+        Map<String, Serializable> urlParams = new HashMap<String, Serializable>(1);
+        urlParams.put("url", locationsResource);
+        FileDataStore dataStore = csvDataStoreFactory.createDataStore(urlParams);
+        assertNotNull("Could not create datastore from url params", dataStore);
     }
 
     @Test
@@ -60,12 +67,48 @@ public class CSVDataStoreFactoryTest {
 
     @Test
     public void testGetTypeName() throws IOException {
-        URL resource = CSVDataStoreFactory.class.getResource("locations.csv");
-        assertNotNull("Failure finding locations csv file", resource);
-        FileDataStore dataStore = csvDataStoreFactory.createDataStore(resource);
+        FileDataStore dataStore = csvDataStoreFactory.createDataStore(locationsResource);
         String[] typeNames = dataStore.getTypeNames();
         assertEquals("Invalid number of type names", 1, typeNames.length);
         assertEquals("Invalid type name", "locations", typeNames[0]);
     }
 
+    @Test
+    public void testCanProcessFileParams() {
+        Map<String, Serializable> fileParams = new HashMap<String, Serializable>(1);
+        fileParams.put("file", file);
+        assertTrue("Did not process file params", csvDataStoreFactory.canProcess(fileParams));
+    }
+
+    @Test
+    public void testCanProcessURLParams() {
+        Map<String, Serializable> urlParams = new HashMap<String, Serializable>(1);
+        urlParams.put("url", locationsResource);
+        assertTrue("Did not process url params", csvDataStoreFactory.canProcess(urlParams));
+    }
+
+    @Test
+    public void testInvalidParamsCreation() throws Exception {
+        Map<String, Serializable> params = new HashMap<String, Serializable>(0);
+        try {
+            csvDataStoreFactory.createDataStore(params);
+        } catch (IllegalArgumentException e) {
+            assertTrue(true);
+            return;
+        } catch (Exception e) {
+        }
+        assertTrue("Did not throw illegal argument exception for null file", false);
+    }
+
+    @Test
+    public void testFileDoesNotExist() throws Exception {
+        try {
+            csvDataStoreFactory.createDataStoreFromFile(new File("/tmp/does-not-exist.csv"));
+        } catch (IllegalArgumentException e) {
+            assertTrue(true);
+            return;
+        } catch (Exception e) {
+        }
+        assertTrue("Did not throw illegal argument exception for non-existent file", false);
+    }
 }

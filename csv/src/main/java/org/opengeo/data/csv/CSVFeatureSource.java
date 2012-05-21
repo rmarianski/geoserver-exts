@@ -55,13 +55,14 @@ public class CSVFeatureSource extends ContentFeatureSource {
         for (n = 0; reader.hasNext(); n++) {
             reader.next();
         }
+        reader.close();
         return n;
     }
 
     protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query)
             throws IOException {
         CSVDataStore dataStore = getDataStore();
-        return new CSVFeatureReader(dataStore.getCsvReader(), dataStore.getCSVStrategy(), query);
+        return new CSVFeatureReader(dataStore.createCsvReader(), dataStore.getCSVStrategy(), query);
     }
 
     protected SimpleFeatureType buildFeatureType() throws IOException {
