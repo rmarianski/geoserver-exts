@@ -36,8 +36,7 @@ public class CSVFeatureSource extends ContentFeatureSource {
     protected ReferencedEnvelope getBoundsInternal(Query query) throws IOException {
         ReferencedEnvelope bounds = new ReferencedEnvelope(getSchema()
                 .getCoordinateReferenceSystem());
-
-        FeatureReader<SimpleFeatureType, SimpleFeature> featureReader = getReaderInternal(query);
+        FeatureReader<SimpleFeatureType, SimpleFeature> featureReader = getReader(query);
         try {
             while (featureReader.hasNext()) {
                 SimpleFeature feature = featureReader.next();
@@ -50,12 +49,15 @@ public class CSVFeatureSource extends ContentFeatureSource {
     }
 
     protected int getCountInternal(Query query) throws IOException {
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader = getReader(query);
-        int n;
-        for (n = 0; reader.hasNext(); n++) {
-            reader.next();
+        FeatureReader<SimpleFeatureType, SimpleFeature> featureReader = getReader(query);
+        int n = 0;
+        try {
+            for (n = 0; featureReader.hasNext(); n++) {
+                featureReader.next();
+            }
+        } finally {
+            featureReader.close();
         }
-        reader.close();
         return n;
     }
 
@@ -68,5 +70,4 @@ public class CSVFeatureSource extends ContentFeatureSource {
     protected SimpleFeatureType buildFeatureType() throws IOException {
         return getDataStore().getSchema();
     }
-
 }
