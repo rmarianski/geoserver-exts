@@ -1,6 +1,12 @@
+target/
 *.class
 
 # Package Files #
 *.jar
 *.war
 *.ear
+
+# eclipse files
+.classpath
+.project
+.settings
