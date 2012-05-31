@@ -23,8 +23,8 @@ import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
 import org.restlet.data.Status;
-import org.springframework.security.Authentication;
-import org.springframework.security.context.SecurityContextHolder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
  * REST resource for /contexts[/<id>]
@@ -121,7 +121,7 @@ public class ImportResource extends AbstractResource {
                 context = importer.createContext(null);
                 context.setUser(getCurrentUser());
 
-                if (MediaType.APPLICATION_JSON.equals(getRequest().getEntity().getMediaType())) {
+                if (getRequest().getEntity().getMediaType().equals(MediaType.APPLICATION_JSON)) {
                     //read representation specified by user, use it to read 
                     ImportContext newContext = 
                         (ImportContext) getFormatPostOrPut().toObject(getRequest().getEntity());
@@ -174,11 +174,7 @@ public class ImportResource extends AbstractResource {
     Object lookupContext(boolean allowAll, boolean mustExist) {
         String i = getAttribute("import");
         if (i != null) {
-            ImportContext context = null;
-            try {
-                context = importer.getContext(Long.parseLong(i));
-            } catch (NumberFormatException e) {
-            }
+            ImportContext context = importer.getContext(Long.parseLong(i));
             if (context == null && mustExist) {
                 throw new RestletException("No such import: " + i, Status.CLIENT_ERROR_NOT_FOUND);
             }

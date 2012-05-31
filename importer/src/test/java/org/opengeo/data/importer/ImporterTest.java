@@ -3,6 +3,8 @@ package org.opengeo.data.importer;
 import java.io.File;
 import java.util.HashSet;
 
+import org.apache.commons.io.FileUtils;
+
 public class ImporterTest extends ImporterTestSupport {
 
     public void testCreateContextSingleFile() throws Exception {
@@ -54,6 +56,13 @@ public class ImporterTest extends ImporterTestSupport {
         assertEquals(1, context.getTasks().size());
 
         assertEquals(1, context.getTasks().get(0).getItems().size());
-       
+    }
+
+    public void testCreateContextIgnoreHidden() throws Exception {
+        File dir = unpack("shape/archsites_epsg_prj.zip");
+        FileUtils.touch(new File(dir, ".DS_Store"));
+
+        ImportContext context = importer.createContext(new Directory(dir));
+        assertEquals(1, context.getTasks().size());
     }
 }

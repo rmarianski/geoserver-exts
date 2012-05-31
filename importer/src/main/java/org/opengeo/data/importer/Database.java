@@ -101,4 +101,9 @@ public class Database extends ImportData {
             t.setDatabase(this);
         }
     }
+
+    private Object readResolve() {
+        tables = tables != null ? tables : new ArrayList();
+        return this;
+    }
 }

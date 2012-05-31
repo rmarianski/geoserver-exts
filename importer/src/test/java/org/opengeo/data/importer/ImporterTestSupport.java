@@ -10,12 +10,11 @@ import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.DataStoreInfo;
 import org.geoserver.catalog.FeatureTypeInfo;
 import org.geoserver.catalog.LayerInfo;
+import org.geoserver.catalog.WorkspaceInfo;
 import org.geoserver.test.GeoServerTestSupport;
 import org.geotools.data.FeatureSource;
 import org.geotools.data.Query;
 import org.geotools.factory.Hints;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.FeatureType;
 import org.w3c.dom.Document;
 
 import com.mockrunner.mock.web.MockHttpServletResponse;
@@ -28,7 +27,7 @@ import java.util.Map;
 import net.sf.json.JSONObject;
 import net.sf.json.util.JSONBuilder;
 
-public abstract class ImporterTestSupport extends GeoServerTestSupport {
+public class ImporterTestSupport extends GeoServerTestSupport {
 
     protected Importer importer;
 
@@ -98,7 +97,7 @@ public abstract class ImporterTestSupport extends GeoServerTestSupport {
         
         if (layer.getType() == LayerInfo.Type.VECTOR) {
             FeatureTypeInfo featureType = (FeatureTypeInfo) layer.getResource();
-            FeatureSource<? extends FeatureType, ? extends Feature> source = featureType.getFeatureSource(null, null);
+            FeatureSource source = featureType.getFeatureSource(null, null);
             assertTrue(source.getCount(Query.ALL) > 0);
             
             //do a wfs request
@@ -118,8 +117,9 @@ public abstract class ImporterTestSupport extends GeoServerTestSupport {
         //create a datastore to import into
         Catalog cat = getCatalog();
 
+        WorkspaceInfo ws = wsName != null ? cat.getWorkspaceByName(wsName) : cat.getDefaultWorkspace();
         DataStoreInfo ds = cat.getFactory().createDataStore();
-        ds.setWorkspace(cat.getWorkspaceByName(wsName));
+        ds.setWorkspace(ws);
         ds.setName(dsName);
         ds.setType("H2");
 

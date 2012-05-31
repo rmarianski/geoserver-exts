@@ -76,7 +76,7 @@ public class ImportJSONIO {
         json.key("state").value(context.getState());
 
         if (context.getTargetWorkspace() != null) {
-            json.key("targetWorkspace").value(toJSON(context.getTargetWorkspace()));
+            json.key("targetWorkspsace").value(toJSON(context.getTargetWorkspace()));
         }
         if (context.getTargetStore() != null) {
             json.key("targetStore").value(toJSON(context.getTargetStore()));
@@ -533,19 +533,19 @@ public class ImportJSONIO {
 
     JSONObject toJSON(Object o) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        XStreamPersister xp = persister(false);
+        XStreamPersister xp = persister();
         xp.save(o, out);
         return (JSONObject) JSONSerializer.toJSON(new String(out.toByteArray()));
     }
 
     <T> T fromJSON(JSONObject json, Class<T> clazz) throws IOException {
-        XStreamPersister xp = persister(true);
+        XStreamPersister xp = persister();
         return (T) xp.load(new ByteArrayInputStream(json.toString().getBytes()), clazz);
     }
 
-    XStreamPersister persister(boolean encodeByRef) {
+    XStreamPersister persister() {
         XStreamPersister xp = 
-            importer.initXStreamPersister(new XStreamPersisterFactory().createJSONPersister(), encodeByRef);
+            importer.initXStreamPersister(new XStreamPersisterFactory().createJSONPersister());
         
         xp.setReferenceByName(true);
         xp.setExcludeIds();

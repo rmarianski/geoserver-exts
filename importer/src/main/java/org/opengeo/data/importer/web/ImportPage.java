@@ -200,7 +200,6 @@ public class ImportPage extends GeoServerSecuredPage {
                 itemTable.setOutputMarkupId(true);
                 itemTable.setFilterable(false);
                 itemTable.setSortable(false);
-                doSelectReady(task, itemTable, null);
 
                 final AjaxLink importLink = new AjaxLink("import") {
                     @Override
@@ -239,7 +238,7 @@ public class ImportPage extends GeoServerSecuredPage {
                         target.addComponent(this);
                     }
                 };
-                importLink.setEnabled(false);
+                importLink.setEnabled(doSelectReady(task, itemTable, null));
                 item.add(importLink);
 
                 item.add(new AjaxLink<ImportTask>("select-all", model) {
@@ -296,15 +295,21 @@ public class ImportPage extends GeoServerSecuredPage {
         target.addComponent(link);
     }
 
-    void doSelectReady(ImportTask task, ImportItemTable table, AjaxRequestTarget target) {
-        for (ImportItem item : task.getItems()) {
+    boolean doSelectReady(ImportTask task, ImportItemTable table, AjaxRequestTarget target) {
+        boolean empty = true;
+        List<ImportItem> items = task.getItems();
+        for (int i = 0; i < items.size(); i++) {
+            ImportItem item = items.get(i);
             if (item.getState() == ImportItem.State.READY) {
-                table.selectObject(item);
+                //table.selectObject(item);
+                table.selectIndex(i);
+                empty = false;
             }
         }
         if (target != null) {
             target.addComponent(table);
         }
+        return !empty;
     }
 
     @Override

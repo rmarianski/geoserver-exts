@@ -12,7 +12,7 @@ import org.springframework.beans.BeanUtils;
  *
  * @author Ian Schneider <ischneider@opengeo.org>
  */
-public abstract class TransformTestSupport extends TestCase {
+public class TransformTestSupport extends TestCase {
 
     public void doJSONTest(ImportTransform transform) throws Exception {
         StringWriter buffer = new StringWriter();

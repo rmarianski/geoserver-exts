@@ -50,9 +50,11 @@ import org.geoserver.web.data.workspace.WorkspacesModel;
 import org.geoserver.web.wicket.GeoServerDialog;
 import org.geoserver.web.wicket.GeoServerDialog.DialogDelegate;
 import org.geoserver.web.wicket.ParamResourceModel;
+import org.geotools.data.DataStoreFactorySpi;
 import org.geotools.util.logging.Logging;
 import org.opengeo.data.importer.ImportContext;
 import org.opengeo.data.importer.ImportData;
+import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.Importer;
 
 /**
@@ -112,6 +114,12 @@ public class ImportDataPage extends GeoServerSecuredPage {
                 icon.add(
                     new AttributeModifier("alt", true, source.getDescription(ImportDataPage.this)));
                 item.add(icon);
+
+                if (!source.isAvailable()) {
+                    item.setEnabled(false);
+                    item.add(new SimpleAttributeModifier("title", "Data source not available. Please " +
+                        "install required plug-in and drivers."));
+                }
             }
             
         };
@@ -131,17 +139,19 @@ public class ImportDataPage extends GeoServerSecuredPage {
         workspaceChoice.add(new AjaxFormComponentUpdatingBehavior("onchange") {
             @Override
             protected void onUpdate(AjaxRequestTarget target) {
-                store.setObject(GeoServerApplication.get().getCatalog()
-                    .getDefaultDataStore((WorkspaceInfo) workspace.getObject()));
-                target.addComponent(storeChoice);
+                updateDefaultStore(target);
             }
         });
         form.add(workspaceChoice);
         
         //store chooser
         store = new StoreModel(catalog.getDefaultDataStore((WorkspaceInfo) workspace.getObject()));
-        storeChoice = new DropDownChoice("store", store, new StoresModel(workspace),
-            new StoreChoiceRenderer());
+        storeChoice = new DropDownChoice("store", store, new EnabledStoresModel(workspace),
+            new StoreChoiceRenderer()) {
+            protected String getNullValidKey() {
+                return ImportDataPage.class.getSimpleName() + "." + super.getNullValidKey();
+            };
+        };
         storeChoice.setOutputMarkupId(true);
 
         storeChoice.setNullValid(true);
@@ -239,10 +249,37 @@ public class ImportDataPage extends GeoServerSecuredPage {
                         try {
                             ImportContext imp = importer.createContext(source, targetWorkspace,
                                     targetStore);
-                            PageParameters pp = new PageParameters();
-                            pp.put("id", imp.getId());
 
-                            setResponsePage(ImportPage.class, pp);
+                            //check the import for actual things to do
+                            boolean proceed = !imp.getTasks().isEmpty();
+                            if (proceed) {
+                                //check that all the tasks are non-empty
+                                proceed = false;
+                                for (ImportTask t : imp.getTasks()) {
+                                    if (!t.getItems().isEmpty()) {
+                                        proceed = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (proceed) {
+                                imp.setArchive(false);
+                                importer.changed(imp);
+    
+                                PageParameters pp = new PageParameters();
+                                pp.put("id", imp.getId());
+    
+                                setResponsePage(ImportPage.class, pp);
+                            }
+                            else {
+                                info("No data to import was found");
+                                target.addComponent(feedbackPanel);
+
+                                importer.delete(imp);
+
+                                resetNextButton(self, target);
+                            }
                         } catch (Exception e) {
                             LOGGER.log(Level.SEVERE, e.getLocalizedMessage(), e);
                             error(e);
@@ -250,10 +287,7 @@ public class ImportDataPage extends GeoServerSecuredPage {
                             target.addComponent(feedbackPanel);
 
                             //update the button back to original state
-                            self.add(new AttributeModifier("class", true, new Model("")));
-                            self.setEnabled(true);
-                            self.get(0).setDefaultModelObject("Next");
-                            target.addComponent(self);
+                            resetNextButton(self, target);
                         }
                         finally {
                             stop();
@@ -286,8 +320,20 @@ public class ImportDataPage extends GeoServerSecuredPage {
         add(dialog = new GeoServerDialog("dialog"));
         
         updateSourcePanel(Source.SPATIAL_FILES);
+        updateDefaultStore(null);
     }
-    
+
+    void updateDefaultStore(AjaxRequestTarget target) {
+        WorkspaceInfo ws = (WorkspaceInfo) workspace.getObject();
+        if (workspace != null) {
+            store.setObject(GeoServerApplication.get().getCatalog().getDefaultDataStore(ws));
+        }
+
+        if (target != null) {
+            target.addComponent(storeChoice);
+        }
+    }
+
     void updateSourcePanel(Source source) {
         Panel old = (Panel) sourcePanel.get(0);
         if (old != null) {
@@ -312,6 +358,13 @@ public class ImportDataPage extends GeoServerSecuredPage {
         }
     }
 
+    void resetNextButton(AjaxSubmitLink next, AjaxRequestTarget target) {
+        next.add(new AttributeModifier("class", true, new Model("")));
+        next.setEnabled(true);
+        next.get(0).setDefaultModelObject("Next");
+        target.addComponent(next);
+    }
+
     /**
      * A type data source.
      */
@@ -327,6 +380,28 @@ public class ImportDataPage extends GeoServerSecuredPage {
             ImportSourcePanel createPanel(String panelId) {
                 return new PostGISPanel(panelId);
             }  
+        }, 
+        ORACLE(DataIcon.DATABASE) { 
+            @Override
+            ImportSourcePanel createPanel(String panelId) {
+                return new OraclePanel(panelId);
+            }
+
+            @Override
+            boolean isAvailable() {
+                return isDataStoreFactoryAvaiable("org.geotools.data.oracle.OracleNGDataStoreFactory");
+            }
+        }, 
+        SQLSERVER(DataIcon.DATABASE) {
+            @Override
+            ImportSourcePanel createPanel(String panelId) {
+                return new SQLServerPanel(panelId);
+            }
+
+            @Override
+            boolean isAvailable() {
+                return isDataStoreFactoryAvaiable("org.geotools.data.sqlserver.SQLServerDataStoreFactory");
+            }
         };
         
 //        directory(new ResourceReference(GeoServerApplication.class, "img/icons/silk/folder.png"),
@@ -361,7 +436,42 @@ public class ImportDataPage extends GeoServerSecuredPage {
         ResourceReference getIcon() {
             return icon.getIcon();
         }
-        
+
+        boolean isAvailable() {
+            return true;
+        }
+
+        boolean isDataStoreFactoryAvaiable(String className) {
+            Class<DataStoreFactorySpi> clazz = null;
+            try {
+                clazz = (Class<DataStoreFactorySpi>) Class.forName(className);
+            }
+            catch(Exception e) {
+                if(LOGGER.isLoggable(Level.FINE)) {
+                    LOGGER.log(Level.FINE, "DataStore class not available: " + className, e);
+                }
+            }
+            if (clazz == null) {
+                return false;
+            }
+
+            DataStoreFactorySpi factory = null;
+            try {
+                factory = clazz.newInstance();
+            }
+            catch(Exception e) {
+                if(LOGGER.isLoggable(Level.FINE)) {
+                    LOGGER.log(Level.FINE, "Error creating DataStore factory: " + className, e);
+                }
+            }
+
+            if (factory == null) {
+                return false;
+            }
+
+            return factory.isAvailable();
+        }
+
         abstract ImportSourcePanel createPanel(String panelId);
     }
 }

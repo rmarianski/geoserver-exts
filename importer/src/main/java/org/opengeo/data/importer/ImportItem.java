@@ -9,9 +9,12 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
+import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.LayerInfo;
 import org.geoserver.ows.util.OwsUtils;
 import org.opengeo.data.importer.transform.TransformChain;
+
+import static org.opengeo.data.importer.ImporterUtils.*;
 
 /**
  * A resource (feature type, coverage, etc... ) created during an imported.
@@ -195,13 +198,8 @@ public class ImportItem implements Serializable {
         return updateMode != null ? updateMode : task.getUpdateMode();
     }
 
-    public void reattach() {
-        if (layer != null) {
-            OwsUtils.resolveCollections(layer);
-            if (layer.getResource() != null) {
-                OwsUtils.resolveCollections(layer.getResource());
-            }
-        }
+    public void reattach(Catalog catalog) {
+        layer = resolve(layer, catalog);
     }
 
     @Override

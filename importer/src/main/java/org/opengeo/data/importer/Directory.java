@@ -8,6 +8,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -66,8 +67,10 @@ public class Directory extends FileData {
         //if the file is an archive, unpack it
         VFSWorker vfs = new VFSWorker();
         if (vfs.canHandle(file)) {
-            LOGGER.info("unpacking " + file.getAbsolutePath() + " to " + this.file.getAbsolutePath());
+            LOGGER.fine("unpacking " + file.getAbsolutePath() + " to " + this.file.getAbsolutePath());
             vfs.extractTo(file, this.file);
+
+            LOGGER.fine("deleting " + file.getAbsolutePath());
             file.delete();
         }
     }
@@ -102,6 +105,7 @@ public class Directory extends FileData {
             //scan all the files looking for spatial ones
             for (File f : dir.listFiles()) {
                 if (f.isHidden()) {
+                    all.remove(f);
                     continue;
                 }
                 if (f.isDirectory()) {
@@ -116,6 +120,12 @@ public class Directory extends FileData {
                         files.add(d);
                     }
                     //q.push(f);
+                    continue;
+                }
+
+                //special case for .aux files, they are metadata but get picked up as readable 
+                // by the erdas imagine reader...just ignore them for now 
+                if ("aux".equalsIgnoreCase(FilenameUtils.getExtension(f.getName()))) {
                     continue;
                 }
 
@@ -355,6 +365,9 @@ public class Directory extends FileData {
                 if (f.isDirectory()) {
                     new Directory(f).cleanup();
                 } else {
+                    if (LOGGER.isLoggable(Level.FINE)) {
+                        LOGGER.fine("Deleting file " + f.getAbsolutePath());
+                    }
                     f.delete();
                 }
             }

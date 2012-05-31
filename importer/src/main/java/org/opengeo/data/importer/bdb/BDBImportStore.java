@@ -96,11 +96,38 @@ public class BDBImportStore implements ImportStore {
         seqDb = env.openDatabase(null, "seq", dbConfig);
         importIdSeq = 
             seqDb.openSequence(null, new DatabaseEntry("import_id".getBytes()), seqConfig);
-        
-        importBinding = new XStreamInfoSerialBinding<ImportContext>(
-            importer.createXStreamPersister(), ImportContext.class);
+
+        importBinding = new SerialVersionSafeSerialBinding<ImportContext>();
+        checkAndFixDbIncompatability(db, dbConfig, env);
+        //importBinding = new XStreamInfoSerialBinding<ImportContext>(
+        //    importer.createXStreamPersister(), ImportContext.class);
     }
 
+
+    void checkAndFixDbIncompatability(Database db, DatabaseConfig dbConfig, Environment env) {
+        // check for potential class incompatibilities and attempt recovery
+        try {
+            iterator().next();
+        } catch (RuntimeException re) {
+            if (re.getCause() instanceof java.io.InvalidClassException) {
+                LOGGER.warning("Attempting database recovery related to class changes: " 
+                        + re.getCause().getMessage());
+                // wipe out the catalog
+                //classCatalog.close();
+                //classDb.close();
+                env.removeDatabase(null, "classes");
+                // and the import db
+                db.close();
+                env.removeDatabase(null, "imports");
+                // reopen
+                db = env.openDatabase(null, "imports", dbConfig);
+                //classDb = env.openDatabase(null, "classes", dbConfig);
+                //classCatalog = new StoredClassCatalog(classDb);
+                //importBinding = new SerialBinding<ImportContext>(classCatalog, ImportContext.class);
+            }
+        }
+
+    }
 
     public ImportContext get(long id) {
         DatabaseEntry val = new DatabaseEntry();
@@ -116,8 +143,8 @@ public class BDBImportStore implements ImportStore {
     ImportContext reattach(ImportContext context) {
         //reload store and workspace objects from catalog so they are "attached" with 
         // the proper references to the catalog initialized
-        context.reattach();
         Catalog catalog = importer.getCatalog();
+        context.reattach(catalog);
         for (ImportTask task : context.getTasks()) {
             StoreInfo store = task.getStore();
             if (store != null && store.getId() != null) {
@@ -139,7 +166,7 @@ public class BDBImportStore implements ImportStore {
                         }
 
                         if (r.getStore().getCatalog() == null) {
-                            ((StoreInfoImpl) r.getStore()).setCatalog(catalog);
+                            //((StoreInfoImpl) r.getStore()).setCatalog(catalog);
                         }
 
                     }

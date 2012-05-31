@@ -2,16 +2,24 @@ package org.opengeo.data.importer.web;
 
 import static org.geoserver.ows.util.ResponseUtils.urlEncode;
 
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintWriter;
+
 import org.apache.wicket.Component;
 import org.apache.wicket.PageParameters;
 import org.apache.wicket.ResourceReference;
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.ajax.markup.html.form.AjaxSubmitLink;
 import org.apache.wicket.behavior.AttributeAppender;
 import org.apache.wicket.behavior.SimpleAttributeModifier;
+import org.apache.wicket.extensions.ajax.markup.html.modal.ModalWindow;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.Form;
+import org.apache.wicket.markup.html.form.TextArea;
 import org.apache.wicket.markup.html.link.ExternalLink;
 import org.apache.wicket.markup.html.link.Link;
 import org.apache.wicket.markup.html.list.ListItem;
@@ -73,6 +81,8 @@ public class ImportItemTable extends GeoServerTablePanel<ImportItem> {
                 case READY:
                     //return advanced option link
                     return new AdvancedOptionPanel(id, itemModel);
+                case ERROR:
+                    return new ErrorPanel(id, itemModel);
                 default:
                     return new WebMarkupContainer(id);
             }
@@ -306,6 +316,51 @@ public class ImportItemTable extends GeoServerTablePanel<ImportItem> {
                     setResponsePage(new ImportItemAdvancedPage(getModel()));
                 }
             });
+        }
+    }
+
+    static class ErrorPanel extends Panel {
+        ModalWindow popupWindow;
+
+        public ErrorPanel(String id, IModel<ImportItem> model) {
+            super(id);
+    
+            add(popupWindow = new ModalWindow("popup"));
+            add(new AjaxLink<ImportItem>("link", model) {
+                @Override
+                public void onClick(AjaxRequestTarget target) {
+                    popupWindow.setContent(
+                        new ExceptionPanel(popupWindow.getContentId(), getModelObject().getError()));
+                    popupWindow.show(target);
+                }
+            });
+        }
+    }
+
+    static class ExceptionPanel extends Panel {
+
+        public ExceptionPanel(String id, final Exception ex) {
+            super(id);
+            add(new Label("message", ex.getLocalizedMessage()));
+            add(new TextArea("stackTrace", new Model(handleStackTrace(ex))));
+            add(new AjaxLink("copy") {
+                @Override
+                public void onClick(AjaxRequestTarget target) {
+                    String text = handleStackTrace(ex);
+                    StringSelection selection = new StringSelection(text);
+                    Toolkit.getDefaultToolkit()
+                        .getSystemClipboard().setContents(selection, selection);
+                }
+            });
+        }
+
+        String handleStackTrace(Exception ex) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            PrintWriter writer = new PrintWriter(out);
+            ex.printStackTrace(writer);
+            writer.flush();
+            
+            return new String(out.toByteArray());
         }
     }
 }

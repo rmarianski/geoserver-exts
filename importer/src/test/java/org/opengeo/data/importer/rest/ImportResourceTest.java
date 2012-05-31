@@ -17,7 +17,6 @@ import org.opengeo.data.importer.ImportContext;
 import org.opengeo.data.importer.ImporterTestSupport;
 import org.opengeo.data.importer.SpatialFile;
 
-import com.mockrunner.mock.web.MockHttpServletRequest;
 import com.mockrunner.mock.web.MockHttpServletResponse;
 import java.util.Iterator;
 
@@ -36,9 +35,6 @@ public class ImportResourceTest extends ImporterTestSupport {
         
         dir = unpack("shape/archsites_no_crs.zip");
         importer.createContext(new SpatialFile(new File(dir, "archsites.shp")));
-
-        dir = unpack("shape/locations.zip");
-        importer.createContext(new SpatialFile(new File(dir, "locations.csv")));
     }
 
     public void testGetAllImports() throws Exception {
@@ -46,7 +42,7 @@ public class ImportResourceTest extends ImporterTestSupport {
         assertNotNull(json.get("imports"));
 
         JSONArray imports = (JSONArray) json.get("imports");
-        assertEquals(4, imports.size());
+        assertEquals(3, imports.size());
 
         JSONObject imprt = imports.getJSONObject(0);
         assertEquals(0, imprt.getInt("id"));
@@ -59,10 +55,6 @@ public class ImportResourceTest extends ImporterTestSupport {
         imprt = imports.getJSONObject(2);
         assertEquals(2, imprt.getInt("id"));
         assertTrue(imprt.getString("href").endsWith("/imports/2"));
-
-        imprt = imports.getJSONObject(3);
-        assertEquals(3, imprt.getInt("id"));
-        assertTrue(imprt.getString("href").endsWith("/imports/3"));
     }
 
     public void testGetImport() throws Exception {
@@ -155,31 +147,6 @@ public class ImportResourceTest extends ImporterTestSupport {
         assertEquals("NO_CRS", item.getString("state"));
     }
 
-    public void testGetImport4() throws Exception {
-        JSONObject json = (JSONObject) getAsJSON("/rest/imports/3");
-        assertNotNull(json.get("import"));
-
-        JSONObject imprt = json.optJSONObject("import");
-        assertEquals(3, imprt.getInt("id"));
-
-        JSONArray tasks = imprt.getJSONArray("tasks");
-        assertEquals(1, tasks.size());
-
-        JSONObject task = tasks.getJSONObject(0);
-        assertEquals("READY", task.get("state"));
-
-        JSONObject source = task.getJSONObject("source");
-        assertEquals("file", source.getString("type"));
-        assertEquals("CSV", source.getString("format"));
-        assertEquals("locations.csv", source.getString("file"));
-
-        JSONArray items = task.getJSONArray("items");
-        assertEquals(1, items.size());
-
-        JSONObject item = items.getJSONObject(0);
-        assertEquals("READY", item.getString("state"));
-    }
-
     public void testGetImportDatabase() throws Exception {
         File dir = unpack("h2/cookbook.zip");
 
@@ -188,7 +155,7 @@ public class ImportResourceTest extends ImporterTestSupport {
         params.put(H2DataStoreFactory.DATABASE.key, new File(dir, "cookbook").getAbsolutePath());
         importer.createContext(new Database(params));
 
-        JSONObject json = (JSONObject) getAsJSON("/rest/imports/4");
+        JSONObject json = (JSONObject) getAsJSON("/rest/imports/3");
         assertNotNull(json.get("import"));
 
         JSONObject source = json.getJSONObject("import").getJSONArray("tasks").getJSONObject(0)
@@ -249,22 +216,5 @@ public class ImportResourceTest extends ImporterTestSupport {
         assertEquals("sf", ctx.getTargetWorkspace().getName());
         assertNotNull(ctx.getTargetStore());
         assertEquals("skunkworks", ctx.getTargetStore().getName());
-    }
-
-    private MockHttpServletResponse postAsServletResponseNoContentType(String path, String body) throws Exception {
-        MockHttpServletRequest request = createRequest(path);
-        request.setMethod("POST");
-        request.setBodyContent(body);
-        return dispatch(request);
-    }
-
-    public void testPostNoMediaType() throws Exception {
-        MockHttpServletResponse resp = postAsServletResponseNoContentType("/rest/imports", "");
-        assertEquals(201, resp.getStatusCode());
-    }
-
-    public void testImportSessionIdNotInt() throws Exception {
-        MockHttpServletResponse resp = postAsServletResponse("/rest/imports/foo", "");
-        assertEquals(404, resp.getStatusCode());
     }
 }

@@ -3,10 +3,16 @@ package org.opengeo.data.importer;
 import java.io.File;
 
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.apache.commons.io.FilenameUtils;
 import org.geoserver.ows.util.ResponseUtils;
+import org.geotools.util.logging.Logging;
 
 public class FileData extends ImportData {
+
+    static Logger LOGGER = Logging.getLogger(FileData.class);
 
     /** serialVersionUID */
     private static final long serialVersionUID = 1L;
@@ -41,6 +47,10 @@ public class FileData extends ImportData {
     @Override
     public void cleanup() throws IOException {
         if (file.exists()) {
+            if (LOGGER.isLoggable(Level.FINE)){
+                LOGGER.fine("Deleting file "  + file.getAbsolutePath());
+            }
+
             if (!file.delete()) {
                 throw new IOException("Unable to delete " + file.getAbsolutePath());
             }

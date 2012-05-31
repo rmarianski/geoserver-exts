@@ -4,6 +4,14 @@
  */
 package org.opengeo.data.importer.web;
 
+import static org.geotools.data.postgis.PostgisNGDataStoreFactory.PREPARED_STATEMENTS;
+import static org.geotools.jdbc.JDBCDataStoreFactory.FETCHSIZE;
+import static org.geotools.jdbc.JDBCDataStoreFactory.MAXCONN;
+import static org.geotools.jdbc.JDBCDataStoreFactory.MAXWAIT;
+import static org.geotools.jdbc.JDBCDataStoreFactory.MINCONN;
+import static org.geotools.jdbc.JDBCDataStoreFactory.VALIDATECONN;
+import static org.geotools.jdbc.JDBCJNDIDataStoreFactory.JNDI_REFNAME;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,6 +30,7 @@ import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
 import org.geoserver.web.wicket.ParamResourceModel;
 import org.geotools.data.DataStoreFactorySpi;
+import org.geotools.jdbc.JDBCDataStoreFactory;
 import org.opengeo.data.importer.Database;
 import org.opengeo.data.importer.ImportData;
 
@@ -266,4 +275,18 @@ public abstract class AbstractDbPanel extends ImportSourcePanel {
      * @param params Empty parameter map.
      */
     protected abstract DataStoreFactorySpi fillStoreParams(Map<String, Serializable> params);
+
+    protected void fillInConnPoolParams(Map<String,Serializable> params, BasicDbParamPanel basicParamPanel) {
+        params.put(MINCONN.key, basicParamPanel.connPoolPanel.minConnection);
+        params.put(MAXCONN.key, basicParamPanel.connPoolPanel.maxConnection);
+        params.put(FETCHSIZE.key, basicParamPanel.connPoolPanel.fetchSize);
+        params.put(MAXWAIT.key, basicParamPanel.connPoolPanel.timeout);
+        params.put(VALIDATECONN.key, basicParamPanel.connPoolPanel.validate);
+        params.put(PREPARED_STATEMENTS.key, basicParamPanel.connPoolPanel.preparedStatements);
+    }
+
+    protected void fillInJndiParams(Map<String,Serializable> params, JNDIDbParamPanel jndiParamPanel) {
+        params.put(JNDI_REFNAME.key, jndiParamPanel.jndiReferenceName);
+        params.put(JDBCDataStoreFactory.SCHEMA.key, jndiParamPanel.schema);
+    }
 }

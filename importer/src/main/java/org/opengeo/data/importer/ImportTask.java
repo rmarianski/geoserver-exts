@@ -5,8 +5,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.StoreInfo;
-import org.geoserver.ows.util.OwsUtils;
+
+import static org.opengeo.data.importer.ImporterUtils.*;
 
 /**
  * A unit of work during an import.
@@ -176,13 +178,12 @@ public class ImportTask implements Serializable {
         state = newState;
     }
 
-    public void reattach() {
-        if (getStore() != null) {
-            OwsUtils.resolveCollections(getStore());
-        }
+    public void reattach(Catalog catalog) {
+        store = resolve(store, catalog);
+
         for (ImportItem item : items) {
             item.setTask(this);
-            item.reattach();
+            item.reattach(catalog);
         }
     }
 
