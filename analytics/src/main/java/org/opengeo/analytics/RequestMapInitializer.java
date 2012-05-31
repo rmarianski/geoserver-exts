@@ -276,6 +276,7 @@ public class RequestMapInitializer implements GeoServerInitializer {
         l.setType(LayerInfo.Type.VECTOR);
         l.setEnabled(true);
         l.setDefaultStyle(cat.getStyleByName(style));
+        l.setAdvertised(false); 
         
         cat.add(l);
     }
