@@ -30,6 +30,7 @@ import org.geoserver.catalog.ResourceInfo;
 import org.geoserver.catalog.StoreInfo;
 import org.geoserver.catalog.StyleInfo;
 import org.geoserver.catalog.WorkspaceInfo;
+import org.geoserver.catalog.impl.StoreInfoImpl;
 import org.geoserver.config.util.XStreamPersister;
 import org.geoserver.config.util.XStreamPersister.CRSConverter;
 import org.geoserver.config.util.XStreamPersisterFactory;
@@ -87,6 +88,7 @@ public class Importer implements InitializingBean, DisposableBean {
     public Importer(Catalog catalog) {
         this.catalog = catalog;
         this.contextStore = new BDBImportStore(this);
+        //this.contextStore = new MemoryImportStore();
         this.styleGen = new StyleGenerator(catalog);
     }
 
@@ -107,8 +109,45 @@ public class Importer implements InitializingBean, DisposableBean {
     }
 
     public ImportContext getContext(long id) {
-        return contextStore.get(id);
+        ImportContext context = contextStore.get(id);
+        return context != null ? reattach(context) : null;
     }
+
+    public ImportContext reattach(ImportContext context) {
+        //reload store and workspace objects from catalog so they are "attached" with 
+        // the proper references to the catalog initialized
+        context.reattach(catalog);
+        for (ImportTask task : context.getTasks()) {
+            StoreInfo store = task.getStore();
+            if (store != null && store.getId() != null) {
+                task.setStore(catalog.getStore(store.getId(), StoreInfo.class));
+                //((StoreInfoImpl) task.getStore()).setCatalog(catalog); // @todo remove if the above sets catalog
+            }
+            for (ImportItem item : task.getItems()) {
+                if (item.getLayer() != null) {
+                    LayerInfo l = item.getLayer();
+                    if (l.getDefaultStyle() != null && l.getDefaultStyle().getId() != null) {
+                        l.setDefaultStyle(catalog.getStyle(l.getDefaultStyle().getId()));
+                    }
+                    if (l.getResource() != null) {
+                        ResourceInfo r = l.getResource();
+                        r.setCatalog(catalog);
+
+                        if (r.getStore() == null) {
+                            r.setStore(store);
+                        }
+
+                        if (r.getStore().getCatalog() == null) {
+                            //((StoreInfoImpl) r.getStore()).setCatalog(catalog);
+                        }
+
+                    }
+                }
+            }
+        }
+        return context;
+    }
+
 
     public Iterator<ImportContext> getContexts() {
         return contextStore.allNonCompleteImports();

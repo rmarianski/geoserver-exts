@@ -5,20 +5,23 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
+import org.apache.commons.collections.Predicate;
+import org.apache.commons.collections.iterators.FilterIterator;
+import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.LayerInfo;
-import org.opengeo.data.importer.DataStoreFormat;
+import org.geoserver.catalog.ResourceInfo;
+import org.geoserver.catalog.StoreInfo;
+import org.geotools.util.logging.Logging;
 import org.opengeo.data.importer.ImportContext;
 import org.opengeo.data.importer.ImportItem;
 import org.opengeo.data.importer.ImportStore;
 import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.Importer;
-import org.opengeo.data.importer.SpatialFile;
-import org.opengeo.data.importer.Table;
-import org.opengeo.data.importer.transform.VectorTransformChain;
 
-import com.sleepycat.bind.EntityBinding;
 import com.sleepycat.bind.EntryBinding;
+import com.sleepycat.bind.serial.ClassCatalog;
 import com.sleepycat.bind.serial.SerialBinding;
 import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.bind.tuple.LongBinding;
@@ -35,18 +38,7 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.sleepycat.je.Sequence;
 import com.sleepycat.je.SequenceConfig;
-import java.util.logging.Logger;
 import com.sleepycat.je.Transaction;
-import com.thoughtworks.xstream.XStream;
-import org.apache.commons.collections.Predicate;
-import org.apache.commons.collections.iterators.FilterIterator;
-import org.geoserver.catalog.Catalog;
-import org.geoserver.catalog.ResourceInfo;
-import org.geoserver.catalog.StoreInfo;
-import org.geoserver.catalog.impl.StoreInfoImpl;
-import org.geotools.util.logging.Logging;
-import org.geoserver.config.util.XStreamPersister;
-import org.geoserver.config.util.XStreamPersisterFactory;
 
 /**
  * Import store implementation based on Berkley DB Java Edition.
@@ -59,10 +51,10 @@ public class BDBImportStore implements ImportStore {
 
     Importer importer;
 
-    Database db;
-    Database seqDb;
-
+    Database db, classDb, seqDb;
+    ClassCatalog classCatalog;
     Sequence importIdSeq;
+
     EntryBinding<ImportContext> importBinding;
 
     public BDBImportStore(Importer importer) {
@@ -89,41 +81,49 @@ public class BDBImportStore implements ImportStore {
         dbConfig.setAllowCreate(true);
         dbConfig.setTransactional(true);
 
+        initDb(dbConfig, env);
+    }
+
+    
+    void initDb(DatabaseConfig dbConfig, Environment env) {
         db = env.openDatabase(null, "imports", dbConfig);
-         
+
+        //class database
+        classDb = env.openDatabase(null, "classes", dbConfig);
+
+        //sequence for identifiers
         SequenceConfig seqConfig = new SequenceConfig();
         seqConfig.setAllowCreate(true);
         seqDb = env.openDatabase(null, "seq", dbConfig);
-        importIdSeq = 
-            seqDb.openSequence(null, new DatabaseEntry("import_id".getBytes()), seqConfig);
+        importIdSeq = seqDb.openSequence(null, new DatabaseEntry("import_id".getBytes()), seqConfig);
 
-        importBinding = new SerialVersionSafeSerialBinding<ImportContext>();
-        checkAndFixDbIncompatability(db, dbConfig, env);
+        classCatalog = new StoredClassCatalog(classDb);
+        importBinding = new SerialBinding<ImportContext>(classCatalog, ImportContext.class);
+        //importBinding = new SerialVersionSafeSerialBinding<ImportContext>();
         //importBinding = new XStreamInfoSerialBinding<ImportContext>(
         //    importer.createXStreamPersister(), ImportContext.class);
+
+        checkAndFixDbIncompatability(dbConfig, env);
     }
 
-
-    void checkAndFixDbIncompatability(Database db, DatabaseConfig dbConfig, Environment env) {
+    void checkAndFixDbIncompatability(DatabaseConfig dbConfig, Environment env) {
         // check for potential class incompatibilities and attempt recovery
         try {
             iterator().next();
         } catch (RuntimeException re) {
-            if (re.getCause() instanceof java.io.InvalidClassException) {
-                LOGGER.warning("Attempting database recovery related to class changes: " 
-                        + re.getCause().getMessage());
+            if (re.getCause() instanceof java.io.ObjectStreamException) {
+                LOGGER.warning("Unable to read import database, attempting recovery");
                 // wipe out the catalog
-                //classCatalog.close();
-                //classDb.close();
+                classCatalog.close();
+                classDb.close();
                 env.removeDatabase(null, "classes");
+                
                 // and the import db
                 db.close();
                 env.removeDatabase(null, "imports");
+
                 // reopen
-                db = env.openDatabase(null, "imports", dbConfig);
-                //classDb = env.openDatabase(null, "classes", dbConfig);
-                //classCatalog = new StoredClassCatalog(classDb);
-                //importBinding = new SerialBinding<ImportContext>(classCatalog, ImportContext.class);
+                initDb(dbConfig, env);
             }
         }
 
@@ -136,44 +136,7 @@ public class BDBImportStore implements ImportStore {
             return null;
         }
 
-        ImportContext context = importBinding.entryToObject(val);
-        return reattach(context);
-    }
-
-    ImportContext reattach(ImportContext context) {
-        //reload store and workspace objects from catalog so they are "attached" with 
-        // the proper references to the catalog initialized
-        Catalog catalog = importer.getCatalog();
-        context.reattach(catalog);
-        for (ImportTask task : context.getTasks()) {
-            StoreInfo store = task.getStore();
-            if (store != null && store.getId() != null) {
-                task.setStore(catalog.getStore(store.getId(), StoreInfo.class));
-                //((StoreInfoImpl) task.getStore()).setCatalog(catalog); // @todo remove if the above sets catalog
-            }
-            for (ImportItem item : task.getItems()) {
-                if (item.getLayer() != null) {
-                    LayerInfo l = item.getLayer();
-                    if (l.getDefaultStyle() != null && l.getDefaultStyle().getId() != null) {
-                        l.setDefaultStyle(catalog.getStyle(l.getDefaultStyle().getId()));
-                    }
-                    if (l.getResource() != null) {
-                        ResourceInfo r = l.getResource();
-                        r.setCatalog(catalog);
-
-                        if (r.getStore() == null) {
-                            r.setStore(store);
-                        }
-
-                        if (r.getStore().getCatalog() == null) {
-                            //((StoreInfoImpl) r.getStore()).setCatalog(catalog);
-                        }
-
-                    }
-                }
-            }
-        }
-        return context;
+        return importBinding.entryToObject(val);
     }
 
     ImportContext dettach(ImportContext context) {
@@ -305,8 +268,12 @@ public class BDBImportStore implements ImportStore {
     public void destroy() {
         //destroy the db environment
         Environment env = db.getEnvironment();
+        
         seqDb.close();
+        classCatalog.close();
+        classDb.close();
         db.close();
+
         env.close();
     }
 }

@@ -72,7 +72,7 @@ public class BDBImportStoreTest extends ImporterTestSupport {
 //        store.query(cv);
 //        assertEquals(0, cv.getCount());
 
-//        store.add(context);
+        //store.add(context);
         assertNotNull(context.getId());
         assertNotNull(context.getTasks().get(0).getItems().get(0).getLayer());
 
@@ -87,6 +87,8 @@ public class BDBImportStoreTest extends ImporterTestSupport {
         store.query(sv);
         assertTrue(sv.isFound());
         
+        importer.reattach(context2);
+
         // ensure various transient bits are set correctly on deserialization
         assertEquals(1,context2.getTasks().size());
         for (int i = 0; i < context2.getTasks().size(); i++) {
