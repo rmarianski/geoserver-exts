@@ -63,8 +63,24 @@
   </pluginRepositories>
 
   <build>
+    <resources>
+      <resource>
+        <directory>${basedir}/src/main/resources</directory>
+        <includes>
+          <include>**/*</include>
+        </includes>
+      </resource>
+      <resource>
+        <directory>${basedir}/src/main/java</directory>
+        <includes>
+          <include>**/*.xml</include>
+          <include>**/*.html</include>
+          <include>**/*.css</include>
+        </includes>
+      </resource>
+    </resources>
+
     <plugins>
-      
       <!-- compilation -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -128,6 +144,16 @@
       </plugin>
 
     </plugins>
+
+    <testResources>
+      <testResource>
+        <directory>${basedir}/src/main/resources</directory>
+        <includes>
+          <include>**/*</include>
+        </includes>
+      </testResource>
+    </testResources>
+
   </build>
 
   <dependencyManagement>
