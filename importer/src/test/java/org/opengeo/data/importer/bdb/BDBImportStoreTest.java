@@ -117,6 +117,10 @@ public class BDBImportStoreTest extends ImporterTestSupport {
         assertEquals(ImportContext.State.COMPLETE, context2.getState());
     }
 
+    public void testDatabaseRecovery() throws Exception {
+        
+    }
+
     class SearchingVisitor implements ImportVisitor {
         long id;
         boolean found = false;
@@ -131,16 +135,6 @@ public class BDBImportStoreTest extends ImporterTestSupport {
         }
         public boolean isFound() {
             return found;
-        }
-    }
-
-    class CountingVisitor implements ImportVisitor {
-        int count = 0;
-        public void visit(ImportContext context) {
-            count++;
-        }
-        public int getCount() {
-            return count;
         }
     }
 

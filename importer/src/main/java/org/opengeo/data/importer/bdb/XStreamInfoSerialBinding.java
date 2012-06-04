@@ -27,7 +27,7 @@ public class XStreamInfoSerialBinding<T> extends SerialBase implements EntryBind
     private boolean compress = true;
 
     private static final boolean DEBUG = "true".equals(System
-            .getProperty("org.geoserver.jeconfig.debug"));
+            .getProperty("org.opengeo.importer.xstream.debug"));
 
     private final Class<T> target;
 

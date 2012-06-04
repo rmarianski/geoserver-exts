@@ -10,12 +10,9 @@ import java.util.logging.Logger;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.collections.iterators.FilterIterator;
 import org.geoserver.catalog.Catalog;
-import org.geoserver.catalog.LayerInfo;
-import org.geoserver.catalog.ResourceInfo;
 import org.geoserver.catalog.StoreInfo;
 import org.geotools.util.logging.Logging;
 import org.opengeo.data.importer.ImportContext;
-import org.opengeo.data.importer.ImportItem;
 import org.opengeo.data.importer.ImportStore;
 import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.Importer;
@@ -49,19 +46,47 @@ public class BDBImportStore implements ImportStore {
     
     static Logger LOGGER = Logging.getLogger(Importer.class);
 
+    public static enum BindingType {
+        SERIAL {
+            @Override
+            ImportBinding createBinding() {
+                return new SerialImportBinding();
+            }
+        }, 
+        XSTREAM {
+            @Override
+            ImportBinding createBinding() {
+                return new XStreamBinding();
+            }
+        };
+
+        abstract ImportBinding createBinding(); 
+    }
+
     Importer importer;
 
-    Database db, classDb, seqDb;
-    ClassCatalog classCatalog;
+    Database db, seqDb;
     Sequence importIdSeq;
 
+    BindingType bindingType = BindingType.SERIAL;
+    ImportBinding dbBinding;
     EntryBinding<ImportContext> importBinding;
 
     public BDBImportStore(Importer importer) {
         this.importer = importer;
     }
 
+    public void setBinding(BindingType bindingType) {
+        this.bindingType = bindingType;
+    }
+
+    public BindingType getBinding() {
+        return bindingType;
+    }
+
     public void init() {
+        dbBinding = bindingType.createBinding();
+
         //create the db environment
         EnvironmentConfig envCfg = new EnvironmentConfig();
         envCfg.setAllowCreate(true);
@@ -86,10 +111,8 @@ public class BDBImportStore implements ImportStore {
 
     
     void initDb(DatabaseConfig dbConfig, Environment env) {
+        //main database
         db = env.openDatabase(null, "imports", dbConfig);
-
-        //class database
-        classDb = env.openDatabase(null, "classes", dbConfig);
 
         //sequence for identifiers
         SequenceConfig seqConfig = new SequenceConfig();
@@ -97,8 +120,9 @@ public class BDBImportStore implements ImportStore {
         seqDb = env.openDatabase(null, "seq", dbConfig);
         importIdSeq = seqDb.openSequence(null, new DatabaseEntry("import_id".getBytes()), seqConfig);
 
-        classCatalog = new StoredClassCatalog(classDb);
-        importBinding = new SerialBinding<ImportContext>(classCatalog, ImportContext.class);
+        dbBinding.initDb(dbConfig, env);
+        importBinding = dbBinding.createImportBinding(importer);
+
         //importBinding = new SerialVersionSafeSerialBinding<ImportContext>();
         //importBinding = new XStreamInfoSerialBinding<ImportContext>(
         //    importer.createXStreamPersister(), ImportContext.class);
@@ -109,14 +133,15 @@ public class BDBImportStore implements ImportStore {
     void checkAndFixDbIncompatability(DatabaseConfig dbConfig, Environment env) {
         // check for potential class incompatibilities and attempt recovery
         try {
-            iterator().next();
+            ImportContext context = iterator().next();
+            System.out.println(context);
         } catch (RuntimeException re) {
             if (re.getCause() instanceof java.io.ObjectStreamException) {
                 LOGGER.warning("Unable to read import database, attempting recovery");
+                
                 // wipe out the catalog
-                classCatalog.close();
-                classDb.close();
-                env.removeDatabase(null, "classes");
+                dbBinding.closeDb(env);
+                dbBinding.destroyDb(env);
                 
                 // and the import db
                 db.close();
@@ -268,12 +293,61 @@ public class BDBImportStore implements ImportStore {
     public void destroy() {
         //destroy the db environment
         Environment env = db.getEnvironment();
-        
+
+        dbBinding.closeDb(env);
         seqDb.close();
-        classCatalog.close();
-        classDb.close();
         db.close();
 
         env.close();
+    }
+
+    static abstract class ImportBinding {
+        void initDb(DatabaseConfig dbConfig, Environment env) {
+        }
+
+        void closeDb(Environment env) {
+        }
+
+        void destroyDb( Environment env) {
+        }
+
+        abstract protected EntryBinding<ImportContext> createImportBinding(Importer importer);
+    }
+
+    static class SerialImportBinding extends ImportBinding {
+        Database classDb;
+        ClassCatalog classCatalog;
+        
+        @Override
+        void initDb(DatabaseConfig dbConfig, Environment env) {
+            //class database
+            classDb = env.openDatabase(null, "classes", dbConfig);
+            classCatalog = new StoredClassCatalog(classDb);
+        }
+
+        @Override
+        void closeDb(Environment env) {
+            classCatalog.close();
+            classDb.close();
+        }
+
+        @Override
+        void destroyDb(Environment env) {
+            env.removeDatabase(null, "classes");
+        }
+
+        @Override
+        protected EntryBinding<ImportContext> createImportBinding(Importer importer) {
+            return new SerialBinding<ImportContext>(classCatalog, ImportContext.class);
+        }
+    }
+
+    static class XStreamBinding extends ImportBinding {
+        @Override
+        protected EntryBinding<ImportContext> createImportBinding(Importer importer) {
+            return new XStreamInfoSerialBinding<ImportContext>(
+                importer.createXStreamPersister(), ImportContext.class);
+        }
+    
     }
 }
