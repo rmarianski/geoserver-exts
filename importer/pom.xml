@@ -19,19 +19,23 @@
     <dependency>
       <groupId>org.geoserver</groupId>
       <artifactId>main</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.geoserver.web</groupId>
       <artifactId>web-demo</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.geoserver.web</groupId>
       <artifactId>web-core</artifactId>
+      <scope>provided</scope>
     </dependency>
     <!-- org.geoserver.rest.uploader dependencies -->
     <dependency>
       <groupId>org.geoserver</groupId>
       <artifactId>restconfig</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.restlet</groupId>
@@ -72,11 +76,13 @@
       <groupId>org.geotools</groupId>
       <artifactId>gt-shapefile</artifactId>
       <version>${gt.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.geotools.jdbc</groupId>
       <artifactId>gt-jdbc-h2</artifactId>
       <version>${gt.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <!-- This dependency has been added to allow the module to compile the Oracle panels without
@@ -113,6 +119,7 @@
         <groupId>org.opengeo.data.csv</groupId>
         <artifactId>csv</artifactId>
         <version>${project.version}</version>
+        <scope>test</scope>
     </dependency>
 
     <dependency>
@@ -152,6 +159,27 @@
   </dependencies>
 
   <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.3</version>
+        <configuration>
+          <descriptors>
+            <descriptor>assembly.xml</descriptor>
+          </descriptors>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+
     <testResources>
       <testResource>
         <directory>${basedir}/src/test/resources</directory>
