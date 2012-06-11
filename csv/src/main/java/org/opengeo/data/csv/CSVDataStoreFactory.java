@@ -26,7 +26,7 @@ public class CSVDataStoreFactory implements FileDataStoreFactorySpi {
     public static final Param URL_PARAM = new Param("url", URL.class, FILE_TYPE + " file", false);
 
     public static final Param NAMESPACEP = new Param("namespace", URI.class,
-            "uri to a the namespace", false, null, new KVP(Param.LEVEL, "advanced"));
+            "uri to the namespace", false, null, new KVP(Param.LEVEL, "advanced"));
 
     public static final Param[] parametersInfo = new Param[] { FILE_PARAM };
 
