@@ -4,19 +4,11 @@ geoserver-exts
 Building
 --------
 
-geoserver-exts currently depends on the suite 2.5 version of geoserver. Build that first:
+geoserver-exts currently depends on a recent version of geoserver master. You can build that first, or have the geoserver-exts build pull down the latest geoserver snapshot.
 
-    git clone git@github.com:opengeo/geoserver.git
-    cd geoserver
-    git checkout suite-2.5
-    cd src/web/app
-    ln -s ../../../data/minimal .
-    cd ../../..
-    mvn clean install -DskipTests
-
-Now the geoserver extensions can be built. Navigate to the root of the extensions and run:
-
-    mvn test
+    git clone git@github.com:opengeo/geoserver-exts.git
+    cd geoserver-exts
+    mvn package
 
 Adding a new extension
 ----------------------
