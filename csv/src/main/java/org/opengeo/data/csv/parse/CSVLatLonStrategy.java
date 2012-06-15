@@ -1,56 +1,43 @@
 package org.opengeo.data.csv.parse;
 
-import java.net.URI;
+import java.io.IOException;
 
-import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
-import org.opengis.feature.simple.SimpleFeature;
+import org.opengeo.data.csv.CSVFileState;
 import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.GeometryFactory;
+import com.csvreader.CsvReader;
 import com.vividsolutions.jts.geom.Point;
 
 public class CSVLatLonStrategy implements CSVStrategy {
 
     private static final String GEOMETRY_COLUMN = "location";
 
-    private String name;
-
-    private CoordinateReferenceSystem crs;
-
-    private int idx;
+    private SimpleFeatureType featureType;
 
     private String[] headers;
 
-    private SimpleFeatureType featureType;
+    private final CSVFileState csvFileState;
 
-    private GeometryFactory geometryFactory;
-
-    private final URI namespace;
-
-    public CSVLatLonStrategy(String name, CoordinateReferenceSystem crs, String[] headers) {
-        this(name, crs, headers, null);
-    }
-
-    public CSVLatLonStrategy(String name, CoordinateReferenceSystem crs, String[] headers,
-            URI namespace) {
-        this.name = name;
-        this.crs = crs;
-        this.headers = headers;
-        this.namespace = namespace;
-        this.idx = 1;
-        this.featureType = buildFeatureType();
-        geometryFactory = new GeometryFactory();
+    public CSVLatLonStrategy(CSVFileState csvFileState) {
+        this.csvFileState = csvFileState;
+        featureType = null;
     }
 
     private SimpleFeatureType buildFeatureType() {
         SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
-        builder.setName(this.name);
-        builder.setCRS(this.crs);
-        if (namespace != null) {
-            builder.setNamespaceURI(namespace);
+        builder.setName(csvFileState.getTypeName());
+        builder.setCRS(csvFileState.getCrs());
+
+        try {
+            CsvReader csvReader = csvFileState.openCSVReader();
+            headers = csvReader.getHeaders();
+            csvReader.close();
+        } catch (IOException e) {
+            throw new RuntimeException("Failure reading csv file", e);
+        }
+        if (csvFileState.getNamespace() != null) {
+            builder.setNamespaceURI(csvFileState.getNamespace());
         }
         builder.add(GEOMETRY_COLUMN, Point.class);
 
@@ -65,29 +52,19 @@ public class CSVLatLonStrategy implements CSVStrategy {
 
     @Override
     public SimpleFeatureType getFeatureType() {
+        if (featureType == null) {
+            synchronized (this) {
+                if (featureType == null) {
+                    featureType = buildFeatureType();
+                }
+            }
+        }
         return featureType;
     }
 
     @Override
-    public SimpleFeature buildFeature(String[] csvRecord) {
-        SimpleFeatureBuilder builder = new SimpleFeatureBuilder(featureType);
-        Double x = null, y = null;
-        for (int i = 0; i < headers.length; i++) {
-            String header = headers[i];
-            String value = csvRecord[i].trim();
-            if ("lat".equalsIgnoreCase(header)) {
-                y = Double.valueOf(value);
-            } else if ("lon".equalsIgnoreCase(header)) {
-                x = Double.valueOf(value);
-            } else {
-                builder.set(header, value);
-            }
-        }
-        if (x != null && y != null) {
-            Coordinate coordinate = new Coordinate(x, y);
-            Point point = geometryFactory.createPoint(coordinate);
-            builder.set(GEOMETRY_COLUMN, point);
-        }
-        return builder.buildFeature(name + this.idx++);
+    public CSVIterator iterator() throws IOException {
+        return new CSVIterator(csvFileState, getFeatureType());
     }
+
 }

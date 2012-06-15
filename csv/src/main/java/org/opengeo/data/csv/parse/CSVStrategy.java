@@ -1,10 +1,11 @@
 package org.opengeo.data.csv.parse;
 
-import org.opengis.feature.simple.SimpleFeature;
+import java.io.IOException;
+
 import org.opengis.feature.simple.SimpleFeatureType;
 
 public interface CSVStrategy {
     public SimpleFeatureType getFeatureType();
 
-    public SimpleFeature buildFeature(String[] csvRecord);
+    public CSVIterator iterator() throws IOException;
 }

@@ -25,19 +25,15 @@ import org.opengis.feature.type.Name;
 import org.opengis.filter.Filter;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
-import com.csvreader.CsvReader;
-
 public class CSVDataStore extends ContentDataStore implements FileDataStore {
 
     private static final CoordinateReferenceSystem crs;
 
-    private final CsvReader csvReader;
-
     private final CSVStrategy csvStrategy;
 
-    private final String typeName;
-
     private final File file;
+
+    private CSVFileState csvFileState;
 
     static {
         try {
@@ -47,38 +43,28 @@ public class CSVDataStore extends ContentDataStore implements FileDataStore {
         }
     }
 
-    private static String typeNameFromFile(File file) {
-        String path = file.getPath();
-        String baseName = FilenameUtils.getBaseName(path);
-        return baseName;
-    }
-
     public CSVDataStore(File file) throws IOException {
         this(file, null);
     }
 
     public CSVDataStore(File file, URI namespace) throws IOException {
-        this(file, namespace, typeNameFromFile(file));
+        this(file, namespace, null);
     }
 
-    public CSVDataStore(File file, URI namespace, String typeName) throws IOException {
-        this(file, namespace, typeName, new CSVLatLonStrategyFactory(typeName, crs, namespace));
-    }
-
-    public CSVDataStore(File file, URI namespace, String typeName,
-            CSVStrategyFactory csvStrategyFactory) throws IOException {
+    public CSVDataStore(File file, URI namespace, CSVStrategyFactory csvStrategyFactory)
+            throws IOException {
         this.file = file;
-        this.typeName = typeName;
 
-        csvReader = createCsvReader();
-        String[] headers = csvReader.getHeaders();
-        csvReader.close();
-
-        this.csvStrategy = csvStrategyFactory.createCSVStrategy(headers);
+        if (csvStrategyFactory == null) {
+            String typeName = getTypeName().getLocalPart();
+            this.csvFileState = new CSVFileState(file, typeName, crs, namespace);
+            csvStrategyFactory = new CSVLatLonStrategyFactory(csvFileState);
+        }
+        this.csvStrategy = csvStrategyFactory.createCSVStrategy();
     }
 
     public Name getTypeName() {
-        return new NameImpl(typeName);
+        return new NameImpl(FilenameUtils.getBaseName(file.getPath()));
     }
 
     @Override
@@ -127,15 +113,6 @@ public class CSVDataStore extends ContentDataStore implements FileDataStore {
     public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriterAppend(
             Transaction transaction) throws IOException {
         throw new UnsupportedOperationException();
-    }
-
-    CsvReader createCsvReader() throws IOException {
-        CsvReader reader = new CsvReader(file.getPath());
-        // to advance reader to data
-        if (!reader.readHeaders()) {
-            throw new IOException("Failure reading csv header for: " + file.getPath());
-        }
-        return reader;
     }
 
     public CSVStrategy getCSVStrategy() {
