@@ -32,7 +32,7 @@ public class CSVLatLonStrategy implements CSVStrategy {
         builder.setCRS(csvFileState.getCrs());
 
         CsvReader csvReader = null;
-        Map<String, Class> typesFromData = null;
+        Map<String, Class<?>> typesFromData = null;
 
         try {
             csvReader = csvFileState.openCSVReader();
@@ -59,7 +59,7 @@ public class CSVLatLonStrategy implements CSVStrategy {
         String latSpelling = null;
         String lonSpelling = null;
         for (String col : headers) {
-            Class type = typesFromData.get(col);
+            Class<?> type = typesFromData.get(col);
             if ("lat".equalsIgnoreCase(col)) {
                 seenLat = true;
                 latSpelling = col;
@@ -86,9 +86,9 @@ public class CSVLatLonStrategy implements CSVStrategy {
         return builder.buildFeatureType();
     }
 
-    private Map<String, Class> findMostSpecificTypesFromData(CsvReader csvReader, String[] headers)
-            throws IOException {
-        Map<String, Class> result = new HashMap<String, Class>();
+    private Map<String, Class<?>> findMostSpecificTypesFromData(CsvReader csvReader,
+            String[] headers) throws IOException {
+        Map<String, Class<?>> result = new HashMap<String, Class<?>>();
         // start off assuming Integers for everything
         for (String header : headers) {
             result.put(header, Integer.class);
@@ -103,7 +103,7 @@ public class CSVLatLonStrategy implements CSVStrategy {
             int i = 0;
             for (String value : values) {
                 String header = headers[i];
-                Class type = result.get(header);
+                Class<?> type = result.get(header);
                 if (type == Integer.class) {
                     try {
                         Integer.parseInt(value);
