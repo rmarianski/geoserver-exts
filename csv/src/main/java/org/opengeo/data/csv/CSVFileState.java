@@ -42,6 +42,10 @@ public class CSVFileState {
         this.file = null;
     }
 
+    public CSVFileState(String dataInput, String typeName, CoordinateReferenceSystem crs) {
+        this(dataInput, typeName, crs, null);
+    }
+
     public URI getNamespace() {
         return namespace;
     }

@@ -41,7 +41,7 @@ public class CSVLatLonStrategyTest {
     @Test
     public void testBuildFeatureType() {
         String input = buildInputString("lat,lon,quux,morx\n");
-        CSVFileState fileState = new CSVFileState(input, "foo", WGS84, null);
+        CSVFileState fileState = new CSVFileState(input, "foo", WGS84);
         CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
         SimpleFeatureType featureType = strategy.getFeatureType();
 
@@ -72,7 +72,7 @@ public class CSVLatLonStrategyTest {
     @Test
     public void testBuildFeature() throws IOException {
         String input = buildInputString("lat,lon,fleem,zoo", "3,4,car,cdr", "8,9,blub,frob");
-        CSVFileState fileState = new CSVFileState(input, "bar", WGS84, null);
+        CSVFileState fileState = new CSVFileState(input, "bar", WGS84);
         CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
 
         CSVIterator iterator = strategy.iterator();
@@ -108,7 +108,7 @@ public class CSVLatLonStrategyTest {
     public void testBuildFeatureDifferentTypes() throws IOException {
         String input = buildInputString("doubleval,intval,lat,stringval,lon",
                 "3.8,7,73.28,foo,-14.39", "9.12,-38,0,bar,29", "-37,0,49,baz,0");
-        CSVFileState fileState = new CSVFileState(input, "typename", WGS84, null);
+        CSVFileState fileState = new CSVFileState(input, "typename", WGS84);
         CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
         CSVIterator iterator = strategy.iterator();
 
@@ -154,7 +154,7 @@ public class CSVLatLonStrategyTest {
     @Test
     public void testNoGeometry() throws IOException {
         String input = buildInputString("a,b", "foo,bar");
-        CSVFileState fileState = new CSVFileState(input, "typename", WGS84, null);
+        CSVFileState fileState = new CSVFileState(input, "typename", WGS84);
         CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
         SimpleFeatureType featureType = strategy.getFeatureType();
 
@@ -173,7 +173,7 @@ public class CSVLatLonStrategyTest {
     @Test
     public void testOnlyLat() throws IOException {
         String input = buildInputString("lat,quux", "foo,morx");
-        CSVFileState fileState = new CSVFileState(input, "typename", WGS84, null);
+        CSVFileState fileState = new CSVFileState(input, "typename", WGS84);
         CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
         SimpleFeatureType featureType = strategy.getFeatureType();
         assertEquals("Invalid number of attributes", 2, featureType.getAttributeCount());
@@ -191,7 +191,7 @@ public class CSVLatLonStrategyTest {
     @Test
     public void testDataDoesNotContainAllFields() throws IOException {
         String input = buildInputString("lat,lon,foo,bar", "-72.3829,42.29,quux");
-        CSVFileState fileState = new CSVFileState(input, "typename", WGS84, null);
+        CSVFileState fileState = new CSVFileState(input, "typename", WGS84);
         CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
         SimpleFeatureType featureType = strategy.getFeatureType();
         assertEquals("Invalid attribute count", 3, featureType.getAttributeCount());
@@ -208,7 +208,7 @@ public class CSVLatLonStrategyTest {
     @Test
     public void testDataContainsMoreFields() throws IOException {
         String input = buildInputString("lat,lon,foo", "-72.3829,42.29,quux,morx");
-        CSVFileState fileState = new CSVFileState(input, "typename", WGS84, null);
+        CSVFileState fileState = new CSVFileState(input, "typename", WGS84);
         CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
         SimpleFeatureType featureType = strategy.getFeatureType();
         assertEquals("Invalid attribute count", 2, featureType.getAttributeCount());
