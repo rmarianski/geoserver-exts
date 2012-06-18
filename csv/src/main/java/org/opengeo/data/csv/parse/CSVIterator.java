@@ -54,6 +54,7 @@ public class CSVIterator implements Iterator<SimpleFeature> {
             } else if ("lon".equalsIgnoreCase(header)) {
                 x = Double.valueOf(value);
             } else {
+                // geotools converters take care of converting for us
                 builder.set(header, value);
             }
         }

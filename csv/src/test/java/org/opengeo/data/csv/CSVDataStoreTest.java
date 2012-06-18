@@ -81,7 +81,6 @@ public class CSVDataStoreTest {
 
         List<String> expectedNumbers = Arrays.asList("140, 125, 150, 200, 350, 560, 721, 550, 436"
                 .split(", "));
-        assertEquals("Unexecpted numbers", expectedNumbers, numbers);
+        assertEquals("Unexpected numbers", expectedNumbers, numbers);
     }
-
 }
