@@ -42,19 +42,27 @@ public class CSVIterator implements Iterator<SimpleFeature> {
         this.geometryDescriptor = featureType.getGeometryDescriptor();
     }
 
+    // TODO this logic is spread through the latlon strategy and this class now
+    // could consider consolidating it all into the strategy
+    // would need to deal with the idx state in that case,
+    // maybe just a builder instead of a feature is returned
     private SimpleFeature buildFeature(String[] csvRecord) {
         SimpleFeatureBuilder builder = new SimpleFeatureBuilder(featureType);
         Double x = null, y = null;
         for (int i = 0; i < headers.length; i++) {
             String header = headers[i];
-            String value = csvRecord[i].trim();
-            if ("lat".equalsIgnoreCase(header)) {
-                y = Double.valueOf(value);
-            } else if ("lon".equalsIgnoreCase(header)) {
-                x = Double.valueOf(value);
+            if (i < csvRecord.length) {
+                String value = csvRecord[i].trim();
+                if (geometryDescriptor != null && "lat".equalsIgnoreCase(header)) {
+                    y = Double.valueOf(value);
+                } else if (geometryDescriptor != null && "lon".equalsIgnoreCase(header)) {
+                    x = Double.valueOf(value);
+                } else {
+                    // geotools converters take care of converting for us
+                    builder.set(header, value);
+                }
             } else {
-                // geotools converters take care of converting for us
-                builder.set(header, value);
+                builder.set(header, null);
             }
         }
         if (x != null && y != null && geometryDescriptor != null) {
@@ -63,7 +71,6 @@ public class CSVIterator implements Iterator<SimpleFeature> {
             builder.set(geometryDescriptor.getLocalName(), point);
         }
         return builder.buildFeature(csvFileState.getTypeName() + "-" + idx++);
-
     }
 
     @Override

@@ -3,6 +3,7 @@ package org.opengeo.data.csv.parse;
 import static org.geotools.referencing.crs.DefaultGeographicCRS.WGS84;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -171,16 +172,51 @@ public class CSVLatLonStrategyTest {
 
     @Test
     public void testOnlyLat() throws IOException {
-        String input = buildInputString("lat,quux", "-72.3829,morx");
+        String input = buildInputString("lat,quux", "foo,morx");
         CSVFileState fileState = new CSVFileState(input, "typename", WGS84, null);
         CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
         SimpleFeatureType featureType = strategy.getFeatureType();
         assertEquals("Invalid number of attributes", 2, featureType.getAttributeCount());
         assertNull("Unexpected geometry", featureType.getGeometryDescriptor());
-        assertEquals("Invalid attribute type", "java.lang.Double",
+        assertEquals("Invalid attribute type", "java.lang.String",
                 getBindingName(featureType, "lat"));
         assertEquals("Invalid attribute type", "java.lang.String",
                 getBindingName(featureType, "quux"));
+        CSVIterator iterator = strategy.iterator();
+        SimpleFeature feature = iterator.next();
+        assertEquals("Invalid lat value", "foo", feature.getAttribute("lat"));
+        assertEquals("Invalid lat value", "morx", feature.getAttribute("quux"));
+    }
+
+    @Test
+    public void testDataDoesNotContainAllFields() throws IOException {
+        String input = buildInputString("lat,lon,foo,bar", "-72.3829,42.29,quux");
+        CSVFileState fileState = new CSVFileState(input, "typename", WGS84, null);
+        CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
+        SimpleFeatureType featureType = strategy.getFeatureType();
+        assertEquals("Invalid attribute count", 3, featureType.getAttributeCount());
+        CSVIterator iterator = strategy.iterator();
+        SimpleFeature feature = iterator.next();
+        Point point = (Point) feature.getAttribute("location");
+        Coordinate coordinate = point.getCoordinate();
+        assertEquals("Invalid x coordinate", 42.29, coordinate.x, 0.1);
+        assertEquals("Invalid y coordinate", -72.3829, coordinate.y, 0.1);
+        assertEquals("Invalid attribute value", "quux", feature.getAttribute("foo"));
+        assertNull("Expected null", feature.getAttribute("bar"));
+    }
+
+    @Test
+    public void testDataContainsMoreFields() throws IOException {
+        String input = buildInputString("lat,lon,foo", "-72.3829,42.29,quux,morx");
+        CSVFileState fileState = new CSVFileState(input, "typename", WGS84, null);
+        CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
+        SimpleFeatureType featureType = strategy.getFeatureType();
+        assertEquals("Invalid attribute count", 2, featureType.getAttributeCount());
+        CSVIterator iterator = strategy.iterator();
+        SimpleFeature feature = iterator.next();
+        assertEquals("Invalid attribute count", 2, feature.getAttributeCount());
+        assertNotNull("No location", feature.getAttribute("location"));
+        assertEquals("Invalid attribute value", "quux", feature.getAttribute("foo"));
     }
 
     private String getBindingName(SimpleFeatureType featureType, String col) {
