@@ -3,6 +3,7 @@ package org.opengeo.data.csv.parse;
 import static org.geotools.referencing.crs.DefaultGeographicCRS.WGS84;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -147,6 +148,39 @@ public class CSVLatLonStrategyTest {
             }
             i++;
         }
+    }
+
+    @Test
+    public void testNoGeometry() throws IOException {
+        String input = buildInputString("a,b", "foo,bar");
+        CSVFileState fileState = new CSVFileState(input, "typename", WGS84, null);
+        CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
+        SimpleFeatureType featureType = strategy.getFeatureType();
+
+        assertEquals("Invalid number of attributes", 2, featureType.getAttributeCount());
+        assertNull("Expected no geometry in feature type", featureType.getGeometryDescriptor());
+        assertEquals("Invalid attribute type", "java.lang.String", getBindingName(featureType, "a"));
+        assertEquals("Invalid attribute type", "java.lang.String", getBindingName(featureType, "b"));
+
+        CSVIterator iterator = strategy.iterator();
+        SimpleFeature feature = iterator.next();
+        assertEquals("Invalid feature attribute count", 2, feature.getAttributeCount());
+        assertEquals("Invalid attribute", "foo", feature.getAttribute("a"));
+        assertEquals("Invalid attribute", "bar", feature.getAttribute("b"));
+    }
+
+    @Test
+    public void testOnlyLat() throws IOException {
+        String input = buildInputString("lat,quux", "-72.3829,morx");
+        CSVFileState fileState = new CSVFileState(input, "typename", WGS84, null);
+        CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
+        SimpleFeatureType featureType = strategy.getFeatureType();
+        assertEquals("Invalid number of attributes", 2, featureType.getAttributeCount());
+        assertNull("Unexpected geometry", featureType.getGeometryDescriptor());
+        assertEquals("Invalid attribute type", "java.lang.Double",
+                getBindingName(featureType, "lat"));
+        assertEquals("Invalid attribute type", "java.lang.String",
+                getBindingName(featureType, "quux"));
     }
 
     private String getBindingName(SimpleFeatureType featureType, String col) {

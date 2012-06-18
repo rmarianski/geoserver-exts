@@ -31,7 +31,7 @@ public class CSVIterator implements Iterator<SimpleFeature> {
 
     private CSVFileState csvFileState;
 
-    private String geometryName;
+    private GeometryDescriptor geometryDescriptor;
 
     public CSVIterator(CSVFileState csvFileState, SimpleFeatureType featureType) throws IOException {
         this.featureType = featureType;
@@ -39,8 +39,7 @@ public class CSVIterator implements Iterator<SimpleFeature> {
         csvReader = csvFileState.openCSVReader();
         this.headers = csvReader.getHeaders();
         this.geometryFactory = new GeometryFactory();
-        GeometryDescriptor geometryDescriptor = featureType.getGeometryDescriptor();
-        this.geometryName = geometryDescriptor.getLocalName();
+        this.geometryDescriptor = featureType.getGeometryDescriptor();
     }
 
     private SimpleFeature buildFeature(String[] csvRecord) {
@@ -58,10 +57,10 @@ public class CSVIterator implements Iterator<SimpleFeature> {
                 builder.set(header, value);
             }
         }
-        if (x != null && y != null) {
+        if (x != null && y != null && geometryDescriptor != null) {
             Coordinate coordinate = new Coordinate(x, y);
             Point point = geometryFactory.createPoint(coordinate);
-            builder.set(geometryName, point);
+            builder.set(geometryDescriptor.getLocalName(), point);
         }
         return builder.buildFeature(csvFileState.getTypeName() + "-" + idx++);
 
