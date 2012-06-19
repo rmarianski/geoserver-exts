@@ -78,10 +78,13 @@ public class CSVLatLonStrategy implements CSVStrategy {
         }
         if (validLat && validLon) {
             builder.add(GEOMETRY_COLUMN, Point.class);
-        } else if (seenLat) {
-            builder.add(latSpelling, typesFromData.get("lat"));
-        } else if (seenLon) {
-            builder.add(lonSpelling, typesFromData.get("lon"));
+        } else {
+            if (seenLat) {
+                builder.add(latSpelling, typesFromData.get("lat"));
+            }
+            if (seenLon) {
+                builder.add(lonSpelling, typesFromData.get("lon"));
+            }
         }
         return builder.buildFeatureType();
     }

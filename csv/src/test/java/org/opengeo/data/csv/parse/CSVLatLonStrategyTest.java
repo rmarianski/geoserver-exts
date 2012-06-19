@@ -219,6 +219,36 @@ public class CSVLatLonStrategyTest {
         assertEquals("Invalid attribute value", "quux", feature.getAttribute("foo"));
     }
 
+    @Test
+    public void testDataDifferentTypes() throws IOException {
+        String input = buildInputString("lat,lon,foo", "-72.3829,42.29,38", "12,-13.21,9",
+                "foo,2.5,7.8");
+        CSVFileState fileState = new CSVFileState(input, "typename", WGS84);
+        CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
+        SimpleFeatureType featureType = strategy.getFeatureType();
+        assertEquals("Invalid attribute count", 3, featureType.getAttributeCount());
+        assertEquals("Invalid attribute type", "java.lang.String",
+                getBindingName(featureType, "lat"));
+        assertEquals("Invalid attribute type", "java.lang.Double",
+                getBindingName(featureType, "lon"));
+        assertEquals("Invalid attribute type", "java.lang.Double",
+                getBindingName(featureType, "foo"));
+        assertNull("Unexpected geometry", featureType.getGeometryDescriptor());
+        CSVIterator iterator = strategy.iterator();
+        String[] expLats = new String[] { "-72.3829", "12", "foo" };
+        Double[] expLons = new Double[] { 42.29, -13.21, 2.5 };
+        Double[] expFoos = new Double[] { 38.0, 9.0, 7.8 };
+        int i = 0;
+        while (iterator.hasNext()) {
+            SimpleFeature feature = iterator.next();
+            assertEquals("Invalid attribute count", 3, feature.getAttributeCount());
+            assertEquals("Invalid lat value", expLats[i], feature.getAttribute("lat"));
+            assertEquals("Invalid lat value", expLons[i], (Double) feature.getAttribute("lon"), 0.1);
+            assertEquals("Invalid foo value", expFoos[i], (Double) feature.getAttribute("foo"), 0.1);
+            i++;
+        }
+    }
+
     private String getBindingName(SimpleFeatureType featureType, String col) {
         AttributeDescriptor descriptor = featureType.getDescriptor(col);
         AttributeType attributeType = descriptor.getType();
