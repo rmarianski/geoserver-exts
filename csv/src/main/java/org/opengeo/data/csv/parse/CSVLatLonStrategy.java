@@ -1,7 +1,9 @@
 package org.opengeo.data.csv.parse;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
@@ -97,11 +99,10 @@ public class CSVLatLonStrategy implements CSVStrategy {
             result.put(header, Integer.class);
         }
         while (csvReader.readRecord()) {
-            String[] values = csvReader.getValues();
-            // TODO should we skip these rows? or just pad with nulls/empty strings and make those strings?
-            // can make nillable as appropriate
-            if (values.length != headers.length) {
-                continue;
+            String[] record = csvReader.getValues();
+            List<String> values = Arrays.asList(record);
+            if (record.length >= headers.length) {
+                values = values.subList(0, headers.length);
             }
             int i = 0;
             for (String value : values) {

@@ -249,6 +249,18 @@ public class CSVLatLonStrategyTest {
         }
     }
 
+    @Test
+    public void testDataFewerRowsDifferentType() throws IOException {
+        String input = buildInputString("a,b", "foo");
+        CSVFileState fileState = new CSVFileState(input, "typename", WGS84);
+        CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
+        SimpleFeatureType featureType = strategy.getFeatureType();
+        assertEquals("Invalid attribute count", 2, featureType.getAttributeCount());
+        assertEquals("Invalid attribute type", "java.lang.String", getBindingName(featureType, "a"));
+        assertEquals("Invalid attribute type", "java.lang.Integer",
+                getBindingName(featureType, "b"));
+    }
+
     private String getBindingName(SimpleFeatureType featureType, String col) {
         AttributeDescriptor descriptor = featureType.getDescriptor(col);
         AttributeType attributeType = descriptor.getType();
