@@ -12,13 +12,17 @@ import java.util.List;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 
+import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
+import org.apache.wicket.MarkupContainer;
 import org.apache.wicket.Page;
 import org.apache.wicket.PageParameters;
 import org.apache.wicket.ResourceReference;
 import org.apache.wicket.ajax.AbstractAjaxTimerBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
+import org.apache.wicket.markup.ComponentTag;
+import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.TextArea;
 import org.apache.wicket.markup.html.link.Link;
@@ -201,7 +205,16 @@ public class ImportPage extends GeoServerSecuredPage {
                 itemTable.setFilterable(false);
                 itemTable.setSortable(false);
 
+                WebMarkupContainer importLinkContainer = new WebMarkupContainer("importContainer");
+                importLinkContainer.setOutputMarkupId(true);
+                item.add(importLinkContainer);
+
                 final AjaxLink importLink = new AjaxLink("import") {
+                    @Override
+                    protected void disableLink(ComponentTag tag) {
+                        tag.remove("onclick");
+                        tag.remove("href");
+                    }
                     @Override
                     public void onClick(AjaxRequestTarget target) {
                         ImportTask task = item.getModelObject();
@@ -234,12 +247,11 @@ public class ImportPage extends GeoServerSecuredPage {
                         target.addComponent(itemTable);
 
                         //set this button disabled
-                        setEnabled(false);
-                        target.addComponent(this);
+                        setImportLinkEnabled(this, false, target);
                     }
                 };
                 importLink.setEnabled(doSelectReady(task, itemTable, null));
-                item.add(importLink);
+                importLinkContainer.add(importLink);
 
                 item.add(new AjaxLink<ImportTask>("select-all", model) {
                     @Override
@@ -290,11 +302,22 @@ public class ImportPage extends GeoServerSecuredPage {
             }
             enable = !allComplete;
         }
-        
-        link.setEnabled(enable);
-        target.addComponent(link);
+
+        setImportLinkEnabled(link, enable, target);
     }
 
+    void setImportLinkEnabled(AjaxLink link, boolean enabled, AjaxRequestTarget target) {
+        link.setEnabled(enabled);
+        
+        MarkupContainer p = link.getParent();
+
+        String css = "button-group selfclear";
+        if (!enabled) {
+            css += " inactive";
+        }
+        p.add(new AttributeModifier("class", new Model(css)));
+        target.addComponent(p);
+    }
     boolean doSelectReady(ImportTask task, ImportItemTable table, AjaxRequestTarget target) {
         boolean empty = true;
         List<ImportItem> items = task.getItems();
