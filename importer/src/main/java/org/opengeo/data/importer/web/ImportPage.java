@@ -196,7 +196,7 @@ public class ImportPage extends GeoServerSecuredPage {
                 final ImportItemTable itemTable = new ImportItemTable("items", provider, selectable) {
                     @Override
                     protected void onSelectionUpdate(AjaxRequestTarget target) {
-                        updateImportLink((AjaxLink) item.get("import"), this, target);
+                        updateImportLink((AjaxLink) item.get("importContainer:import"), this, target);
                     }
                 };
                 item.add(itemTable);
