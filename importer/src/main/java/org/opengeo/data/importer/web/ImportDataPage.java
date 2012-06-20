@@ -27,13 +27,18 @@ import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.markup.html.form.Form;
+import org.apache.wicket.markup.html.form.Radio;
+import org.apache.wicket.markup.html.form.RadioGroup;
 import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.markup.html.image.Image;
+import org.apache.wicket.markup.html.link.ExternalLink;
+import org.apache.wicket.markup.html.link.Link;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
+import org.apache.wicket.model.StringResourceModel;
 import org.apache.wicket.util.time.Duration;
 import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.NamespaceInfo;
@@ -49,7 +54,9 @@ import org.geoserver.web.data.workspace.WorkspaceDetachableModel;
 import org.geoserver.web.data.workspace.WorkspacesModel;
 import org.geoserver.web.wicket.GeoServerDialog;
 import org.geoserver.web.wicket.GeoServerDialog.DialogDelegate;
+import org.geoserver.web.wicket.HelpLink;
 import org.geoserver.web.wicket.ParamResourceModel;
+import org.geoserver.web.wicket.SimpleAjaxLink;
 import org.geotools.data.DataStoreFactorySpi;
 import org.geotools.util.logging.Logging;
 import org.opengeo.data.importer.ImportContext;
@@ -68,7 +75,7 @@ public class ImportDataPage extends GeoServerSecuredPage {
 
     static Logger LOGGER = Logging.getLogger(ImportDataPage.class);
 
-    ListView<Source> sourceList;
+    AjaxRadioPanel<Source> sourceList;
     WebMarkupContainer sourcePanel;
     
     WorkspaceDetachableModel workspace;
@@ -87,42 +94,29 @@ public class ImportDataPage extends GeoServerSecuredPage {
     public ImportDataPage(PageParameters params) {
         Form form = new Form("form");
         add(form);
-        
-        sourceList = new ListView<Source>("sources", Arrays.asList(Source.values())) {
+
+        sourceList = new AjaxRadioPanel<Source>("sources", Arrays.asList(Source.values()), Source.SPATIAL_FILES) {
             @Override
-            protected void populateItem(final ListItem<Source> item) {
-                final Source source = (Source) item.getModelObject();
-                AjaxLink link = new AjaxLink("link") {
-                    @Override
-                    public void onClick(AjaxRequestTarget target) {
-                        updateSourcePanel(source);
-                        updateModalLinks(this, target);
-                        target.addComponent(sourcePanel);
-                    }
-                };
-                link.setOutputMarkupId(true);
-                
-                link.add(new Label("name", source.getName(ImportDataPage.this)));
-                if(item == sourceList.get(0)) {
-                    link.add(new AttributeAppender("class", true, new Model("selected"), " "));
-                }
-                item.add(link);
-
-                item.add(new Label("description", source .getDescription(ImportDataPage.this)));
-
-                Image icon = new Image("icon", source.getIcon());
-                icon.add(
-                    new AttributeModifier("alt", true, source.getDescription(ImportDataPage.this)));
-                item.add(icon);
-
-                if (!source.isAvailable()) {
-                    item.setEnabled(false);
-                    item.add(new SimpleAttributeModifier("title", "Data source not available. Please " +
-                        "install required plug-in and drivers."));
-                }
+            protected void onRadioSelect(AjaxRequestTarget target, Source newSelection) {
+                updateSourcePanel(newSelection, target);
             }
-            
+
+            @Override
+            protected AjaxRadio<Source> newRadioCell(RadioGroup<Source> group,
+                    ListItem<Source> item) {
+                AjaxRadio<Source> radio = super.newRadioCell(group, item);
+                if (!item.getModelObject().isAvailable()) {
+                    radio.setEnabled(false);
+                }
+                return radio;
+            }
+
+            @Override
+            protected Component createLabel(String id, ListItem<Source> item) {
+                return new SourceLabelPanel(id, item.getModelObject());
+            }
         };
+
         form.add(sourceList);
         
         sourcePanel = new WebMarkupContainer("panel");
@@ -162,9 +156,6 @@ public class ImportDataPage extends GeoServerSecuredPage {
             @Override
             public void onClick(AjaxRequestTarget target) {
                 dialog.setTitle(new ParamResourceModel("newWorkspace", ImportDataPage.this));
-                dialog.setInitialWidth(400);
-                dialog.setInitialHeight(150);
-                dialog.setMinimalHeight(150);
                 
                 dialog.showOkCancel(target, new DialogDelegate() {
                     String wsName;
@@ -318,8 +309,11 @@ public class ImportDataPage extends GeoServerSecuredPage {
         }.setVisible(ImporterWebUtils.isDevMode()));
         
         add(dialog = new GeoServerDialog("dialog"));
-        
-        updateSourcePanel(Source.SPATIAL_FILES);
+        dialog.setInitialWidth(400);
+        dialog.setInitialHeight(150);
+        dialog.setMinimalHeight(150);
+
+        updateSourcePanel(Source.SPATIAL_FILES, null);
         updateDefaultStore(null);
     }
 
@@ -334,7 +328,7 @@ public class ImportDataPage extends GeoServerSecuredPage {
         }
     }
 
-    void updateSourcePanel(Source source) {
+    void updateSourcePanel(Source source, AjaxRequestTarget target) {
         Panel old = (Panel) sourcePanel.get(0);
         if (old != null) {
             sourcePanel.remove(old);
@@ -342,19 +336,9 @@ public class ImportDataPage extends GeoServerSecuredPage {
 
         Panel p = source.createPanel("content");
         sourcePanel.add(p);
-    }
-    
-    void updateModalLinks(AjaxLink selected, AjaxRequestTarget target) {
-        int n = sourceList.getModelObject().size();
-        for (int i = 0; i < n; i++) {
-            AjaxLink link = (AjaxLink) ((ListItem)sourceList.get(i)).get("link");
-            if (link == selected) {
-                link.add(new AttributeAppender("class", new Model("selected"), " "));
-            }
-            else {
-                link.add(new SimpleAttributeModifier("class", ""));
-            }
-            target.addComponent(link);
+
+        if (target != null) {
+            target.addComponent(sourcePanel);
         }
     }
 
@@ -363,6 +347,33 @@ public class ImportDataPage extends GeoServerSecuredPage {
         next.setEnabled(true);
         next.get(0).setDefaultModelObject("Next");
         target.addComponent(next);
+    }
+
+    class SourceLabelPanel extends Panel {
+
+        public SourceLabelPanel(String id, Source source) {
+            super(id);
+            
+            add(new Label("name", source.getName(ImportDataPage.this)));
+            add(new Label("description", source .getDescription(ImportDataPage.this)));
+            
+            Image icon = new Image("icon", source.getIcon());
+            icon.add(new AttributeModifier("alt", true, source.getDescription(ImportDataPage.this)));
+            add(icon);
+
+            WebMarkupContainer extra = new WebMarkupContainer("extra");
+            add(extra);
+            extra.add(new ExternalLink("link", source.getHelpLink(ImportDataPage.this)));
+            
+            if (!source.isAvailable()) {
+                get("name").add(new SimpleAttributeModifier("style", "font-style: italic;"));
+                add(new SimpleAttributeModifier("title", "Data source not available. Please " +
+                      "install required plugin and drivers."));
+            }
+            else {
+                extra.setVisible(false);
+            }
+        }
     }
 
     /**
@@ -431,6 +442,10 @@ public class ImportDataPage extends GeoServerSecuredPage {
 
         IModel getDescription(Component component) {
             return new ParamResourceModel(this.name().toLowerCase() + "_description", component);
+        }
+
+        IModel getHelpLink(Component component) {
+            return new ParamResourceModel(this.name().toLowerCase() + "_helpLink", component);
         }
 
         ResourceReference getIcon() {

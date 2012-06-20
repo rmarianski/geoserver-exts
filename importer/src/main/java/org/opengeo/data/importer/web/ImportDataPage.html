@@ -6,9 +6,6 @@
   </wicket:link>
   
  <style type="text/css">
-   .selected {
-     font-style: italic;
-   }
    fieldset {
      margin-top: 3em;
    }
@@ -29,18 +26,9 @@
   <form wicket:id="form">
     <fieldset>
       <legend><span>1. Choose a data source to import from</span></legend>
-      <ul id="sources">
-        <li wicket:id="sources">
-          <img wicket:id="icon" />
-          <a wicket:id="link"> <span wicket:id="name" /></a> - <span wicket:id="description" />
-        </li>
-      </ul>
+      <div wicket:id="sources" id="sources">
+      </div>
     </fieldset>
-    <!--div wicket:id="sources">
-        <img wicket:id="icon" />
-        <a wicket:id="link"> <span wicket:id="name" /></a> - <span wicket:id="description" />
-    </div-->
-    <!--fieldset style="margin-top:1em;"-->
     <fieldset>
       <legend><span>2. Configure the data source</span></legend>
       <ul>
