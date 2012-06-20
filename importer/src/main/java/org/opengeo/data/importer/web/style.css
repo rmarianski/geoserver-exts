@@ -4,10 +4,16 @@
   background-image: url(bullet_go.png);
 }
 
-.apply-link {
+.working-link {
   padding: 2px 0px 2px 20px;
   background: transparent no-repeat left center;
-  background-image: url(bullet_go.png);
+  background-image: url(indicator.gif);
+}
+
+.accept-link {
+  padding: 2px 0px 2px 20px;
+  background: transparent no-repeat left center;
+  background-image: url(accept.png);
 }
 
 .button-group .button-working span {

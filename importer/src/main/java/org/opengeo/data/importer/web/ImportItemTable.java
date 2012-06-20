@@ -13,7 +13,6 @@ import org.apache.wicket.ResourceReference;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.ajax.markup.html.form.AjaxSubmitLink;
-import org.apache.wicket.behavior.AttributeAppender;
 import org.apache.wicket.behavior.SimpleAttributeModifier;
 import org.apache.wicket.extensions.ajax.markup.html.modal.ModalWindow;
 import org.apache.wicket.markup.html.WebMarkupContainer;
@@ -22,7 +21,6 @@ import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.TextArea;
 import org.apache.wicket.markup.html.link.ExternalLink;
 import org.apache.wicket.markup.html.link.Link;
-import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.markup.repeater.DefaultItemReuseStrategy;
 import org.apache.wicket.markup.repeater.data.DataView;
@@ -35,12 +33,11 @@ import org.geoserver.catalog.LayerInfo;
 import org.geoserver.web.GeoServerApplication;
 import org.geoserver.web.demo.PreviewLayer;
 import org.geoserver.web.wicket.CRSPanel;
+import org.geoserver.web.wicket.GeoServerDataProvider;
 import org.geoserver.web.wicket.GeoServerDataProvider.Property;
 import org.geoserver.web.wicket.GeoServerDialog;
 import org.geoserver.web.wicket.GeoServerDialog.DialogDelegate;
-import org.geoserver.web.wicket.GeoServerDataProvider;
 import org.geoserver.web.wicket.GeoServerTablePanel;
-import org.geoserver.web.wicket.Icon;
 import org.geoserver.web.wicket.SRSToCRSModel;
 import org.geoserver.web.wicket.SimpleAjaxLink;
 import org.opengeo.data.importer.ImportItem;
@@ -48,12 +45,14 @@ import org.opengeo.data.importer.ImportItem.State;
 
 public class ImportItemTable extends GeoServerTablePanel<ImportItem> {
 
+    ModalWindow popupWindow;
     GeoServerDialog dialog;
     
     public ImportItemTable(String id, GeoServerDataProvider<ImportItem> dataProvider, boolean selectable) {
         super(id, dataProvider, selectable);
         add(dialog = new GeoServerDialog("dialog"));
-
+        add(popupWindow = new ModalWindow("popup"));
+        
         ((DataView)get("listContainer:items")).setItemReuseStrategy(DefaultItemReuseStrategy.getInstance());
     }
 
@@ -64,8 +63,25 @@ public class ImportItemTable extends GeoServerTablePanel<ImportItem> {
         }
 
         if (property == ImportItemProvider.STATUS) {
-            return new Icon(id, new StatusIconModel(property.getModel(itemModel)), 
-                new StatusDescriptionModel(property.getModel(itemModel)));
+            ImportItem.State state = (State) property.getModel(itemModel).getObject();
+            Component c = null;
+            if (state == ImportItem.State.ERROR) {
+                c = new SimpleAjaxLink<ImportItem>(id, itemModel, new StatusDescriptionModel(property.getModel(itemModel))) {
+                    @Override
+                    protected void onClick(AjaxRequestTarget target) {
+                        popupWindow.setContent(
+                                new ExceptionPanel(popupWindow.getContentId(), getModelObject().getError()));
+                        popupWindow.show(target);
+                    }
+                };
+            }
+            else {
+                
+                c = new Label(id, new StatusDescriptionModel(property.getModel(itemModel)));
+            }
+            
+            String cssClass = new StatusIconModel(property.getModel(itemModel)).getCssClass();
+            return c.add(new SimpleAttributeModifier("class", cssClass));
         }
         if (property == ImportItemProvider.ACTION) {
             
@@ -81,8 +97,6 @@ public class ImportItemTable extends GeoServerTablePanel<ImportItem> {
                 case READY:
                     //return advanced option link
                     return new AdvancedOptionPanel(id, itemModel);
-                case ERROR:
-                    return new ErrorPanel(id, itemModel);
                 default:
                     return new WebMarkupContainer(id);
             }
@@ -90,12 +104,6 @@ public class ImportItemTable extends GeoServerTablePanel<ImportItem> {
         return null;
     }
 
-    protected void onPopulateItem(Property<ImportItem> property, ListItem item) {
-        if (property == ImportItemProvider.ACTION) {
-            item.add(new AttributeAppender("style", new Model("width:100%;"), " "));
-        }
-    }
-    
     SimpleAjaxLink createFixCRSLink(String id, final IModel<ImportItem> itemModel) {
         return new SimpleAjaxLink(id, new Model("Fix...")) {
             @Override
@@ -165,6 +173,25 @@ public class ImportItemTable extends GeoServerTablePanel<ImportItem> {
                 return new ResourceReference(GeoServerApplication.class, "img/icons/silk/delete.png");
             }
             return null;
+        }
+        public String getCssClass() {
+            ImportItem.State state = (ImportItem.State) chained.getObject();
+            switch(state) {
+            case READY:
+                return "apply-link";
+            case RUNNING:
+                return "working-link";
+            case COMPLETE:
+                return "accept-link";
+            case NO_BOUNDS:
+            case NO_CRS:
+            case ERROR:
+            //case NO_FORMAT:
+                return "warning-link";
+            //case ERROR:
+            //    return "error-link";
+            }
+            return "";
         }
     }
     class StatusDescriptionModel extends StatusModel<String> {
