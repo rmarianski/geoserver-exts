@@ -6,11 +6,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.opengeo.data.csv.CSVFileState;
+import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.feature.type.GeometryDescriptor;
 
 import com.csvreader.CsvReader;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
 
 public class CSVLatLonStrategy implements CSVStrategy {
@@ -149,7 +154,38 @@ public class CSVLatLonStrategy implements CSVStrategy {
 
     @Override
     public CSVIterator iterator() throws IOException {
-        return new CSVIterator(csvFileState, getFeatureType());
+        return new CSVIterator(csvFileState, this);
     }
 
+    @Override
+    public SimpleFeature createFeature(String recordId, String[] csvRecord) {
+        SimpleFeatureType featureType = getFeatureType();
+        SimpleFeatureBuilder builder = new SimpleFeatureBuilder(featureType);
+        GeometryDescriptor geometryDescriptor = featureType.getGeometryDescriptor();
+        GeometryFactory geometryFactory = new GeometryFactory();
+        Double x = null, y = null;
+        for (int i = 0; i < headers.length; i++) {
+            String header = headers[i];
+            if (i < csvRecord.length) {
+                String value = csvRecord[i].trim();
+                if (geometryDescriptor != null && "lat".equalsIgnoreCase(header)) {
+                    y = Double.valueOf(value);
+                } else if ((geometryDescriptor != null && "lon".equalsIgnoreCase(header))
+                        || (geometryDescriptor != null && "lng".equalsIgnoreCase(header))) {
+                    x = Double.valueOf(value);
+                } else {
+                    // geotools converters take care of converting for us
+                    builder.set(header, value);
+                }
+            } else {
+                builder.set(header, null);
+            }
+        }
+        if (x != null && y != null && geometryDescriptor != null) {
+            Coordinate coordinate = new Coordinate(x, y);
+            Point point = geometryFactory.createPoint(coordinate);
+            builder.set(geometryDescriptor.getLocalName(), point);
+        }
+        return builder.buildFeature(csvFileState.getTypeName() + "-" + recordId);
+    }
 }
