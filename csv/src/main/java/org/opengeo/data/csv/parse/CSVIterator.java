@@ -55,7 +55,8 @@ public class CSVIterator implements Iterator<SimpleFeature> {
                 String value = csvRecord[i].trim();
                 if (geometryDescriptor != null && "lat".equalsIgnoreCase(header)) {
                     y = Double.valueOf(value);
-                } else if (geometryDescriptor != null && "lon".equalsIgnoreCase(header)) {
+                } else if ((geometryDescriptor != null && "lon".equalsIgnoreCase(header)) ||
+                           (geometryDescriptor != null && "lng".equalsIgnoreCase(header))) {
                     x = Double.valueOf(value);
                 } else {
                     // geotools converters take care of converting for us
