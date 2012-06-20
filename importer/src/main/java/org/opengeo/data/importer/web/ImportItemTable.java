@@ -6,6 +6,8 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.wicket.Component;
 import org.apache.wicket.PageParameters;
@@ -17,6 +19,7 @@ import org.apache.wicket.behavior.SimpleAttributeModifier;
 import org.apache.wicket.extensions.ajax.markup.html.modal.ModalWindow;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
+import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.TextArea;
 import org.apache.wicket.markup.html.link.ExternalLink;
@@ -326,9 +329,10 @@ public class ImportItemTable extends GeoServerTablePanel<ImportItem> {
             
             LayerInfo layer = model.getObject().getLayer();
             PreviewLayer preview = new PreviewLayer(layer);
+
             add(new ExternalLink("openlayers", preview.getWmsLink()+ "&format=application/openlayers"));
             add(new ExternalLink("google", "../wms/kml?layers=" + layer.getName()));
-            add(new ExternalLink("styler", "/styler/index.html?layer="
+            add(new ExternalLink("geoexplorer", "/geoexplorer/index.html?layer="
                 + urlEncode(layer.getResource().getStore().getWorkspace().getName() + ":" +  layer.getName())));
         }
     }
