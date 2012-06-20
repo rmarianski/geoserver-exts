@@ -351,6 +351,7 @@
     <module>importer</module>
     <module>analytics</module>
     <module>csv</module>
+    <module>web</module>
   </modules>
 
   <properties>
