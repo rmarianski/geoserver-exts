@@ -8,7 +8,7 @@ geoserver-exts currently depends on a recent version of geoserver master. You ca
 
     git clone git@github.com:opengeo/geoserver-exts.git
     cd geoserver-exts
-    mvn package
+    mvn install
 
 Adding a new extension
 ----------------------
