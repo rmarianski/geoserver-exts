@@ -3,6 +3,7 @@ package org.opengeo.data.importer.web;
 import static org.opengeo.data.importer.web.ImporterWebUtils.importer;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -384,18 +385,23 @@ public class ImportPage extends GeoServerSecuredPage {
         protected String load() {
             ImportData data = task.getData();
 
+            String title = data.toString();
             if (data instanceof FileData) {
                 FileData df = (FileData) data;
                 ImportData parentData = task.getContext().getData();
                 if (parentData instanceof Directory) {
                     try {
-                        return df.relativePath((Directory) parentData);
+                        title = df.relativePath((Directory) parentData);
                     } catch (IOException e) {
                         LOGGER.log(Level.WARNING, e.getMessage(), e);
                     }
                 }
             }
-            return data.toString();
+            if (title.length() > 70) {
+                //shorten it
+                title = title.substring(0,20) + "[...]" + title.substring(title.length()-50);
+            }
+            return title;
         }
     
     }
