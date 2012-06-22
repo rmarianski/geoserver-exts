@@ -87,9 +87,17 @@ public class Importer implements InitializingBean, DisposableBean {
 
     public Importer(Catalog catalog) {
         this.catalog = catalog;
-        this.contextStore = new BDBImportStore(this);
-        //this.contextStore = new MemoryImportStore();
+        this.contextStore = createContextStore();
         this.styleGen = new StyleGenerator(catalog);
+    }
+
+    ImportStore createContextStore() {
+        //look up system property
+        String store = System.getProperty("org.opengeo.importer.store");
+        if ("bdb".equalsIgnoreCase(store)) {
+            return new BDBImportStore(this);
+        }
+        return new MemoryImportStore();
     }
 
     public ImportStore getStore() {
@@ -601,23 +609,28 @@ public class Importer implements InitializingBean, DisposableBean {
             }
 
             item.setState(ImportItem.State.RUNNING);
+            try {
+                //set up transform chain
+                TransformChain tx = (TransformChain) item.getTransform();
+                
+                //apply pre transform
+                if (!doPreTransform(item, task.getData(), tx)) {
+                    continue;
+                }
+    
+                addToCatalog(item, task);
+    
+                //apply pre transform
+                if (!doPostTransform(item, task.getData(), tx)) {
+                    continue;
+                }
 
-            //set up transform chain
-            TransformChain tx = (TransformChain) item.getTransform();
-            
-            //apply pre transform
-            if (!doPreTransform(item, task.getData(), tx)) {
-                continue;
+                item.setState(ImportItem.State.COMPLETE);
             }
-
-            addToCatalog(item, task);
-
-            //apply pre transform
-            if (!doPostTransform(item, task.getData(), tx)) {
-                continue;
+            catch(Exception e) {
+                item.setState(ImportItem.State.ERROR);
+                item.setError(e);
             }
-
-            item.setState(ImportItem.State.COMPLETE);
         }
     }
 
