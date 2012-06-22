@@ -518,7 +518,7 @@ public class Importer implements InitializingBean, DisposableBean {
 
         //check if the task is complete, ie all items are complete
         task.updateState();
-        
+
         if (task.getContext().isArchive() && 
             task.getState() == ImportTask.State.COMPLETE && !task.isDirect()) {
             Directory directory = null;
@@ -666,6 +666,9 @@ public class Importer implements InitializingBean, DisposableBean {
                     currentlyProcessing.put(task.getContext().getId(), item);
                     loadIntoDataStore(item, (DataStoreInfo)task.getStore(), (VectorFormat) format, (VectorTransformChain) tx);
 
+                    FeatureTypeInfo featureType = (FeatureTypeInfo) item.getLayer().getResource();
+                    featureType.getAttributes().clear();
+
                     //JD: not sure what the rationale is here... ask IS
                     //if (task.getUpdateMode() == null) {
                     if (item.updateMode() == null) {
@@ -800,6 +803,11 @@ public class Importer implements InitializingBean, DisposableBean {
             while(reader.hasNext()) {
                 SimpleFeature feature = (SimpleFeature) reader.next();
                 SimpleFeature next = (SimpleFeature) writer.next();
+
+                //(JD) TODO: some formats will rearrange the geometry type (like shapefile) which
+                // makes the goemetry the first attribute reagardless, so blindly copying over
+                // attributes won't work unless the source type also  has the geometry as the 
+                // first attribute in the schema
                 next.setAttributes(feature.getAttributes());
 
                 // @hack #45678 - mask empty geometry or postgis will complain
