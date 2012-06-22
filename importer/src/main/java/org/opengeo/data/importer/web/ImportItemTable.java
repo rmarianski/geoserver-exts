@@ -10,6 +10,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
 import org.apache.wicket.PageParameters;
 import org.apache.wicket.ResourceReference;
@@ -381,7 +382,10 @@ public class ImportItemTable extends GeoServerTablePanel<ImportItem> {
                 public String getIdValue(PreviewLink object, int index) {
                     return object.href;
                 }
-            }).setNullValid(false));
+            }).setNullValid(false).setOutputMarkupId(true));
+
+            add(new ExternalLink("go","#").add(new AttributeModifier("onclick", 
+                new Model("go(document.getElementById('" + get("links").getMarkupId() + "'));"))));
        }
 
         class PreviewLink implements Serializable {

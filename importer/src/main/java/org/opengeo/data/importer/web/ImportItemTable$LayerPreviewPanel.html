@@ -1,7 +1,7 @@
 <html xmlns:wicket="http://wicket.apache.org/">
 <wicket:head>
   <script type="text/javascript">
-  function goto(select) {
+  function go(select) {
     var selected = select.options[select.selectedIndex];
     window.open(selected.value);
   }
@@ -10,10 +10,10 @@
 <body>
 <wicket:panel>
   <wicket:message key="viewIn">View in</wicket:message>
-  <select id="links" wicket:id="links" onchange="window.open(this.options[this.selectedIndex].value);">
+  <select id="links" wicket:id="links">
   </select>
-  <a href="#" onclick="goto(document.getElementById('links'));"><wicket:message key="go"></wicket:message></a>
-  
+  <a href="#" wicket:id="go" onclick="go(document.getElementById('links'));"><wicket:message key="go"></wicket:message></a>
+
 </wicket:panel>
 </body>
 </html>
