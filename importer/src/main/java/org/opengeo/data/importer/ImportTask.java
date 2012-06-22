@@ -179,11 +179,15 @@ public class ImportTask implements Serializable {
     }
 
     public void reattach(Catalog catalog) {
-        store = resolve(store, catalog);
+        reattach(catalog, false);
+    }
+    
+    public void reattach(Catalog catalog, boolean lookupByName) {
+        store = resolve(store, catalog, lookupByName);
 
         for (ImportItem item : items) {
             item.setTask(this);
-            item.reattach(catalog);
+            item.reattach(catalog, lookupByName);
         }
     }
 

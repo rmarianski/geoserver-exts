@@ -202,20 +202,24 @@ public class ImportContext implements Serializable {
     }
 
     public void reattach(Catalog catalog) {
+        reattach(catalog, false);
+    }
+
+    public void reattach(Catalog catalog, boolean lookupByName) {
         if (data != null) {
             data.reattach();
         }
 
-        targetWorkspace = resolve(targetWorkspace, catalog);
+        targetWorkspace = resolve(targetWorkspace, catalog, lookupByName);
 
-        if (targetStore != null && targetStore.getWorkspace() == null) {
+        if (targetStore != null) {
             targetStore.setWorkspace(targetWorkspace);
         }
-        targetStore = resolve(targetStore, catalog);
+        targetStore = resolve(targetStore, catalog, lookupByName);
 
         for (ImportTask task : tasks) {
             task.setContext(this);
-            task.reattach(catalog);
+            task.reattach(catalog, lookupByName);
         }
     }
 

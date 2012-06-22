@@ -7,6 +7,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import org.geoserver.catalog.StoreInfo;
+import org.geoserver.catalog.WorkspaceInfo;
 import org.geoserver.config.util.XStreamPersister;
 import org.geoserver.config.util.XStreamPersisterFactory;
 import org.geoserver.rest.AbstractResource;
@@ -125,14 +127,23 @@ public class ImportResource extends AbstractResource {
                     //read representation specified by user, use it to read 
                     ImportContext newContext = 
                         (ImportContext) getFormatPostOrPut().toObject(getRequest().getEntity());
-                    if (newContext.getTargetWorkspace() != null) {
-                        context.setTargetWorkspace(newContext.getTargetWorkspace());
+
+                    WorkspaceInfo targetWorkspace = newContext.getTargetWorkspace();
+                    StoreInfo targetStore = newContext.getTargetStore();
+                    
+                    if (targetWorkspace != null) {
+                        context.setTargetWorkspace(targetWorkspace);
                     }
-                    if (newContext.getTargetStore() != null) {
-                        context.setTargetStore(newContext.getTargetStore());
+                    if (targetStore != null) {
+                        context.setTargetStore(targetStore);
+                    }
+                    if (targetStore != null && targetWorkspace == null) {
+                        //take it from the store 
+                        context.setTargetWorkspace(targetStore.getWorkspace());
                     }
                 }
 
+                context.reattach(importer.getCatalog(), true);
                 getResponse().redirectSeeOther(getPageInfo().rootURI("/imports/"+context.getId()));
                 getResponse().setEntity(new ImportContextJSONFormat().toRepresentation(context));
                 getResponse().setStatus(Status.SUCCESS_CREATED);

@@ -36,7 +36,7 @@ public class SerialVersionSafeSerialBindingTest extends ImporterTestSupport {
         binding.objectToEntry(context, e);
         
         ImportContext context2 = (ImportContext) binding.entryToObject(e);
-        context2.reattach(cat);
+        context2.reattach(cat, true);
 
         assertNotNull(context2.getTargetWorkspace().getId());
         assertNotNull(context2.getTargetStore().getId());

@@ -199,7 +199,11 @@ public class ImportItem implements Serializable {
     }
 
     public void reattach(Catalog catalog) {
-        layer = resolve(layer, catalog);
+        reattach(catalog, false);
+    }
+
+    public void reattach(Catalog catalog, boolean lookupByName) {
+        layer = resolve(layer, catalog, lookupByName);
     }
 
     @Override
