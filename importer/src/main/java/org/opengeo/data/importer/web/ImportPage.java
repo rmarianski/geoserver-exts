@@ -199,7 +199,7 @@ public class ImportPage extends GeoServerSecuredPage {
                     protected void onSelectionUpdate(AjaxRequestTarget target) {
                         updateImportLink((AjaxLink) item.get("importContainer:import"), this, target);
                     }
-                };
+                }.setFeedbackPanel(feedbackPanel);
                 item.add(itemTable);
                 
                 itemTable.setOutputMarkupId(true);

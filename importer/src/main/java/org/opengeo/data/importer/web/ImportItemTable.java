@@ -26,6 +26,7 @@ import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.TextArea;
 import org.apache.wicket.markup.html.link.ExternalLink;
 import org.apache.wicket.markup.html.link.Link;
+import org.apache.wicket.markup.html.panel.FeedbackPanel;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.markup.repeater.DefaultItemReuseStrategy;
 import org.apache.wicket.markup.repeater.data.DataView;
@@ -46,22 +47,28 @@ import org.geoserver.web.wicket.GeoServerTablePanel;
 import org.geoserver.web.wicket.ParamResourceModel;
 import org.geoserver.web.wicket.SRSToCRSModel;
 import org.geoserver.web.wicket.SimpleAjaxLink;
+import org.geotools.referencing.CRS;
 import org.opengeo.data.importer.ImportItem;
 import org.opengeo.data.importer.ImportItem.State;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class ImportItemTable extends GeoServerTablePanel<ImportItem> {
 
     ModalWindow popupWindow;
     GeoServerDialog dialog;
-    
+    FeedbackPanel feedbackPanel;
+
     public ImportItemTable(String id, GeoServerDataProvider<ImportItem> dataProvider, boolean selectable) {
         super(id, dataProvider, selectable);
         add(dialog = new GeoServerDialog("dialog"));
         add(popupWindow = new ModalWindow("popup"));
-        
         ((DataView)get("listContainer:items")).setItemReuseStrategy(DefaultItemReuseStrategy.getInstance());
     }
 
+    public ImportItemTable setFeedbackPanel(FeedbackPanel feedbackPanel) {
+        this.feedbackPanel = feedbackPanel;
+        return this;
+    }
     @Override
     protected Component getComponentForProperty(String id, final IModel itemModel, Property property) {
         if (property == ImportItemProvider.NAME) {
@@ -294,11 +301,27 @@ public class ImportItemTable extends GeoServerTablePanel<ImportItem> {
             add(form);
 
             form.add(new CRSPanel("crs", 
-                new SRSToCRSModel(new PropertyModel(model, "layer.resource.sRS"))));
+                new SRSToCRSModel(new PropertyModel(model, "layer.resource.sRS"))) {
+                @Override
+                protected CoordinateReferenceSystem fromSRS(String srs) {
+                    try {
+                        return CRS.decode(srs);
+                    }
+                    catch(Exception e) {
+                        error(e);
+                        return null;
+                    }
+                }
+            });
 
             form.add(new AjaxSubmitLink("apply") {
                 @Override
+                protected void onError(AjaxRequestTarget target, Form<?> form) {
+                    target.addComponent(feedbackPanel);
+                }
+                @Override
                 protected void onSubmit(AjaxRequestTarget target, Form<?> form) {
+                    target.addComponent(feedbackPanel);
                     ImportItem item = model.getObject();
                     ImporterWebUtils.importer().changed(item);
 
