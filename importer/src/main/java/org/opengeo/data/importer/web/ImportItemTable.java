@@ -130,6 +130,12 @@ public class ImportItemTable extends GeoServerTablePanel<ImportItem> {
         };
     }
 
+    protected void onItemFixed(ImportItem item, AjaxRequestTarget target) {
+        selectObject(item);
+        target.addComponent(this);
+        onSelectionUpdate(target);
+    }
+
     static abstract class StatusModel<T> implements IChainingModel<T> {
         
         IModel chained;
@@ -285,14 +291,17 @@ public class ImportItemTable extends GeoServerTablePanel<ImportItem> {
             add(form);
 
             form.add(new CRSPanel("crs", 
-                new SRSToCRSModel(new PropertyModel(model, "layer.resource.srs"))));
+                new SRSToCRSModel(new PropertyModel(model, "layer.resource.sRS"))));
 
             form.add(new AjaxSubmitLink("apply") {
                 @Override
                 protected void onSubmit(AjaxRequestTarget target, Form<?> form) {
-                    ImporterWebUtils.importer().changed(model.getObject());
+                    ImportItem item = model.getObject();
+                    ImporterWebUtils.importer().changed(item);
+
                     //ImportItemTable.this.modelChanged();
                     target.addComponent(ImportItemTable.this);
+                    onItemFixed(item, target);
                 }
             });
         }
