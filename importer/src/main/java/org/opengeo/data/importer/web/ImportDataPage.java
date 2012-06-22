@@ -5,6 +5,7 @@
 package org.opengeo.data.importer.web;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.List;
@@ -80,13 +81,13 @@ public class ImportDataPage extends GeoServerSecuredPage {
     
     WorkspaceDetachableModel workspace;
     DropDownChoice workspaceChoice;
+    TextField workspaceNameTextField;
     
     StoreModel store;
     DropDownChoice storeChoice;
     
     String storeName;
-    TextField storeNameTextField;
-
+    
     ImportContextTable importTable;
 
     GeoServerDialog dialog;
@@ -133,11 +134,23 @@ public class ImportDataPage extends GeoServerSecuredPage {
         workspaceChoice.add(new AjaxFormComponentUpdatingBehavior("onchange") {
             @Override
             protected void onUpdate(AjaxRequestTarget target) {
-                updateDefaultStore(target);
+                updateTargetStore(target);
             }
         });
+        workspaceChoice.setNullValid(true);
         form.add(workspaceChoice);
-        
+
+        WebMarkupContainer workspaceNameContainer = new WebMarkupContainer("workspaceNameContainer");
+        workspaceNameContainer.setOutputMarkupId(true);
+        form.add(workspaceNameContainer);
+
+        workspaceNameTextField = new TextField("workspaceName", new Model());
+        workspaceNameTextField.setOutputMarkupId(true);
+        boolean defaultWorkspace = catalog.getDefaultWorkspace() != null;
+        workspaceNameTextField.setVisible(!defaultWorkspace);
+        workspaceNameTextField.setRequired(!defaultWorkspace);
+        workspaceNameContainer.add(workspaceNameTextField);
+
         //store chooser
         store = new StoreModel(catalog.getDefaultDataStore((WorkspaceInfo) workspace.getObject()));
         storeChoice = new DropDownChoice("store", store, new EnabledStoresModel(workspace),
@@ -151,58 +164,6 @@ public class ImportDataPage extends GeoServerSecuredPage {
         storeChoice.setNullValid(true);
         form.add(storeChoice);
         
-        // new workspace
-        form.add(new AjaxLink("newWorkspace") {
-            @Override
-            public void onClick(AjaxRequestTarget target) {
-                dialog.setTitle(new ParamResourceModel("newWorkspace", ImportDataPage.this));
-                
-                dialog.showOkCancel(target, new DialogDelegate() {
-                    String wsName;
-
-                    @Override
-                    protected boolean onSubmit(AjaxRequestTarget target, Component contents) {
-                        try {
-                            Catalog catalog = GeoServerApplication.get().getCatalog();
-                            
-                            NewWorkspacePanel panel = (NewWorkspacePanel) contents;
-                            wsName = panel.workspace;
-                            
-                            WorkspaceInfo ws = catalog.getFactory().createWorkspace();
-                            ws.setName(wsName);
-                            
-                            NamespaceInfo ns = catalog.getFactory().createNamespace();
-                            ns.setPrefix(wsName);
-                            ns.setURI("http://opengeo.org/#" + URLEncoder.encode(wsName, "ASCII"));
-                            
-                            catalog.add( ws );
-                            catalog.add( ns );
-
-                            return true;
-                        } catch(Exception e) {
-                            e.printStackTrace();
-                            return false;
-                        }
-                    }
-                    
-                    @Override
-                    public void onClose(AjaxRequestTarget target) {
-                        Catalog catalog = GeoServerApplication.get().getCatalog();
-                        workspace = new WorkspaceDetachableModel(catalog.getWorkspaceByName(wsName));
-                        workspaceChoice.setModel(workspace);
-                        target.addComponent(workspaceChoice);
-                        target.addComponent(storeChoice);
-                    }
-                    
-                    @Override
-                    protected Component getContents(String id) {
-                        return new NewWorkspacePanel(id);
-                    }
-                });
-                
-            }
-        });
-
         form.add(new AjaxSubmitLink("next", form) {
 
             protected void onError(AjaxRequestTarget target, Form<?> form) {
@@ -222,6 +183,20 @@ public class ImportDataPage extends GeoServerSecuredPage {
                 // while the context is created
                 final AjaxSubmitLink self = this;
                 this.add(new AbstractAjaxTimerBehavior(Duration.milliseconds(100)) {
+                    public void exception(Exception e, AjaxRequestTarget target, boolean stop) {
+                        LOGGER.log(Level.SEVERE, e.getLocalizedMessage(), e);
+                        error(e);
+
+                        target.addComponent(feedbackPanel);
+
+                        //update the button back to original state
+                        resetNextButton(self, target);
+
+                        if (stop) {
+                            stop();
+                        }
+                    }
+
                     @Override
                     protected void onTimer(AjaxRequestTarget target) {
                         ImportSourcePanel panel = (ImportSourcePanel) sourcePanel.get("content");
@@ -231,8 +206,35 @@ public class ImportDataPage extends GeoServerSecuredPage {
                         } catch (IOException e) {
                             throw new WicketRuntimeException(e);
                         }
-                        WorkspaceInfo targetWorkspace = (WorkspaceInfo) 
-                            (workspace.getObject() != null ? workspace.getObject() : null);
+
+                        
+                        WorkspaceInfo targetWorkspace = (WorkspaceInfo) workspace.getObject(); 
+                        if (targetWorkspace == null) {
+                            Catalog cat = getCatalog();
+                            
+                            targetWorkspace = cat.getFactory().createWorkspace();
+
+                            String wsName = workspaceNameTextField.getDefaultModelObjectAsString();
+                            targetWorkspace.setName(wsName);
+                            
+                            NamespaceInfo ns = cat.getFactory().createNamespace();
+                            ns.setPrefix(wsName);
+                            try {
+                                ns.setURI("http://opengeo.org/#" + URLEncoder.encode(wsName, "ASCII"));
+                            } catch (UnsupportedEncodingException e) {
+                                throw new RuntimeException(e);
+                            }
+                            
+                            try {
+                                cat.add( targetWorkspace );
+                                cat.add( ns );
+                            }
+                            catch(Exception e) {
+                                exception(e, target, true);
+                                return;
+                            }
+                        }
+
                         StoreInfo targetStore = (StoreInfo) (store.getObject() != null ? store
                                 .getObject() : null);
 
@@ -272,13 +274,7 @@ public class ImportDataPage extends GeoServerSecuredPage {
                                 resetNextButton(self, target);
                             }
                         } catch (Exception e) {
-                            LOGGER.log(Level.SEVERE, e.getLocalizedMessage(), e);
-                            error(e);
-
-                            target.addComponent(feedbackPanel);
-
-                            //update the button back to original state
-                            resetNextButton(self, target);
+                            exception(e, target, false);
                         }
                         finally {
                             stop();
@@ -314,17 +310,20 @@ public class ImportDataPage extends GeoServerSecuredPage {
         dialog.setMinimalHeight(150);
 
         updateSourcePanel(Source.SPATIAL_FILES, null);
-        updateDefaultStore(null);
+        updateTargetStore(null);
     }
 
-    void updateDefaultStore(AjaxRequestTarget target) {
+    void updateTargetStore(AjaxRequestTarget target) {
         WorkspaceInfo ws = (WorkspaceInfo) workspace.getObject();
-        if (workspace != null) {
-            store.setObject(GeoServerApplication.get().getCatalog().getDefaultDataStore(ws));
-        }
+        store.setObject(ws != null ? 
+            GeoServerApplication.get().getCatalog().getDefaultDataStore(ws) : null);
+        
+        workspaceNameTextField.setVisible(ws == null);
+        workspaceNameTextField.setRequired(ws == null);
 
         if (target != null) {
             target.addComponent(storeChoice);
+            target.addComponent(workspaceNameTextField.getParent());
         }
     }
 
