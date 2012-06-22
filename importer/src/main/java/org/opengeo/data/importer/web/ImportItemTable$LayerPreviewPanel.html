@@ -1,12 +1,19 @@
 <html xmlns:wicket="http://wicket.apache.org/">
+<wicket:head>
+  <script type="text/javascript">
+  function goto(select) {
+    var selected = select.options[select.selectedIndex];
+    window.open(selected.value);
+  }
+  </script>
+</wicket:head>
 <body>
 <wicket:panel>
   <wicket:message key="viewIn">View in</wicket:message>
-  <select>
-   <option><a href="#" wicket:id="geoexplorer" target="_blank">GeoExplorer</a></option>
-   <option><a href="#" wicket:id="openlayers" target="_blank">Layer Preview</a></option>
-   <option><a href="#" wicket:id="google" target="_blank">Google Earth</a></option>
-   </select>
+  <select id="links" wicket:id="links" onchange="window.open(this.options[this.selectedIndex].value);">
+  </select>
+  <a href="#" onclick="goto(document.getElementById('links'));"><wicket:message key="go"></wicket:message></a>
+  
 </wicket:panel>
 </body>
 </html>

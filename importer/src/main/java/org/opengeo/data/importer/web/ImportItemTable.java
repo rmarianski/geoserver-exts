@@ -6,6 +6,7 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +20,7 @@ import org.apache.wicket.behavior.SimpleAttributeModifier;
 import org.apache.wicket.extensions.ajax.markup.html.modal.ModalWindow;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
+import org.apache.wicket.markup.html.form.ChoiceRenderer;
 import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.TextArea;
@@ -41,6 +43,7 @@ import org.geoserver.web.wicket.GeoServerDataProvider.Property;
 import org.geoserver.web.wicket.GeoServerDialog;
 import org.geoserver.web.wicket.GeoServerDialog.DialogDelegate;
 import org.geoserver.web.wicket.GeoServerTablePanel;
+import org.geoserver.web.wicket.ParamResourceModel;
 import org.geoserver.web.wicket.SRSToCRSModel;
 import org.geoserver.web.wicket.SimpleAjaxLink;
 import org.opengeo.data.importer.ImportItem;
@@ -332,17 +335,39 @@ public class ImportItemTable extends GeoServerTablePanel<ImportItem> {
         }
     }
 
-    static class LayerPreviewPanel extends Panel {
+    class LayerPreviewPanel extends Panel {
         public LayerPreviewPanel(String id, IModel<ImportItem> model) {
             super(id);
             
             LayerInfo layer = model.getObject().getLayer();
             PreviewLayer preview = new PreviewLayer(layer);
 
-            add(new ExternalLink("openlayers", preview.getWmsLink()+ "&format=application/openlayers"));
-            add(new ExternalLink("google", "../wms/kml?layers=" + layer.getName()));
-            add(new ExternalLink("geoexplorer", "/geoexplorer/index.html?layer="
+            List<PreviewLink> links = new ArrayList<PreviewLink>();
+            links.add(new PreviewLink("layerPreview", preview.getWmsLink()+ "&format=application/openlayers"));
+            links.add(new PreviewLink("googleearth", "../wms/kml?layers=" + layer.getName()));
+            links.add(new PreviewLink("geoexplorer", "/geoexplorer/index.html?layer=" 
                 + urlEncode(layer.getResource().getStore().getWorkspace().getName() + ":" +  layer.getName())));
+
+            add(new DropDownChoice<PreviewLink>("links", new Model(links.get(0)), links, 
+                new ChoiceRenderer<PreviewLink>() {
+                @Override
+                public Object getDisplayValue(PreviewLink object) {
+                    return new ParamResourceModel(object.id, ImportItemTable.this, object.id).getString();
+                }
+                @Override
+                public String getIdValue(PreviewLink object, int index) {
+                    return object.href;
+                }
+            }).setNullValid(false));
+       }
+
+        class PreviewLink implements Serializable {
+           String id;
+           String href;
+           PreviewLink(String id, String href) {
+               this.id = id;
+               this.href = href;
+           }
         }
     }
 
