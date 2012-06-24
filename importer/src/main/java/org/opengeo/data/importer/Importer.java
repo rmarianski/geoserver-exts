@@ -40,6 +40,8 @@ import org.geotools.data.FeatureReader;
 import org.geotools.data.FeatureStore;
 import org.geotools.data.FeatureWriter;
 import org.geotools.data.Transaction;
+import org.geotools.data.oracle.OracleDialect;
+import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.GeneralEnvelope;
 import org.geotools.geometry.jts.ReferencedEnvelope;
@@ -727,17 +729,23 @@ public class Importer implements InitializingBean, DisposableBean {
         
         FeatureReader reader = format.read(item.getTask().getData(), item);
         SimpleFeatureType featureType = (SimpleFeatureType) reader.getFeatureType();
-        DataStore dataStore = (DataStore) store.getDataStore(null);
         String featureTypeName = featureType.getName().getLocalPart();
 
+        DataStore dataStore = (DataStore) store.getDataStore(null);
+        FeatureDataConverter featureDataConverter = FeatureDataConverter.DEFAULT;
+        if (dataStore instanceof ShapefileDataStore) {
+            featureDataConverter = FeatureDataConverter.TO_SHAPEFILE;
+        }
+
+        featureType = featureDataConverter.convertType(featureType, featureType.getTypeName());
         UpdateMode updateMode = item.updateMode();
-        
         if (updateMode == null) {
             //find a unique type name in the target store
             featureTypeName = findUniqueNativeFeatureTypeName(featureType, store);
+            item.setOriginalName(featureType.getTypeName());
+
             if (!featureTypeName.equals(featureType.getTypeName())) {
                 //update the metadata
-                item.setOriginalName(featureType.getTypeName());
                 item.getLayer().getResource().setName(featureTypeName);
                 item.getLayer().getResource().setNativeName(featureTypeName);
                 
@@ -808,8 +816,8 @@ public class Importer implements InitializingBean, DisposableBean {
                 // makes the goemetry the first attribute reagardless, so blindly copying over
                 // attributes won't work unless the source type also  has the geometry as the 
                 // first attribute in the schema
-                next.setAttributes(feature.getAttributes());
-
+                featureDataConverter.convert(feature, next);
+                
                 // @hack #45678 - mask empty geometry or postgis will complain
                 Geometry geom = (Geometry) next.getDefaultGeometry();
                 if (geom != null && geom.isEmpty()) {
@@ -977,6 +985,12 @@ public class Importer implements InitializingBean, DisposableBean {
         DataStore dataStore = (DataStore) store.getDataStore(null);
         String name = featureType.getName().getLocalPart();
         
+        //hack for oracle, all names must be upper case
+        if (dataStore instanceof JDBCDataStore 
+            && ((JDBCDataStore)dataStore).getSQLDialect() instanceof OracleDialect) {
+            name = name.toUpperCase();
+        }
+
         //TODO: put an upper limit on how many times to try
         List<String> names = Arrays.asList(dataStore.getTypeNames());
         if (names.contains(name)) {

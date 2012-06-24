@@ -85,30 +85,18 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <!-- This dependency has been added to allow the module to compile the Oracle panels without
-           requiring too much reflection, but the plug-in won't be there at runtime unless the user
-           chose it in the GUI
-      -->
       <groupId>org.geotools.jdbc</groupId>
       <artifactId>gt-jdbc-oracle</artifactId>
       <version>${gt.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <!-- This dependency has been added to allow the module to compile the Sql Server panels without
-           requiring too much reflection, but the plug-in won't be there at runtime unless the user
-           chose it in the GUI
-      -->
       <groupId>org.geotools.jdbc</groupId>
       <artifactId>gt-jdbc-sqlserver</artifactId>
       <version>${gt.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <!-- This dependency has been added to allow the module to compile the SDE panels without
-           requiring too much reflection, but the plug-in won't be there at runtime unless the user
-           chose it in the GUI
-      -->
       <groupId>org.geotools</groupId>
       <artifactId>gt-arcsde</artifactId>
       <version>${gt.version}</version>
@@ -189,5 +177,28 @@
       </testResource>
     </testResources>
   </build>
+
+  <profiles>
+    <profile>
+      <id>oracle</id>
+      <dependencies>
+        <dependency>
+          <groupId>com.oracle</groupId>
+          <artifactId>ojdbc14</artifactId>
+          <version>10.2.0.3.0</version>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>sqlserver</id>
+      <dependencies>
+        <dependency>
+          <groupId>com.microsoft</groupId>
+          <artifactId>sqljdbc</artifactId>
+          <version>4.0</version>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
 
 </project>

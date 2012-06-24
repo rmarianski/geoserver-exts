@@ -211,27 +211,29 @@ public class ImportDataPage extends GeoServerSecuredPage {
                         WorkspaceInfo targetWorkspace = (WorkspaceInfo) workspace.getObject(); 
                         if (targetWorkspace == null) {
                             Catalog cat = getCatalog();
-                            
-                            targetWorkspace = cat.getFactory().createWorkspace();
 
                             String wsName = workspaceNameTextField.getDefaultModelObjectAsString();
-                            targetWorkspace.setName(wsName);
-                            
-                            NamespaceInfo ns = cat.getFactory().createNamespace();
-                            ns.setPrefix(wsName);
-                            try {
-                                ns.setURI("http://opengeo.org/#" + URLEncoder.encode(wsName, "ASCII"));
-                            } catch (UnsupportedEncodingException e) {
-                                throw new RuntimeException(e);
-                            }
-                            
-                            try {
-                                cat.add( targetWorkspace );
-                                cat.add( ns );
-                            }
-                            catch(Exception e) {
-                                exception(e, target, true);
-                                return;
+                            targetWorkspace = cat.getWorkspaceByName(wsName);
+                            if (targetWorkspace == null) {
+                                targetWorkspace = cat.getFactory().createWorkspace();
+                                targetWorkspace.setName(wsName);
+
+                                NamespaceInfo ns = cat.getFactory().createNamespace();
+                                ns.setPrefix(wsName);
+                                try {
+                                    ns.setURI("http://opengeo.org/#" + URLEncoder.encode(wsName, "ASCII"));
+                                } catch (UnsupportedEncodingException e) {
+                                    throw new RuntimeException(e);
+                                }
+
+                                try {
+                                    cat.add( targetWorkspace );
+                                    cat.add( ns );
+                                }
+                                catch(Exception e) {
+                                    exception(e, target, true);
+                                    return;
+                                }
                             }
                         }
 
