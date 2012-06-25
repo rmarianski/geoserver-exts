@@ -68,8 +68,6 @@ public abstract class ImporterDbTestSupport extends ImporterTestSupport {
         public File getFixture() {
             return fixture;
         }
-
-       
     }
     
     class DbTestData extends MockData {
