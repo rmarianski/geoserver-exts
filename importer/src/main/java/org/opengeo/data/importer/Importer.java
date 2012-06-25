@@ -40,6 +40,7 @@ import org.geotools.data.FeatureReader;
 import org.geotools.data.FeatureStore;
 import org.geotools.data.FeatureWriter;
 import org.geotools.data.Transaction;
+import org.geotools.data.directory.DirectoryDataStore;
 import org.geotools.data.oracle.OracleDialect;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
@@ -726,18 +727,19 @@ public class Importer implements InitializingBean, DisposableBean {
 
     void loadIntoDataStore(ImportItem item, DataStoreInfo store, VectorFormat format, 
         VectorTransformChain tx) throws Exception {
-        
-        FeatureReader reader = format.read(item.getTask().getData(), item);
+
+        ImportData data = item.getTask().getData();
+        FeatureReader reader = format.read(data, item);
         SimpleFeatureType featureType = (SimpleFeatureType) reader.getFeatureType();
         String featureTypeName = featureType.getName().getLocalPart();
 
         DataStore dataStore = (DataStore) store.getDataStore(null);
         FeatureDataConverter featureDataConverter = FeatureDataConverter.DEFAULT;
-        if (dataStore instanceof ShapefileDataStore) {
+        if (dataStore instanceof ShapefileDataStore || dataStore instanceof DirectoryDataStore) {
             featureDataConverter = FeatureDataConverter.TO_SHAPEFILE;
         }
 
-        featureType = featureDataConverter.convertType(featureType, featureType.getTypeName());
+        featureType = featureDataConverter.convertType(featureType, format, data, item);
         UpdateMode updateMode = item.updateMode();
         if (updateMode == null) {
             //find a unique type name in the target store
