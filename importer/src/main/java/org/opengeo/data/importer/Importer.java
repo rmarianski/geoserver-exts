@@ -1,5 +1,6 @@
 package org.opengeo.data.importer;
 
+import com.google.common.collect.Iterators;
 import com.thoughtworks.xstream.XStream;
 import com.vividsolutions.jts.geom.Geometry;
 import java.io.File;
@@ -9,10 +10,13 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
@@ -174,6 +178,25 @@ public class Importer implements InitializingBean, DisposableBean {
     
     public Iterator<ImportContext> getAllContexts() {
         return contextStore.iterator();
+    }
+    
+    public Iterator<ImportContext> getAllContextsByUpdated() {
+        try {
+            return contextStore.iterator("updated");
+        }
+        catch(UnsupportedOperationException e) {
+            //fallback
+            TreeSet sorted = new TreeSet<ImportContext>(new Comparator<ImportContext>() {
+                @Override
+                public int compare(ImportContext o1, ImportContext o2) {
+                    Date d1 = o1.getUpdated();
+                    Date d2 = o2.getUpdated();
+                    return -1 * d1.compareTo(d2);
+                }
+            });
+            Iterators.addAll(sorted, contextStore.iterator());
+            return sorted.iterator();
+        }
     }
 
     public ImportContext createContext(ImportData data, WorkspaceInfo targetWorkspace) throws IOException {
@@ -528,6 +551,7 @@ public class Importer implements InitializingBean, DisposableBean {
         }
 
         context.updateState();
+        context.updated();
         contextStore.save(context);
     }
 

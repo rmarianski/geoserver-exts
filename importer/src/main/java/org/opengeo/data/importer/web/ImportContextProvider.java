@@ -14,6 +14,16 @@ public class ImportContextProvider extends GeoServerDataProvider<ImportContext> 
     public static Property<ImportContext> CREATED = new BeanProperty("created", "created");
     public static Property<ImportContext> UPDATED = new BeanProperty("updated", "updated");
 
+    boolean sortByUpdated = false;
+
+    public ImportContextProvider() {
+        this(false);
+    }
+
+    public ImportContextProvider(boolean sortByUpdated) {
+        this.sortByUpdated = sortByUpdated;
+    }
+
     @Override
     protected List<Property<ImportContext>> getProperties() {
         return Arrays.asList(ID, STATE, CREATED, UPDATED);

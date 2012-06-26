@@ -11,7 +11,6 @@ import java.util.logging.LogRecord;
 
 import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.LayerInfo;
-import org.geoserver.ows.util.OwsUtils;
 import org.opengeo.data.importer.job.ProgressMonitor;
 import org.opengeo.data.importer.transform.TransformChain;
 

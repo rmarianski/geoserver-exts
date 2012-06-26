@@ -97,6 +97,7 @@ public class ImportDataPage extends GeoServerSecuredPage {
     String storeName;
     
     ImportContextTable importTable;
+    AjaxLink removeImportLink;
 
     GeoServerDialog dialog;
 
@@ -309,25 +310,38 @@ public class ImportDataPage extends GeoServerSecuredPage {
             }
         }.setOutputMarkupId(true).setEnabled(false));
 
-        importTable = new ImportContextTable("imports", new ImportContextProvider() {
+        importTable = new ImportContextTable("imports", new ImportContextProvider(true) {
             @Override
             protected List<org.geoserver.web.wicket.GeoServerDataProvider.Property<ImportContext>> getProperties() {
-                return Arrays.asList(ID, CREATED, STATE);
+                return Arrays.asList(ID, STATE, UPDATED);
             }
-        });
+        }, true) {
+            protected void onSelectionUpdate(AjaxRequestTarget target) {
+                removeImportLink.setEnabled(!getSelection().isEmpty());
+                target.addComponent(removeImportLink);
+            };
+        };
         importTable.setOutputMarkupId(true);
         importTable.setFilterable(false);
         importTable.setSortable(false);
         form.add(importTable);
 
-        form.add(new AjaxLink("removeAll") {
+        form.add(removeImportLink = new AjaxLink("remove") {
             @Override
             public void onClick(AjaxRequestTarget target) {
                 Importer importer = ImporterWebUtils.importer();
-                importer.getStore().removeAll();
+                for (ImportContext c : importTable.getSelection()) {
+                    try {
+                        importer.delete(c);
+                    } catch (IOException e) {
+                        LOGGER.log(Level.WARNING, "Error deleting context", c);
+                    }
+                }
+                importTable.clearSelection();
                 target.addComponent(importTable);
             }
-        }.setVisible(ImporterWebUtils.isDevMode()));
+        });
+        removeImportLink.setOutputMarkupId(true).setEnabled(false);
         
         add(dialog = new GeoServerDialog("dialog"));
         dialog.setInitialWidth(400);
