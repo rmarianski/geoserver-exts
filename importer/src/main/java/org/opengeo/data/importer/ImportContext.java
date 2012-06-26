@@ -10,6 +10,7 @@ import java.util.List;
 import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.StoreInfo;
 import org.geoserver.catalog.WorkspaceInfo;
+import org.opengeo.data.importer.job.ProgressMonitor;
 
 import static org.opengeo.data.importer.ImporterUtils.*;
 
@@ -25,7 +26,7 @@ public class ImportContext implements Serializable {
     private static final long serialVersionUID = 8790675013874051197L;
 
     public static enum State {
-        PENDING, READY, RUNNING, INCOMPLETE, COMPLETE
+        PENDING, READY, RUNNING, INCOMPLETE, COMPLETE, CANCELLED;
     }
 
     /** identifier */
@@ -79,6 +80,8 @@ public class ImportContext implements Serializable {
      * TODO: false is a better default for this, change it and give mapstory/IS a heads up.
      */
     boolean archive = true;
+
+    volatile ProgressMonitor progress;
 
     public ImportContext(long id) {
         this();
@@ -221,6 +224,17 @@ public class ImportContext implements Serializable {
             task.setContext(this);
             task.reattach(catalog, lookupByName);
         }
+    }
+
+    public ProgressMonitor progress() {
+        if (progress == null) {
+            progress = new ProgressMonitor();
+        }
+        return progress;
+    }
+
+    public void setProgress(ProgressMonitor progress) {
+        this.progress = progress;
     }
 
     @Override

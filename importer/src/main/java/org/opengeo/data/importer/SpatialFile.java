@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.geotools.referencing.CRS;
+import org.opengeo.data.importer.job.ProgressMonitor;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
@@ -50,7 +51,7 @@ public class SpatialFile extends FileData {
     }
 
     @Override
-    public void prepare() throws IOException {
+    public void prepare(ProgressMonitor m) throws IOException {
         //round up all the files with the same name
         suppFiles = new ArrayList();
         prjFile = null;

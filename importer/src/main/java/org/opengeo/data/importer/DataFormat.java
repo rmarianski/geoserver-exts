@@ -17,6 +17,7 @@ import org.geotools.coverage.grid.io.UnknownFormat;
 import org.geotools.data.DataStoreFactorySpi;
 import org.geotools.data.FileDataStoreFactorySpi;
 import org.geotools.data.FileDataStoreFinder;
+import org.opengeo.data.importer.job.ProgressMonitor;
 import org.vfny.geoserver.util.DataStoreUtils;
 
 /**
@@ -86,5 +87,5 @@ public abstract class DataFormat implements Serializable {
     public abstract StoreInfo createStore(ImportData data, WorkspaceInfo workspace, Catalog catalog) 
         throws IOException;
 
-    public abstract List<ImportItem> list(ImportData data, Catalog catalog) throws IOException;
+    public abstract List<ImportItem> list(ImportData data, Catalog catalog, ProgressMonitor monitor) throws IOException;
 }

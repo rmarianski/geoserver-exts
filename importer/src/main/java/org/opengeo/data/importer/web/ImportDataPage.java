@@ -9,6 +9,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -24,6 +26,7 @@ import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.ajax.markup.html.form.AjaxSubmitLink;
 import org.apache.wicket.behavior.AttributeAppender;
 import org.apache.wicket.behavior.SimpleAttributeModifier;
+import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.DropDownChoice;
@@ -59,11 +62,15 @@ import org.geoserver.web.wicket.HelpLink;
 import org.geoserver.web.wicket.ParamResourceModel;
 import org.geoserver.web.wicket.SimpleAjaxLink;
 import org.geotools.data.DataStoreFactorySpi;
+import org.geotools.util.DefaultProgressListener;
 import org.geotools.util.logging.Logging;
 import org.opengeo.data.importer.ImportContext;
 import org.opengeo.data.importer.ImportData;
 import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.Importer;
+import org.opengeo.data.importer.job.ProgressMonitor;
+import org.opengeo.data.importer.job.Task;
+import org.opengis.util.ProgressListener;
 
 /**
  * First page of the import wizard.
@@ -82,7 +89,8 @@ public class ImportDataPage extends GeoServerSecuredPage {
     WorkspaceDetachableModel workspace;
     DropDownChoice workspaceChoice;
     TextField workspaceNameTextField;
-    
+    Component statusLabel;
+
     StoreModel store;
     DropDownChoice storeChoice;
     
@@ -91,7 +99,7 @@ public class ImportDataPage extends GeoServerSecuredPage {
     ImportContextTable importTable;
 
     GeoServerDialog dialog;
-    
+
     public ImportDataPage(PageParameters params) {
         Form form = new Form("form");
         add(form);
@@ -163,128 +171,143 @@ public class ImportDataPage extends GeoServerSecuredPage {
 
         storeChoice.setNullValid(true);
         form.add(storeChoice);
-        
+
+        form.add(statusLabel = new Label("status", new Model()).setOutputMarkupId(true));
         form.add(new AjaxSubmitLink("next", form) {
+            @Override
+            protected void disableLink(ComponentTag tag) {
+                super.disableLink(tag);
+                tag.setName("a");
+                tag.addBehavior(new SimpleAttributeModifier("class", "disabled"));
+            }
 
             protected void onError(AjaxRequestTarget target, Form<?> form) {
                 target.addComponent(feedbackPanel);
             }
             
-            protected void onSubmit(AjaxRequestTarget target, Form<?> form) {
+            protected void onSubmit(AjaxRequestTarget target, final Form<?> form) {
                 
-                //first update the button to indicate we are working
-                add(new AttributeAppender("class", true, new Model("button-working icon"), " "));
+                //update status to indicate we are working
+                statusLabel.add(new SimpleAttributeModifier("class", "working-link"));
+                statusLabel.setDefaultModelObject("Working");
+                target.addComponent(statusLabel);
+                
+                //enable cancel and disable this
+                Component cancel = form.get("cancel");
+                cancel.setEnabled(true);
+                target.addComponent(cancel);
+
                 setEnabled(false);
-                get(0).setDefaultModelObject("Working");
-
                 target.addComponent(this);
-
-                //start a timer to actually do the work, which will allow the link to update 
-                // while the context is created
+                
                 final AjaxSubmitLink self = this;
-                this.add(new AbstractAjaxTimerBehavior(Duration.milliseconds(100)) {
-                    public void exception(Exception e, AjaxRequestTarget target, boolean stop) {
-                        LOGGER.log(Level.SEVERE, e.getLocalizedMessage(), e);
-                        error(e);
 
-                        target.addComponent(feedbackPanel);
+                final Long jobid;
+                try {
+                    jobid = createContext();
+                } catch (Exception e) {
+                    error(e);
+                    return;
+                }
 
-                        //update the button back to original state
-                        resetNextButton(self, target);
+                cancel.setDefaultModelObject(jobid);
+                this.add(new AbstractAjaxTimerBehavior(Duration.seconds(3)) {
+                   protected void onTimer(AjaxRequestTarget target) {
+                       Importer importer = ImporterWebUtils.importer();
+                       Task<ImportContext> t = importer.getTask(jobid);
 
-                        if (stop) {
-                            stop();
-                        }
-                    }
+                       if (t.isDone()) {
+                           try {
+                               if (t.getError() != null) {
+                                   error(t.getError());
+                               }
+                               else if (t.isCancelled()) {
+                                   //do nothing
+                               }
+                               else {
+                                   ImportContext imp = t.get();
+                                   
+                                   //check the import for actual things to do
+                                   boolean proceed = !imp.getTasks().isEmpty();
+                                   if (proceed) {
+                                       //check that all the tasks are non-empty
+                                       proceed = false;
+                                       for (ImportTask task : imp.getTasks()) {
+                                           if (!task.getItems().isEmpty()) {
+                                               proceed = true;
+                                               break;
+                                           }
+                                       }
+                                   }
 
-                    @Override
-                    protected void onTimer(AjaxRequestTarget target) {
-                        ImportSourcePanel panel = (ImportSourcePanel) sourcePanel.get("content");
-                        ImportData source;
-                        try {
-                            source = panel.createImportSource();
-                        } catch (IOException e) {
-                            throw new WicketRuntimeException(e);
-                        }
+                                   if (proceed) {
+                                       imp.setArchive(false);
+                                       importer.changed(imp);
+           
+                                       PageParameters pp = new PageParameters();
+                                       pp.put("id", imp.getId());
+           
+                                       setResponsePage(ImportPage.class, pp);
+                                   }
+                                   else {
+                                       info("No data to import was found");
+                                       importer.delete(imp);
+                                   }
+                               }
+                           }
+                           catch(Exception e) {
+                               error(e);
+                           }
+                           finally {
+                               stop();
+                               
+                               //update the button back to original state
+                               resetButtons(form, target);
 
-                        
-                        WorkspaceInfo targetWorkspace = (WorkspaceInfo) workspace.getObject(); 
-                        if (targetWorkspace == null) {
-                            Catalog cat = getCatalog();
+                               target.addComponent(feedbackPanel);
+                           }
+                           return;
+                       }
 
-                            String wsName = workspaceNameTextField.getDefaultModelObjectAsString();
-                            targetWorkspace = cat.getWorkspaceByName(wsName);
-                            if (targetWorkspace == null) {
-                                targetWorkspace = cat.getFactory().createWorkspace();
-                                targetWorkspace.setName(wsName);
+                       ProgressMonitor m = t.getMonitor();
+                       String msg = m.getTask() != null ? m.getTask().toString() : "Working";
 
-                                NamespaceInfo ns = cat.getFactory().createNamespace();
-                                ns.setPrefix(wsName);
-                                try {
-                                    ns.setURI("http://opengeo.org/#" + URLEncoder.encode(wsName, "ASCII"));
-                                } catch (UnsupportedEncodingException e) {
-                                    throw new RuntimeException(e);
-                                }
-
-                                try {
-                                    cat.add( targetWorkspace );
-                                    cat.add( ns );
-                                }
-                                catch(Exception e) {
-                                    exception(e, target, true);
-                                    return;
-                                }
-                            }
-                        }
-
-                        StoreInfo targetStore = (StoreInfo) (store.getObject() != null ? store
-                                .getObject() : null);
-
-                        Importer importer = ImporterWebUtils.importer();
-                        try {
-                            ImportContext imp = importer.createContext(source, targetWorkspace,
-                                    targetStore);
-
-                            //check the import for actual things to do
-                            boolean proceed = !imp.getTasks().isEmpty();
-                            if (proceed) {
-                                //check that all the tasks are non-empty
-                                proceed = false;
-                                for (ImportTask t : imp.getTasks()) {
-                                    if (!t.getItems().isEmpty()) {
-                                        proceed = true;
-                                        break;
-                                    }
-                                }
-                            }
-
-                            if (proceed) {
-                                imp.setArchive(false);
-                                importer.changed(imp);
-    
-                                PageParameters pp = new PageParameters();
-                                pp.put("id", imp.getId());
-    
-                                setResponsePage(ImportPage.class, pp);
-                            }
-                            else {
-                                info("No data to import was found");
-                                target.addComponent(feedbackPanel);
-
-                                importer.delete(imp);
-
-                                resetNextButton(self, target);
-                            }
-                        } catch (Exception e) {
-                            exception(e, target, false);
-                        }
-                        finally {
-                            stop();
-                        }
-                    }
+                       statusLabel.setDefaultModelObject(msg);
+                       target.addComponent(statusLabel);
+                   }; 
                 });
             }
-        }.add(new Label("message", new Model("Next"))));
+        });
+        
+        form.add(new AjaxLink<Long>("cancel", new Model<Long>()) {
+            protected void disableLink(ComponentTag tag) {
+                super.disableLink(tag);
+                ImporterWebUtils.disableLink(tag); 
+            };
+            @Override
+            public void onClick(AjaxRequestTarget target) {
+                Importer importer = ImporterWebUtils.importer();
+                Long jobid = getModelObject();
+                Task<ImportContext> task = importer.getTask(jobid);
+                if (task != null && !task.isDone() && !task.isCancelled()) {
+                    task.getMonitor().setCanceled(true);
+                    task.cancel(false);
+                    try {
+                        task.get();
+                    }
+                    catch(Exception e) {
+                    }
+                }
+
+                setEnabled(false);
+                
+                Component next = getParent().get("next");
+                next.setEnabled(true);
+                
+                target.addComponent(this);
+                target.addComponent(next);
+            }
+        }.setOutputMarkupId(true).setEnabled(false));
 
         importTable = new ImportContextTable("imports", new ImportContextProvider() {
             @Override
@@ -315,6 +338,40 @@ public class ImportDataPage extends GeoServerSecuredPage {
         updateTargetStore(null);
     }
 
+    Long createContext() throws Exception {
+        ImportSourcePanel panel = (ImportSourcePanel) sourcePanel.get("content");
+        ImportData source = panel.createImportSource();
+
+        WorkspaceInfo targetWorkspace = (WorkspaceInfo) workspace.getObject(); 
+        if (targetWorkspace == null) {
+            Catalog cat = getCatalog();
+
+            String wsName = workspaceNameTextField.getDefaultModelObjectAsString();
+            targetWorkspace = cat.getWorkspaceByName(wsName);
+            if (targetWorkspace == null) {
+                targetWorkspace = cat.getFactory().createWorkspace();
+                targetWorkspace.setName(wsName);
+
+                NamespaceInfo ns = cat.getFactory().createNamespace();
+                ns.setPrefix(wsName);
+                try {
+                    ns.setURI("http://opengeo.org/#" + URLEncoder.encode(wsName, "ASCII"));
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException(e);
+                }
+
+                cat.add( targetWorkspace );
+                cat.add( ns );
+            }
+        }
+
+        StoreInfo targetStore = (StoreInfo) (store.getObject() != null ? store
+                .getObject() : null);
+
+        Importer importer = ImporterWebUtils.importer();
+        return importer.createContextAsync(source, targetWorkspace, targetStore);
+
+    }
     void updateTargetStore(AjaxRequestTarget target) {
         WorkspaceInfo ws = (WorkspaceInfo) workspace.getObject();
         store.setObject(ws != null ? 
@@ -343,11 +400,15 @@ public class ImportDataPage extends GeoServerSecuredPage {
         }
     }
 
-    void resetNextButton(AjaxSubmitLink next, AjaxRequestTarget target) {
-        next.add(new AttributeModifier("class", true, new Model("")));
-        next.setEnabled(true);
-        next.get(0).setDefaultModelObject("Next");
-        target.addComponent(next);
+    void resetButtons(Form form, AjaxRequestTarget target) {
+        form.get("next").setEnabled(true);
+        form.get("cancel").setEnabled(false);
+        statusLabel.setDefaultModelObject("");
+        statusLabel.add(new SimpleAttributeModifier("class", ""));
+        
+        target.addComponent(form.get("next"));
+        target.addComponent(form.get("cancel"));
+        target.addComponent(form.get("status"));
     }
 
     class SourceLabelPanel extends Panel {

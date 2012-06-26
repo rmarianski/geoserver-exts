@@ -10,6 +10,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFactorySpi;
 import org.geotools.jdbc.JDBCDataStoreFactory;
+import org.opengeo.data.importer.job.ProgressMonitor;
 import org.vfny.geoserver.util.DataStoreUtils;
 
 public class Database extends ImportData {
@@ -51,7 +52,7 @@ public class Database extends ImportData {
      * Loads the available tables from this database.
      */
     @Override
-    public void prepare() throws IOException {
+    public void prepare(ProgressMonitor m) throws IOException {
         tables = new ArrayList<Table>();
         DataStoreFactorySpi factory = 
                 (DataStoreFactorySpi) DataStoreUtils.aquireFactory(parameters);
@@ -59,6 +60,7 @@ public class Database extends ImportData {
             throw new IOException("Unable to find data store for specified parameters");
         }
 
+        m.setTask("Loading tables");
         DataStore store = factory.createDataStore(parameters);
         if (store == null) {
             throw new IOException("Unable to create data store from specified parameters");

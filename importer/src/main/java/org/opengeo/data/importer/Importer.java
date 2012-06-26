@@ -51,6 +51,10 @@ import org.geotools.referencing.CRS;
 import org.geotools.util.logging.Logging;
 import org.opengeo.data.importer.ImportTask.State;
 import org.opengeo.data.importer.bdb.BDBImportStore;
+import org.opengeo.data.importer.job.Job;
+import org.opengeo.data.importer.job.JobQueue;
+import org.opengeo.data.importer.job.ProgressMonitor;
+import org.opengeo.data.importer.job.Task;
 import org.opengeo.data.importer.transform.RasterTransformChain;
 import org.opengeo.data.importer.transform.ReprojectTransform;
 import org.opengeo.data.importer.transform.TransformChain;
@@ -186,7 +190,14 @@ public class Importer implements InitializingBean, DisposableBean {
     
     public ImportContext createContext(ImportData data, WorkspaceInfo targetWorkspace, 
         StoreInfo targetStore) throws IOException {
+        return createContext(data, targetWorkspace, targetStore, null);
+    }
+
+    public ImportContext createContext(ImportData data, WorkspaceInfo targetWorkspace, 
+            StoreInfo targetStore, ProgressMonitor monitor) throws IOException {
+
         ImportContext context = new ImportContext();
+        context.setProgress(monitor);
         context.setData(data);
 
         if (targetWorkspace == null && targetStore != null) {
@@ -199,8 +210,23 @@ public class Importer implements InitializingBean, DisposableBean {
         context.setTargetStore(targetStore);
 
         init(context);
-        contextStore.add(context);
+        if (context.progress().isCanceled()) {
+            context.setState(ImportContext.State.CANCELLED);
+        }
+        else {
+            contextStore.add(context);
+        }
         return context;
+    }
+
+    public Long createContextAsync(final ImportData data, final WorkspaceInfo targetWorkspace, 
+        final StoreInfo targetStore) throws IOException {
+        return jobs.submit(new Job<ImportContext>() {
+            @Override
+            protected ImportContext call(ProgressMonitor monitor) throws Exception {
+                return createContext(data, targetWorkspace, targetStore, monitor);
+            }
+        });
     }
 
     public List<ImportTask> update(ImportContext context, ImportData data) throws IOException {
@@ -225,7 +251,7 @@ public class Importer implements InitializingBean, DisposableBean {
         if (data == null) {
             return Collections.EMPTY_LIST;
         }
-        data.prepare();
+        data.prepare(context.progress());
 
         List<ImportTask> tasks = new ArrayList();
         StoreInfo targetStore = context.getTargetStore();
@@ -328,7 +354,7 @@ public class Importer implements InitializingBean, DisposableBean {
         boolean ready = true;
         for (ImportTask task : context.getTasks()) {
             ImportData data = task.getData();
-            data.prepare();
+            data.prepare(context.progress());
 
             DataFormat format = data.getFormat();
 
@@ -370,7 +396,7 @@ public class Importer implements InitializingBean, DisposableBean {
 
             if (task.getItems().isEmpty()) {
                 //ask the format for the list of "resources" to import
-                for (ImportItem item : format.list(data, catalog)) {
+                for (ImportItem item : format.list(data, catalog, task.progress())) {
                     task.addItem(item);
 
                     item.setTransform(format instanceof VectorFormat 
@@ -482,8 +508,13 @@ public class Importer implements InitializingBean, DisposableBean {
     }
 
     public void run(ImportContext context, ImportFilter filter) throws IOException {
+        run(context, filter, null);
+    }
+    
+    public void run(ImportContext context, ImportFilter filter, ProgressMonitor monitor) throws IOException {
+        context.setProgress(monitor);
         context.setState(ImportContext.State.RUNNING);
-
+        
         if (LOGGER.isLoggable(Level.FINE)) {
             LOGGER.fine("Running import " + context.getId());
         }
@@ -566,16 +597,17 @@ public class Importer implements InitializingBean, DisposableBean {
     }
 
     public Long runAsync(final ImportContext context, final ImportFilter filter) {
-        return jobs.submit(new Callable<ImportContext>() {
-            public ImportContext call() throws Exception {
-                run(context, filter);
+        return jobs.submit(new Job<ImportContext>() {
+            @Override
+            protected ImportContext call(ProgressMonitor monitor) throws Exception {
+                run(context, filter, monitor);
                 return context;
             }
         });
     }
 
-    public Future<ImportContext> getFuture(Long job) {
-        return (Future<ImportContext>) jobs.getFuture(job);
+    public Task<ImportContext> getTask(Long job) {
+        return (Task<ImportContext>) jobs.getFuture(job);
     }
 
     /* 
@@ -604,7 +636,7 @@ public class Importer implements InitializingBean, DisposableBean {
 
         //add the individual resources
         for (ImportItem item : task.getItems()) {
-            if (item.getState() != ImportItem.State.READY) {
+            if (!item.readyForImport()) {
                 continue;
             }
             if (!filter.include(item)) {
@@ -646,7 +678,10 @@ public class Importer implements InitializingBean, DisposableBean {
         }
         // @todo This needs to be transactional and probably should be extracted to a class for clarity
         for (ImportItem item : task.getItems()) {
-            if (item.getState() != ImportItem.State.READY) {
+            if (task.progress().isCanceled()){
+                break;
+            }
+            if (!item.readyForImport()) {
                 continue;
             }
             if (!filter.include(item)) {
@@ -663,18 +698,20 @@ public class Importer implements InitializingBean, DisposableBean {
                 continue;
             }
 
+            boolean canceled = false;
             DataFormat format = task.getData().getFormat();
             if (format instanceof VectorFormat) {
                 try {
                     currentlyProcessing.put(task.getContext().getId(), item);
                     loadIntoDataStore(item, (DataStoreInfo)task.getStore(), (VectorFormat) format, (VectorTransformChain) tx);
+                    canceled = item.progress().isCanceled();
 
                     FeatureTypeInfo featureType = (FeatureTypeInfo) item.getLayer().getResource();
                     featureType.getAttributes().clear();
 
                     //JD: not sure what the rationale is here... ask IS
                     //if (task.getUpdateMode() == null) {
-                    if (item.updateMode() == null) {
+                    if (!canceled && item.updateMode() == null) {
                         addToCatalog(item, task);
                     }
                 }
@@ -691,11 +728,11 @@ public class Importer implements InitializingBean, DisposableBean {
                 throw new UnsupportedOperationException("Indirect raster import not yet supported");
             }
 
-            if (!doPostTransform(item, task.getData(), tx)) {
+            if (!canceled && !doPostTransform(item, task.getData(), tx)) {
                 continue;
             }
 
-            item.setState(ImportItem.State.COMPLETE);
+            item.setState(canceled ? ImportItem.State.CANCELED : ImportItem.State.COMPLETE);
         }
     }
 
@@ -797,6 +834,8 @@ public class Importer implements InitializingBean, DisposableBean {
         // @todo ability to collect transformation errors for use in a dry-run (auto-rollback)
         FeatureWriter writer = null;
         
+        ProgressMonitor monitor = item.progress();
+        
         // @todo need better way to communicate to client
         int skipped = 0;
         int cnt = 0;
@@ -811,6 +850,9 @@ public class Importer implements InitializingBean, DisposableBean {
             writer = dataStore.getFeatureWriterAppend(featureTypeName, transaction);
             
             while(reader.hasNext()) {
+                if (monitor.isCanceled()){
+                    break;
+                }
                 SimpleFeature feature = (SimpleFeature) reader.next();
                 SimpleFeature next = (SimpleFeature) writer.next();
 
@@ -847,7 +889,7 @@ public class Importer implements InitializingBean, DisposableBean {
         } 
         // no finally block, there is too much to do
         
-        if (error != null) {
+        if (error != null || monitor.isCanceled()) {
             // all sub exceptions in this catch block should be logged, not thrown
             // as the triggering exception will be thrown
 
@@ -1038,7 +1080,14 @@ public class Importer implements InitializingBean, DisposableBean {
     }
 
     public void delete(ImportContext importContext) throws IOException {
-        importContext.delete();
+        delete(importContext, false);
+    }
+    
+    public void delete(ImportContext importContext, boolean purge) throws IOException {
+        if (purge) {
+            importContext.delete();    
+        }
+        
         contextStore.remove(importContext);
     }
 

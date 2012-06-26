@@ -210,6 +210,8 @@ public class ImportItemTable extends GeoServerTablePanel<ImportItem> {
                 return "warning-link";
             //case ERROR:
             //    return "error-link";
+            case CANCELED:
+                return "cancel-link";
             }
             return "";
         }

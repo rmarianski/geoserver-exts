@@ -14,6 +14,7 @@ import org.geoserver.catalog.ResourceInfo;
 import org.geoserver.catalog.WorkspaceInfo;
 import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
+import org.opengeo.data.importer.job.ProgressMonitor;
 
 /**
  * Base for formats that have a GridFormat implementation.
@@ -70,7 +71,8 @@ public class GridFormat extends RasterFormat {
     }
 
     @Override
-    public List<ImportItem> list(ImportData data, Catalog catalog) throws IOException {
+    public List<ImportItem> list(ImportData data, Catalog catalog, ProgressMonitor monitor) 
+            throws IOException {
         AbstractGridCoverage2DReader reader = gridReader(data);
         
         List<ImportItem> resources = new ArrayList<ImportItem>();

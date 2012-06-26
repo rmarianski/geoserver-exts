@@ -3,6 +3,8 @@ package org.opengeo.data.importer;
 import java.io.IOException;
 import java.io.Serializable;
 
+import org.opengeo.data.importer.job.ProgressMonitor;
+
 /**
  * Base class for all types of data sources that can be imported.
  * 
@@ -46,9 +48,16 @@ public abstract class ImportData implements Serializable{
     /**
      * Runs any initial checks against the data preparing for import. 
      */
-    public void prepare() throws IOException {
+    public final void prepare() throws IOException {
+        prepare(new ProgressMonitor());
     }
-    
+
+    /**
+     * Runs any initial checks against the data preparing for import. 
+     */
+    public void prepare(ProgressMonitor monitor) throws IOException {
+    }
+
     public void cleanup() throws IOException {
         // do nothing
     }
@@ -69,7 +78,7 @@ public abstract class ImportData implements Serializable{
         }
 
         @Override
-        public void prepare() throws IOException {
+        public void prepare(ProgressMonitor m) throws IOException {
             throw new UnsupportedOperationException();
         }
     

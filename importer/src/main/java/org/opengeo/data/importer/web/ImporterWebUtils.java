@@ -1,6 +1,8 @@
 package org.opengeo.data.importer.web;
 
 import org.apache.wicket.Application;
+import org.apache.wicket.behavior.SimpleAttributeModifier;
+import org.apache.wicket.markup.ComponentTag;
 import org.geoserver.web.GeoServerApplication;
 import org.opengeo.data.importer.Importer;
 
@@ -18,5 +20,10 @@ public class ImporterWebUtils {
 
     static boolean isDevMode() {
         return Application.DEVELOPMENT.equalsIgnoreCase(GeoServerApplication.get().getConfigurationType());
+    }
+
+    static void disableLink(ComponentTag tag) {
+        tag.setName("a");
+        tag.addBehavior(new SimpleAttributeModifier("class", "disabled"));
     }
 }

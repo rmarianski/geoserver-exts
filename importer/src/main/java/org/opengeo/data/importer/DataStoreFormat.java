@@ -28,6 +28,7 @@ import org.geotools.data.Transaction;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.jdbc.JDBCDataStoreFactory;
 import org.geotools.util.logging.Logging;
+import org.opengeo.data.importer.job.ProgressMonitor;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
 import org.opengis.feature.type.FeatureType;
@@ -89,7 +90,7 @@ public class DataStoreFormat extends VectorFormat {
     }
 
     @Override
-    public List<ImportItem> list(ImportData data, Catalog catalog) throws IOException {
+    public List<ImportItem> list(ImportData data, Catalog catalog, ProgressMonitor monitor) throws IOException {
         DataStore dataStore = createDataStore(data);
         try {
             CatalogBuilder cb = new CatalogBuilder(catalog);
@@ -100,6 +101,11 @@ public class DataStoreFormat extends VectorFormat {
             
             List<ImportItem> resources = new ArrayList<ImportItem>();
             for (String typeName : dataStore.getTypeNames()) {
+                if (monitor.isCanceled()) {
+                    break;
+                }
+                monitor.setTask("Processing " + typeName);
+
                 // warning - this will log a scary exception if SRS cannot be found
                 try {
                     SimpleFeatureType nativeFeatureType = dataStore.getSchema(typeName);

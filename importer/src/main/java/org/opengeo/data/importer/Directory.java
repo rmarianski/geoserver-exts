@@ -1,6 +1,11 @@
 package org.opengeo.data.importer;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -10,13 +15,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.io.FilenameUtils;
 import org.geoserver.data.util.IOUtils;
 import org.geotools.util.logging.Logging;
-import org.h2.store.fs.FileObjectOutputStream;
+import org.opengeo.data.importer.job.ProgressMonitor;
 
 public class Directory extends FileData {
 
@@ -85,7 +90,7 @@ public class Directory extends FileData {
     }
 
     @Override
-    public void prepare() throws IOException {
+    public void prepare(ProgressMonitor m) throws IOException {
         files = new ArrayList<FileData>();
 
         //recursively search for spatial files, maintain a queue of directories to recurse into
@@ -94,6 +99,11 @@ public class Directory extends FileData {
 
         while(!q.isEmpty()) {
             File dir = q.poll();
+
+            if (m.isCanceled()){
+                return;
+            }
+            m.setTask("Scanning " + dir.getPath());
 
             //get all the regular (non directory) files
             Set<File> all = new LinkedHashSet<File>(Arrays.asList(dir.listFiles(new FilenameFilter() {
@@ -115,7 +125,7 @@ public class Directory extends FileData {
                     // are all hidden files anyway
                     if (!"__MACOSX".equals(f.getName())) {
                         Directory d = new Directory(f);
-                        d.prepare();
+                        d.prepare(m);
 
                         files.add(d);
                     }
@@ -137,7 +147,7 @@ public class Directory extends FileData {
                     sf.setFormat(format);
 
                     //gather up the related files
-                    sf.prepare();
+                    sf.prepare(m);
 
                     files.add(sf);
 
@@ -385,8 +395,8 @@ public class Directory extends FileData {
         }
 
         @Override
-        public void prepare() throws IOException {
-            super.prepare();
+        public void prepare(ProgressMonitor m) throws IOException {
+            super.prepare(m);
 
             files.retainAll(filter);
             format = format();

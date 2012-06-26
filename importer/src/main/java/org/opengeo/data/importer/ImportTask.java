@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.StoreInfo;
+import org.opengeo.data.importer.job.ProgressMonitor;
 
 import static org.opengeo.data.importer.ImporterUtils.*;
 
@@ -189,6 +190,10 @@ public class ImportTask implements Serializable {
             item.setTask(this);
             item.reattach(catalog, lookupByName);
         }
+    }
+
+    public ProgressMonitor progress() {
+        return context.progress();
     }
 
     @Override

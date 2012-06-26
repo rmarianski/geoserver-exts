@@ -57,6 +57,7 @@ import org.opengeo.data.importer.ImportItem;
 import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.RasterFormat;
 import org.opengeo.data.importer.VectorFormat;
+import org.opengeo.data.importer.job.Task;
 
 public class ImportPage extends GeoServerSecuredPage {
 
@@ -134,7 +135,8 @@ public class ImportPage extends GeoServerSecuredPage {
                 ImportData data = task.getData();
 
                 item.add(new Icon("icon",new DataIconModel(data)));
-                item.add(new Label("title", new DataTitleModel(task)));
+                item.add(new Label("title", new DataTitleModel(task))
+                    .add(new AttributeModifier("title", new DataTitleModel(task, false))));
 
                 StoreInfo store = task.getStore();
                 if (store != null) {
@@ -197,7 +199,7 @@ public class ImportPage extends GeoServerSecuredPage {
                 final ImportItemTable itemTable = new ImportItemTable("items", provider, selectable) {
                     @Override
                     protected void onSelectionUpdate(AjaxRequestTarget target) {
-                        updateImportLink((AjaxLink) item.get("importContainer:import"), this, target);
+                        updateImportLink((AjaxLink) item.get("import"), this, target);
                     }
                 }.setFeedbackPanel(feedbackPanel);
                 item.add(itemTable);
@@ -206,15 +208,11 @@ public class ImportPage extends GeoServerSecuredPage {
                 itemTable.setFilterable(false);
                 itemTable.setSortable(false);
 
-                WebMarkupContainer importLinkContainer = new WebMarkupContainer("importContainer");
-                importLinkContainer.setOutputMarkupId(true);
-                item.add(importLinkContainer);
-
-                final AjaxLink importLink = new AjaxLink("import") {
+                final AjaxLink<Long> importLink = new AjaxLink<Long>("import", new Model<Long>()) {
                     @Override
                     protected void disableLink(ComponentTag tag) {
-                        tag.remove("onclick");
-                        tag.remove("href");
+                        super.disableLink(tag);
+                        ImporterWebUtils.disableLink(tag);
                     }
                     @Override
                     public void onClick(AjaxRequestTarget target) {
@@ -225,6 +223,7 @@ public class ImportPage extends GeoServerSecuredPage {
 
                         final Long jobid = 
                             importer().runAsync(task.getContext(), filter);
+                        setDefaultModelObject(jobid);
 
                         final AjaxLink self = this;
 
@@ -232,7 +231,7 @@ public class ImportPage extends GeoServerSecuredPage {
                         itemTable.add(new AbstractAjaxTimerBehavior(Duration.milliseconds(500)) {
                             @Override
                             protected void onTimer(AjaxRequestTarget target) {
-                                Future<ImportContext> job = importer().getFuture(jobid); 
+                                Task<ImportContext> job = importer().getTask(jobid); 
                                 if (job == null || job.isDone()) {
                                     //remove the timer
                                     stop();
@@ -251,9 +250,43 @@ public class ImportPage extends GeoServerSecuredPage {
                         setImportLinkEnabled(this, false, target);
                     }
                 };
+                importLink.setOutputMarkupId(true);
                 importLink.setEnabled(doSelectReady(task, itemTable, null));
-                importLinkContainer.add(importLink);
+                item.add(importLink);
 
+                final AjaxLink cancelLink = new AjaxLink("cancel") {
+                    @Override
+                    protected void disableLink(ComponentTag tag) {
+                        super.disableLink(tag);
+                        ImporterWebUtils.disableLink(tag);
+                    }
+                    @Override
+                    public void onClick(AjaxRequestTarget target) {
+                        Long jobid = importLink.getModelObject();
+                        if (jobid == null) {
+                            return;
+                        }
+
+                        Task<ImportContext> task = importer().getTask(jobid);
+                        if (task == null || task.isDone()) {
+                            return;
+                        }
+
+                        task.getMonitor().setCanceled(true);
+                        task.cancel(false);
+                        try {
+                            task.get();
+                        }
+                        catch(Exception e) {
+                        }
+
+                        //set this button disabled
+                        setImportLinkEnabled(importLink, true, target);
+                    }
+                    
+                };
+                cancelLink.setEnabled(false);
+                item.add(cancelLink);
                 item.add(new AjaxLink<ImportTask>("select-all", model) {
                     @Override
                     public void onClick(AjaxRequestTarget target) {
@@ -309,16 +342,13 @@ public class ImportPage extends GeoServerSecuredPage {
 
     void setImportLinkEnabled(AjaxLink link, boolean enabled, AjaxRequestTarget target) {
         link.setEnabled(enabled);
-        
-        MarkupContainer p = link.getParent();
+        target.addComponent(link);
 
-        String css = "button-group selfclear";
-        if (!enabled) {
-            css += " inactive";
-        }
-        p.add(new AttributeModifier("class", new Model(css)));
-        target.addComponent(p);
+        AjaxLink cancel = (AjaxLink) link.getParent().get("cancel");
+        cancel.setEnabled(!enabled);
+        target.addComponent(cancel);
     }
+
     boolean doSelectReady(ImportTask task, ImportItemTable table, AjaxRequestTarget target) {
         boolean empty = true;
         List<ImportItem> items = task.getItems();
@@ -376,9 +406,15 @@ public class ImportPage extends GeoServerSecuredPage {
     static class DataTitleModel extends LoadableDetachableModel<String> {
 
         ImportTask task;
-
+        boolean abbrev;
+        
         DataTitleModel(ImportTask task) {
+            this(task, true);
+        }
+
+        DataTitleModel(ImportTask task, boolean abbrev) {
             this.task = task;
+            this.abbrev = abbrev;
         }
 
         @Override
@@ -397,7 +433,7 @@ public class ImportPage extends GeoServerSecuredPage {
                     }
                 }
             }
-            if (title.length() > 70) {
+            if (abbrev && title.length() > 70) {
                 //shorten it
                 title = title.substring(0,20) + "[...]" + title.substring(title.length()-50);
             }

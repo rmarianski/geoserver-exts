@@ -12,6 +12,7 @@ import java.util.logging.LogRecord;
 import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.LayerInfo;
 import org.geoserver.ows.util.OwsUtils;
+import org.opengeo.data.importer.job.ProgressMonitor;
 import org.opengeo.data.importer.transform.TransformChain;
 
 import static org.opengeo.data.importer.ImporterUtils.*;
@@ -28,7 +29,7 @@ public class ImportItem implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static enum State {
-        PENDING, READY, RUNNING, NO_CRS, NO_BOUNDS, ERROR, COMPLETE;
+        PENDING, READY, RUNNING, NO_CRS, NO_BOUNDS, ERROR, CANCELED, COMPLETE;
     }
 
     /**
@@ -206,6 +207,14 @@ public class ImportItem implements Serializable {
         layer = resolve(layer, catalog, lookupByName);
     }
 
+    public ProgressMonitor progress() {
+        return task.progress();
+    }
+
+    public boolean readyForImport() {
+        return state == State.READY || state == State.CANCELED;
+    }
+    
     @Override
     public int hashCode() {
         final int prime = 31;

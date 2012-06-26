@@ -1,4 +1,4 @@
-package org.opengeo.data.importer;
+package org.opengeo.data.importer.job;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,7 +8,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -18,10 +22,24 @@ public class JobQueue {
     AtomicLong counter = new AtomicLong();
 
     /** recent jobs */
-    ConcurrentHashMap<Long,Future<?>> jobs = new ConcurrentHashMap<Long, Future<?>>();
+    ConcurrentHashMap<Long,Task<?>> jobs = new ConcurrentHashMap<Long, Task<?>>();
 
     /** job runner */
-    ExecutorService pool = Executors.newCachedThreadPool();
+    //ExecutorService pool = Executors.newCachedThreadPool();
+    ExecutorService pool = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
+            new SynchronousQueue<Runnable>()) {
+        protected <T extends Object> RunnableFuture<T> newTaskFor(Callable<T> callable) {
+            if (callable instanceof Job) {
+                return new Task((Job) callable);
+            }
+            return super.newTaskFor(callable);
+        };
+        protected void afterExecute(Runnable r, Throwable t) {
+            if (t != null && r instanceof Task) {
+                ((Task)r).setError(t);
+            }
+        };
+    };
 
     /** job cleaner */
     ScheduledExecutorService cleaner = Executors.newSingleThreadScheduledExecutor();
@@ -29,7 +47,7 @@ public class JobQueue {
         cleaner.scheduleAtFixedRate(new Runnable() {
             public void run() {
                 List<Long> toremove = new ArrayList<Long>();
-                for (Map.Entry<Long, Future<?>> e : jobs.entrySet()) {
+                for (Map.Entry<Long, Task<?>> e : jobs.entrySet()) {
                     if (e.getValue().isDone()) {
                         toremove.add(e.getKey());
                     }
@@ -41,13 +59,13 @@ public class JobQueue {
         }, 60, 60, TimeUnit.SECONDS);
     }
 
-    public Long submit(Callable<?> task) {
+    public Long submit(Job<?> task) {
         Long jobid = counter.getAndIncrement();
-        jobs.put(jobid, pool.submit(task));
+        jobs.put(jobid, (Task) pool.submit(task));
         return jobid;
     }
 
-    public Future<?> getFuture(Long jobid) {
+    public Task<?> getFuture(Long jobid) {
         return jobs.get(jobid);
     }
 

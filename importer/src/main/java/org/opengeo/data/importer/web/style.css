@@ -16,6 +16,12 @@
   background-image: url(accept.png);
 }
 
+.cancel-link {
+  padding: 2px 0px 2px 20px;
+  background: transparent no-repeat left center;
+  background-image: url(cancel.png);
+}
+
 .button-group .button-working span {
   background: url(indicator.gif) no-repeat;
   display: block;
@@ -32,3 +38,13 @@ ul.horizontal li {
 ul.horizontal li:first-child {
   border-left:none;
 }
+
+div.button-group a.disabled {
+  border-color: #aaa; 
+  color: #aaa;
+  background: none; 
+  font-weight: normal; 
+  font-style: italic;
+  cursor: default;
+}
+  
