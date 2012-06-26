@@ -225,6 +225,14 @@ public class BDBImportStore implements ImportStore {
             .values().iterator();
     }
 
+    public Iterator<ImportContext> iterator(String sortBy) {
+        if (sortBy == null) {
+            return iterator();
+        }
+
+        throw new UnsupportedOperationException();
+    }
+
     public Iterator<ImportContext> allNonCompleteImports() {
         // if this becomes too slow a secondary database could be used for indexing
         return new FilterIterator(iterator(), new Predicate() {

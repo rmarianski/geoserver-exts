@@ -28,6 +28,8 @@ public interface ImportStore {
 
     Iterator<ImportContext> iterator();
 
+    Iterator<ImportContext> iterator(String sortBy);
+
     Iterator<ImportContext> allNonCompleteImports();
     
     Iterator<ImportContext> importsByUser(String user);

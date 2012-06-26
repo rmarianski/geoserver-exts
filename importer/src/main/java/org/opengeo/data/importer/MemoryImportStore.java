@@ -64,7 +64,14 @@ public class MemoryImportStore implements ImportStore {
     public Iterator<ImportContext> iterator() {
         return imports.iterator();
     }
-    
+
+    public Iterator<ImportContext> iterator(String sortBy) {
+        if (sortBy == null) {
+            return iterator();
+        }
+        throw new UnsupportedOperationException();
+    }
+
     @Override
     public Iterator<ImportContext> allNonCompleteImports() {
         return collect(new ImportCollector() {
