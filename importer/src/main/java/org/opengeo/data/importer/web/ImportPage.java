@@ -118,7 +118,8 @@ public class ImportPage extends GeoServerSecuredPage {
             }
         }.setVisible(ImporterWebUtils.isDevMode()));
 
-        ImportContextTable headerTable = new ImportContextTable("header", provider);
+        final ImportContextTable headerTable = new ImportContextTable("header", provider);
+        headerTable.setOutputMarkupId(true);
         headerTable.setFilterable(false);
         headerTable.setPageable(false);
         add(headerTable);
@@ -242,6 +243,7 @@ public class ImportPage extends GeoServerSecuredPage {
 
                                 //update the table
                                 target.addComponent(itemTable);
+                                target.addComponent(headerTable);
                             }
                         });
                         target.addComponent(itemTable);
