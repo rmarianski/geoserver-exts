@@ -89,7 +89,7 @@ public class HTMLMapPrintResource extends PrintResource {
         Variant variant = getVariants().get(0);
         String ext = MediaTypes.getExtensionForMediaType(variant.getMediaType());
         Representation rep;
-        if (ext.equals("pdf")) {
+        if ("pdf".equals(ext)) {
             rep = getPDFRepresentation();
         } else {
             Element root = renderer.getDocument().getDocumentElement();
