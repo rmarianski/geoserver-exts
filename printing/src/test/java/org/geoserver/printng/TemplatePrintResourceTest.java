@@ -19,6 +19,7 @@ public class TemplatePrintResourceTest extends PrintTestSupport {
         
         MockHttpServletResponse response = getAsServletResponse("/rest/printng/maps/test1.png?foo=FOOBAR");
         showResult = true;
-        checkImage(response,"image/png");
+        // @todo hard-coded width/height
+        checkImage(response,"image/png", 800, 600);
     }
 }

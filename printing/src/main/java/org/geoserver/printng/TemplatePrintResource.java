@@ -5,6 +5,8 @@ import freemarker.template.TemplateException;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.geoserver.config.GeoServerDataDirectory;
 import org.geoserver.platform.GeoServerExtensions;
 import org.geoserver.rest.RestletException;
@@ -54,6 +56,13 @@ public class TemplatePrintResource extends PrintResource {
         } catch (TemplateException ex) {
             throw new RestletException("Template error", Status.SERVER_ERROR_INTERNAL,ex);
         }
+        try {
+            renderer.parseTemplate();
+        } catch (IOException ex) {
+            throw new RestletException("Template error", Status.SERVER_ERROR_INTERNAL,ex);
+        } catch (TemplateException ex) {
+            throw new RestletException("Template error", Status.SERVER_ERROR_INTERNAL,ex);
+        }
         Representation rep;
         if (mediaType == MediaType.TEXT_HTML) {
             rep = new StringRepresentation(renderer.getTemplateOutput(), MediaType.TEXT_HTML);
@@ -61,6 +70,7 @@ public class TemplatePrintResource extends PrintResource {
             rep = getPDFRepresentation();
         } else {
             String ext = MediaTypes.getExtensionForMediaType(mediaType);
+            // @todo hard-coded width/height
             rep = getImageRepresentation(mediaType,ext,800,600);
         }
         return rep;

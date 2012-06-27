@@ -18,7 +18,9 @@ import org.restlet.resource.StreamRepresentation;
 import org.restlet.resource.Variant;
 
 /**
- * Base support class for print endpoints
+ * Base support class for print endpoints.
+ * @todo add support for common query/form parameters (width, height, etc)
+ * 
  * @author Ian Schneider <ischneider@opengeo.org>
  */
 public abstract class PrintResource extends Resource {

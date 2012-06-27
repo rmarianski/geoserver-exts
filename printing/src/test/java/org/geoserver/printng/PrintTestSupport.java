@@ -30,22 +30,25 @@ public class PrintTestSupport extends GeoServerTestSupport {
     }
     
     protected void checkImage(MockHttpServletResponse response, String mimeType) throws IOException {
+        checkImage(response, mimeType, 512, 256);
+    }
+    
+    protected void checkImage(MockHttpServletResponse response, String mimeType, int width, int height) throws IOException {
         assertEquals(mimeType, response.getContentType());
         ByteArrayInputStream bytes = getBinaryInputStream(response);
         try {
             BufferedImage image = ImageIO.read(bytes);
             assertNotNull(image);
-            assertEquals(image.getWidth(), 512);
-            assertEquals(image.getHeight(), 256);
+            assertEquals(width, image.getWidth());
+            assertEquals(height, image.getHeight());
         } catch (Throwable t) {
             t.printStackTrace();
             fail("Could not read image :" + t.getLocalizedMessage());
         }
-        if (showResult) {
+        if (showResult && Desktop.isDesktopSupported()) {
             bytes.reset();
             File res = new File(getDataDirectory().findDataRoot(),"image." + mimeType.split("/")[1]);
             IOUtils.copy(bytes, res);
-            Desktop.getDesktop().open(res);
         }
     }
 }
