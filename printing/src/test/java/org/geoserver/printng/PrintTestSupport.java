@@ -17,7 +17,7 @@ import org.geoserver.test.GeoServerTestSupport;
  *
  * @author Ian Schneider <ischneider@opengeo.org>
  */
-public class PrintTestSupport extends GeoServerTestSupport {
+public abstract class PrintTestSupport extends GeoServerTestSupport {
     
     boolean showResult = false;
     
