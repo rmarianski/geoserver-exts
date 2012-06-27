@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+
+import org.apache.commons.io.FilenameUtils;
 import org.geoserver.config.GeoServerDataDirectory;
 import org.geoserver.platform.GeoServerExtensions;
 import org.geoserver.rest.RestletException;
@@ -61,17 +63,16 @@ public abstract class PrintResource extends Resource {
     }
     
     protected String initVariants(String fname,MediaType defaultType) {
-        int idx = fname.lastIndexOf('.');
-        String extension = idx > 0 ? fname.substring(idx + 1) : null;
-        fname = idx > 0 ? fname.substring(0, idx) : fname;
+        String extension = FilenameUtils.getExtension(fname);
+        String baseName = FilenameUtils.getBaseName(fname);
         MediaType mediaType = defaultType == null ? MediaType.TEXT_HTML : defaultType;
-        if (extension != null) {
+        if (extension != null && !extension.isEmpty()) {
             mediaType = MediaTypes.getMediaTypeForExtension(extension);
         }
         if (mediaType != null) {
             getVariants().add(new Variant(mediaType));
         }
-        return fname;
+        return baseName;
     }
 
     protected Representation getPDFRepresentation() {

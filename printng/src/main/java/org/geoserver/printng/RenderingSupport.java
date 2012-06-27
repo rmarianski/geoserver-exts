@@ -30,6 +30,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.geotools.util.logging.Logging;
 import org.w3c.dom.Document;
@@ -194,7 +195,7 @@ public class RenderingSupport {
     }
 
     public void renderImage(File out, int width, int height) throws IOException {
-        String format = out.getName().split("\\.")[1];
+        String format = FilenameUtils.getExtension(out.getName());
         renderImage(new FileOutputStream(out), format, width, height);
     }
 
