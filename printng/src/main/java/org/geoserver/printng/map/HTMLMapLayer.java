@@ -109,6 +109,7 @@ abstract class HTMLMapLayer {
 
         Grid(String url, String format, float opacity, Dimension tileSize, String... layers) {
             super(url, format, opacity, layers);
+            this.tileSize = tileSize;
         }
 
         void calculateGridLayout(Envelope bounds, Envelope extent, double resolution) {
@@ -135,9 +136,9 @@ abstract class HTMLMapLayer {
             // tiles required to cover the viewport plus at least one for panning
 
             Dimension viewSize = new Dimension(width, height);
-            int minRows = (int) Math.ceil(viewSize.height / this.tileSize.height)
+            int minRows = (int) Math.ceil((double)viewSize.height / (double)this.tileSize.height)
                     + Math.max(1, 2 * this.buffer);
-            int minCols = (int) Math.ceil(viewSize.width / this.tileSize.width)
+            int minCols = (int) Math.ceil((double)viewSize.width / (double)this.tileSize.width)
                     + Math.max(1, 2 * this.buffer);
 
             //var extent = this.getMaxExtent();

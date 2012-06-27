@@ -48,8 +48,11 @@ public class HTMLToPDF {
             System.out.println("done");
             if (loop) {
                 Desktop.getDesktop().open(outputFile);
-                System.out.println("press enter to run again");
+                System.out.println("press enter to run again: 'q' to quit");
                 String line = br.readLine();
+                if ("q".equals(line)) {
+                    break;
+                }
                 try {
                     ppd = Integer.parseInt(line);
                 } catch (NumberFormatException nfe) {
