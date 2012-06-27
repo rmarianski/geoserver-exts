@@ -216,7 +216,7 @@ abstract class HTMLMapLayer {
     }
     
     static class XYZ extends Grid {
-        private double resolution;
+//        private double resolution;
 //        maxExtent: new OpenLayers.Bounds(
 //                    -128 * 156543.0339,
 //                    -128 * 156543.0339,
@@ -236,7 +236,7 @@ abstract class HTMLMapLayer {
         @Override
         List<Tile> getTiles(int width, int height, String srs, Envelope bounds, double resolution) {
             // @hack
-            this.resolution = resolution;
+//            this.resolution = resolution;
             return super.getTiles(width, height, srs, bounds, resolution);
         }
 

@@ -1,9 +1,5 @@
 package org.geoserver.printng;
 
-import com.lowagie.text.DocumentException;
-import freemarker.template.Configuration;
-import freemarker.template.Template;
-import freemarker.template.TemplateException;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
@@ -29,9 +25,11 @@ import java.util.concurrent.Future;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+
 import org.apache.commons.io.IOUtils;
 import org.geotools.util.logging.Logging;
 import org.w3c.dom.Document;
@@ -44,10 +42,15 @@ import org.xhtmlrenderer.resource.ImageResource;
 import org.xhtmlrenderer.swing.Java2DRenderer;
 import org.xhtmlrenderer.swing.NaiveUserAgent;
 import org.xhtmlrenderer.util.FSImageWriter;
-import org.xhtmlrenderer.util.XMLUtil;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
+import com.lowagie.text.DocumentException;
+
+import freemarker.template.Configuration;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
 
 /**
  * Support for rendering raw html or templates to images or pdf output while hiding some of the details
@@ -63,20 +66,20 @@ public class RenderingSupport {
     private boolean allowXHTMLTransitional = false;
     private Document dom;
     private String url;
-    private File imageCacheDir;
+//    private File imageCacheDir;
     private String templateOutput;
     private Integer dpp;
     private Logger logger = Logging.getLogger(getClass());
 
     public RenderingSupport(File imageCacheDir) {
-        this.imageCacheDir = imageCacheDir;
+//        this.imageCacheDir = imageCacheDir;
     }
     
     /**
      * Disable all image caching.
      */
     public void disableImageCaching() {
-        this.imageCacheDir = null;
+//        this.imageCacheDir = null;
     }
     
     /**
@@ -320,7 +323,6 @@ public class RenderingSupport {
                 } catch (Exception ex) {
                     throw new RuntimeException("inconceivable", ex);
                 }
-                ImageResource res = null;
                 if (!cacheFile.exists()) {
                     imagesToResolve.add(href);
                     cacheDestination.add(cacheFile);
@@ -334,7 +336,7 @@ public class RenderingSupport {
             }
             if (!imagesToResolve.isEmpty()) {
                 ExecutorService threadPool = Executors.newFixedThreadPool(2);
-                ExecutorCompletionService executor = new ExecutorCompletionService(threadPool);
+                ExecutorCompletionService<File> executor = new ExecutorCompletionService<File>(threadPool);
                 List<Future<File>> futures = new ArrayList<Future<File>>(imagesToResolve.size());
                 for (int i = 0; i < imagesToResolve.size(); i++) {
                     final String href = imagesToResolve.get(i);

@@ -3,6 +3,8 @@ package org.geoserver.printng;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+
+import org.geoserver.config.GeoServerDataDirectory;
 import org.geoserver.rest.RestletException;
 import org.geoserver.rest.format.MediaTypes;
 import org.restlet.Context;
@@ -64,7 +66,9 @@ public class HTMLMapPrintResource extends PrintResource {
                 File resourceDir = getGeoserverDirectory(false, "resources", resource);
                 getLogger().info("request for printing resources " + resource);
                 if (resourceDir == null) {
-                    getLogger().warning("resources not found at " + resourceDir.getAbsolutePath());
+                    GeoServerDataDirectory geoserverDataDirectory = getGeoserverDataDirectory();
+                    File dataDirPath = geoserverDataDirectory.root();
+                    getLogger().warning("resources not found at " + dataDirPath.getAbsolutePath());
                     throw new RestletException("Invalid request",Status.CLIENT_ERROR_BAD_REQUEST);
                 }
                 try {

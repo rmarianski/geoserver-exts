@@ -30,9 +30,13 @@ public abstract class PrintResource extends Resource {
     PrintResource(Request req, Response resp) {
         super(null, req, resp);
     }
-    
+
+    protected GeoServerDataDirectory getGeoserverDataDirectory() {
+        return GeoServerExtensions.bean(GeoServerDataDirectory.class);
+    }
+
     protected File getGeoserverDirectory(boolean create,String... path) {
-        GeoServerDataDirectory dataDir = GeoServerExtensions.bean(GeoServerDataDirectory.class);
+        GeoServerDataDirectory dataDir = getGeoserverDataDirectory();
         String[] parts = new String[path.length + 1];
         parts[0] = "printing2";
         System.arraycopy(path, 0, parts, 1, path.length);
@@ -50,7 +54,6 @@ public abstract class PrintResource extends Resource {
     protected RenderingSupport renderingSupport() {
         if (renderingSupport == null) {
             // @todo cache directory ?
-            GeoServerDataDirectory dataDir = GeoServerExtensions.bean(GeoServerDataDirectory.class);
             File imageCache = getGeoserverDirectory(true,"imageCache");
             renderingSupport = new RenderingSupport(imageCache);
         }

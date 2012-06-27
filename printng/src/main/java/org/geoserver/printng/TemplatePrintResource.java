@@ -1,12 +1,8 @@
 package org.geoserver.printng;
 
-import freemarker.template.SimpleHash;
-import freemarker.template.TemplateException;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
 import org.geoserver.config.GeoServerDataDirectory;
 import org.geoserver.platform.GeoServerExtensions;
 import org.geoserver.rest.RestletException;
@@ -20,6 +16,9 @@ import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.StringRepresentation;
 import org.restlet.resource.Variant;
+
+import freemarker.template.SimpleHash;
+import freemarker.template.TemplateException;
 
 /**
  * Simple prototype of a template print resource - templates go in data_dir/printing2/templates. Any request
@@ -81,7 +80,7 @@ public class TemplatePrintResource extends PrintResource {
         super.init(context, request, response);
 
         String map = (String) request.getAttributes().get("map");
-        String type = (String) request.getAttributes().get("type");
+//        String type = (String) request.getAttributes().get("type");
         map = initVariants(map,MediaType.TEXT_HTML);
         resolveTemplate(map);
         if (template == null) {
