@@ -40,6 +40,11 @@
    <artifactId>analytics</artifactId>
    <version>${gs.version}</version>
   </dependency>
+  <dependency>
+   <groupId>org.opengeo.geoserver</groupId>
+   <artifactId>printing</artifactId>
+   <version>${gs.version}</version>
+  </dependency>
 
   <dependency>
    <groupId>org.mortbay.jetty</groupId>
