@@ -10,7 +10,7 @@
   </parent>
 
   <groupId>org.opengeo.geoserver</groupId>
-  <artifactId>printing</artifactId>
+  <artifactId>printng</artifactId>
   <packaging>jar</packaging>
   <version>2.2-SNAPSHOT</version>
   <name>GeoServer Printing Extension</name>

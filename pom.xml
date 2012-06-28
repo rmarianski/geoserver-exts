@@ -371,7 +371,7 @@
     <module>analytics</module>
     <module>csv</module>
     <module>importer</module>
-    <module>printing</module>
+    <module>printng</module>
     <module>web</module>
   </modules>
 
