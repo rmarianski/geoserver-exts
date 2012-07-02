@@ -73,7 +73,7 @@
       <version>0.9.1</version>
     </dependency>
     <dependency>
-      <groupId>com.ocpsoft.prettytime</groupId>
+      <groupId>org.ocpsoft.prettytime</groupId>
       <artifactId>prettytime</artifactId>
       <version>1.0.8.Final</version>
     </dependency>
