@@ -42,7 +42,7 @@
   </dependency>
   <dependency>
    <groupId>org.opengeo.geoserver</groupId>
-   <artifactId>printing</artifactId>
+   <artifactId>printng</artifactId>
    <version>${gs.version}</version>
   </dependency>
 
