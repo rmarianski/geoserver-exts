@@ -20,7 +20,6 @@
       <groupId>org.geoserver.community</groupId>
       <artifactId>monitoring</artifactId>
       <version>${gs.version}</version>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>joda-time</groupId>
