@@ -370,9 +370,11 @@ public class ImportItemTable extends GeoServerTablePanel<ImportItem> {
 
             List<PreviewLink> links = new ArrayList<PreviewLink>();
             links.add(new PreviewLink("layerPreview", preview.getWmsLink()+ "&format=application/openlayers"));
+
+            String layerName = 
+                urlEncode(layer.getResource().getStore().getWorkspace().getName() + ":" +  layer.getName()); 
+            links.add(new PreviewLink("geoexplorer", "/geoexplorer/composer/#styler=" + layerName)); 
             links.add(new PreviewLink("googleearth", "../wms/kml?layers=" + layer.getName()));
-            links.add(new PreviewLink("geoexplorer", "/geoexplorer/index.html?layer=" 
-                + urlEncode(layer.getResource().getStore().getWorkspace().getName() + ":" +  layer.getName())));
 
             add(new DropDownChoice<PreviewLink>("links", new Model(links.get(0)), links, 
                 new ChoiceRenderer<PreviewLink>() {
