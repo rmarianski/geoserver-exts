@@ -650,9 +650,14 @@ public class Importer implements InitializingBean, DisposableBean {
             //ensure a namespace connection parameter set matching workspace/namespace
             if (!store.getConnectionParameters().containsKey("namespace")) {
                 WorkspaceInfo ws = task.getContext().getTargetWorkspace();
-                NamespaceInfo ns = catalog.getNamespaceByPrefix(ws.getName());
-                if (ns != null) {
-                    store.getConnectionParameters().put("namespace", ns.getURI());
+                if (ws == null && task.getContext().getTargetStore() != null) {
+                    ws = task.getContext().getTargetStore().getWorkspace();
+                }
+                if (ws != null) {
+                    NamespaceInfo ns = catalog.getNamespaceByPrefix(ws.getName());
+                    if (ns != null) {
+                        store.getConnectionParameters().put("namespace", ns.getURI());
+                    }
                 }
             }
             catalog.add(task.getStore());
