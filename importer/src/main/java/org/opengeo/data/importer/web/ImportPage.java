@@ -3,27 +3,22 @@ package org.opengeo.data.importer.web;
 import static org.opengeo.data.importer.web.ImporterWebUtils.importer;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Future;
 import java.util.logging.Level;
 
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
-import org.apache.wicket.MarkupContainer;
-import org.apache.wicket.Page;
 import org.apache.wicket.PageParameters;
 import org.apache.wicket.ResourceReference;
 import org.apache.wicket.ajax.AbstractAjaxTimerBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.markup.ComponentTag;
-import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.TextArea;
 import org.apache.wicket.markup.html.link.Link;
@@ -55,6 +50,7 @@ import org.opengeo.data.importer.ImportContext;
 import org.opengeo.data.importer.ImportData;
 import org.opengeo.data.importer.ImportItem;
 import org.opengeo.data.importer.ImportTask;
+import org.opengeo.data.importer.ImportTask.State;
 import org.opengeo.data.importer.RasterFormat;
 import org.opengeo.data.importer.VectorFormat;
 import org.opengeo.data.importer.job.Task;
@@ -239,6 +235,13 @@ public class ImportPage extends GeoServerSecuredPage {
                                     
                                     self.setEnabled(true);
                                     target.addComponent(self);
+
+                                    ImportTask task = item.getModelObject();
+                                    if (task.getState() == State.COMPLETE) {
+                                        Component cancelLink = self.getParent().get("cancel");
+                                        cancelLink.setEnabled(true);
+                                        target.addComponent(cancelLink);
+                                    }
                                 }
 
                                 //update the table
@@ -264,6 +267,12 @@ public class ImportPage extends GeoServerSecuredPage {
                     }
                     @Override
                     public void onClick(AjaxRequestTarget target) {
+                        ImportTask t = item.getModelObject();
+                        if (t.getState() == State.COMPLETE) {
+                            setResponsePage(ImportDataPage.class);
+                            return;
+                        }
+
                         Long jobid = importLink.getModelObject();
                         if (jobid == null) {
                             return;
@@ -287,7 +296,8 @@ public class ImportPage extends GeoServerSecuredPage {
                     }
                     
                 };
-                cancelLink.setEnabled(false);
+                cancelLink.setEnabled(task.getState() == State.COMPLETE);
+                cancelLink.add(new Label("text", new CancelTitleModel(model)));
                 item.add(cancelLink);
                 item.add(new AjaxLink<ImportTask>("select-all", model) {
                     @Override
@@ -442,6 +452,31 @@ public class ImportPage extends GeoServerSecuredPage {
             return title;
         }
     
+    }
+
+    static class CancelTitleModel extends LoadableDetachableModel {
+
+        IModel<ImportTask> taskModel;
+
+        CancelTitleModel(IModel<ImportTask> taskModel) {
+            this.taskModel = taskModel;
+        }
+
+        @Override
+        protected Object load() {
+            switch(taskModel.getObject().getState()) {
+            case COMPLETE:
+                return new StringResourceModel("done", new Model("Done")).getString();
+            default:
+                return new StringResourceModel("cancel", new Model("Cancel")).getString();
+            }
+        }
+
+        @Override
+        protected void onDetach() {
+            super.onDetach();
+            taskModel.detach();
+        }
     }
 
     static class TextAreaPanel extends Panel {

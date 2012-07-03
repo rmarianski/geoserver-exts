@@ -166,6 +166,7 @@ public class ImportTask implements Serializable {
                case PENDING:
                case RUNNING:
                case ERROR:
+               case CANCELED:
                case NO_CRS:
                case NO_BOUNDS:
                    newState = State.INCOMPLETE;
