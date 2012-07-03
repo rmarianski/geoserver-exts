@@ -40,7 +40,7 @@ public abstract class PrintResource extends Resource {
     protected File getGeoserverDirectory(boolean create,String... path) {
         GeoServerDataDirectory dataDir = getGeoserverDataDirectory();
         String[] parts = new String[path.length + 1];
-        parts[0] = "printing2";
+        parts[0] = "printng";
         System.arraycopy(path, 0, parts, 1, path.length);
         try {
             if (create) {

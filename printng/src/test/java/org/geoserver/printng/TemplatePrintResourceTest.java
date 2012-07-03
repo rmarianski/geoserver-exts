@@ -14,7 +14,7 @@ import org.apache.commons.io.IOUtils;
 public class TemplatePrintResourceTest extends PrintTestSupport {
     
     public void testTemplatePrint() throws Exception {
-        File dir = getDataDirectory().findOrCreateDir("printing2/templates");
+        File dir = getDataDirectory().findOrCreateDir("printng/templates");
         IOUtils.write("<div>${foo}</div>", new FileOutputStream(new File(dir,"test1.ftl")));
         
         MockHttpServletResponse response = getAsServletResponse("/rest/printng/maps/test1.png?foo=FOOBAR");

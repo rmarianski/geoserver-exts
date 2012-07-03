@@ -21,7 +21,7 @@ import freemarker.template.SimpleHash;
 import freemarker.template.TemplateException;
 
 /**
- * Simple prototype of a template print resource - templates go in data_dir/printing2/templates. Any request
+ * Simple prototype of a template print resource - templates go in data_dir/printng/templates. Any request
  * parameters are passed to the template to render. In this case, there is not much dynamic ability.
  * @author Ian Schneider <ischneider@opengeo.org>
  */
@@ -29,7 +29,7 @@ public class TemplatePrintResource extends PrintResource {
     
     File template;
     
-    static final String templatePath = "printing2/templates";
+    static final String templatePath = "printng/templates";
 
     TemplatePrintResource(Request req, Response resp) {
         super(req, resp);
