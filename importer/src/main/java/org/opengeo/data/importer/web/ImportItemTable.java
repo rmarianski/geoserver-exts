@@ -9,6 +9,8 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
@@ -48,12 +50,25 @@ import org.geoserver.web.wicket.GeoServerTablePanel;
 import org.geoserver.web.wicket.ParamResourceModel;
 import org.geoserver.web.wicket.SRSToCRSModel;
 import org.geoserver.web.wicket.SimpleAjaxLink;
+import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
+import org.geotools.util.logging.Logging;
 import org.opengeo.data.importer.ImportItem;
+import org.opengeo.data.importer.Importer;
 import org.opengeo.data.importer.ImportItem.State;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class ImportItemTable extends GeoServerTablePanel<ImportItem> {
+
+    static Logger LOGGER = Logging.getLogger(Importer.class);
+    static CoordinateReferenceSystem EPSG_3857;
+    static {
+        try {
+            EPSG_3857 = CRS.decode("EPSG:3857");
+        } catch (Exception e) {
+            LOGGER.log(Level.FINER, e.getMessage(), e);
+        }
+    }
 
     ModalWindow popupWindow;
     GeoServerDialog dialog;
@@ -371,9 +386,24 @@ public class ImportItemTable extends GeoServerTablePanel<ImportItem> {
             List<PreviewLink> links = new ArrayList<PreviewLink>();
             links.add(new PreviewLink("layerPreview", preview.getWmsLink()+ "&format=application/openlayers"));
 
-            String layerName = 
-                urlEncode(layer.getResource().getStore().getWorkspace().getName() + ":" +  layer.getName()); 
-            links.add(new PreviewLink("geoexplorer", "/geoexplorer/composer/#styler=" + layerName)); 
+            String gxpLink = 
+                    System.getProperty("opengeo.geoexplorer.url", "/geoexplorer");
+            gxpLink = gxpLink.endsWith("/") ? gxpLink.substring(0,gxpLink.length()-1) : gxpLink;
+
+            gxpLink += "/composer/?layers=" +
+                urlEncode(layer.getResource().getStore().getWorkspace().getName() + ":" +  layer.getName());
+
+            //geoexplorer needs bbox in spherical mercator
+            try {
+                ReferencedEnvelope e = layer.getResource().getLatLonBoundingBox().transform(EPSG_3857, true);
+                if (e != null) {
+                    gxpLink += "&bbox=" + 
+                            String.format("%f,%f,%f,%f", e.getMinX(), e.getMinY(), e.getMaxX(), e.getMaxY()); 
+                }
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, "Unable to reproject "+ layer.getName() + " to spherical mercator", e);
+            }
+            links.add(new PreviewLink("geoexplorer", gxpLink)); 
             links.add(new PreviewLink("googleearth", "../wms/kml?layers=" + layer.getName()));
 
             add(new DropDownChoice<PreviewLink>("links", new Model(links.get(0)), links, 
