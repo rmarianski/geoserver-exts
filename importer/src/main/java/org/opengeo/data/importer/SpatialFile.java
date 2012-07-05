@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
 import org.apache.commons.io.FileUtils;
 import org.geotools.referencing.CRS;
@@ -85,7 +86,12 @@ public class SpatialFile extends FileData {
         }
 
         //fix the prj file (match to official epsg wkt)
-        fixPrjFile();
+        try {
+            fixPrjFile();
+        }
+        catch(Exception e) {
+            LOGGER.log(Level.WARNING, "Error fixing prj file", e);
+        }
     }
     
     public void fixPrjFile() throws IOException {
