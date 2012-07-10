@@ -1,27 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
 <beans>
-    
+
   <bean id="restPrintMapping" class="org.geoserver.rest.RESTMapping">
     <property name="routes">
       <map>
         <entry>
-          <key><value>/printng/render{ext}</value></key>
+          <key>
+            <value>/printng/render.{ext}</value>
+          </key>
+          <value>printFinderFromRequestBody</value>
+        </entry>
+        <entry>
+          <key>
+            <value>/printng/render/{resource}.{ext}</value>
+          </key>
           <value>printFinder</value>
         </entry>
         <entry>
-          <key><value>/printng/render/{resource}.{ext}</value></key>
-          <value>printFinder</value>
-        </entry>
-        <entry>
-          <key><value>/printng/maps/{map}</value></key>
+          <key>
+            <value>/printng/maps/{map}</value>
+          </key>
           <value>printFinder</value>
         </entry>
       </map>
     </property>
   </bean>
 
-  <bean id="printFinder" class="org.geoserver.printng.PrintFinder">
+  <bean id="printFinder" class="org.geoserver.printng.PrintFinder" />
+
+  <bean id="printFinderFromRequestBody" class="org.geoserver.printng.PrintFinder">
+    <constructor-arg index="0">
+      <ref bean="printngReaderRequestBody" />
+    </constructor-arg>
   </bean>
-  
+
+  <bean id="printngReaderRequestBody" class="org.geoserver.printng.reader.PrintngReaderRequestBody" />
+
 </beans>

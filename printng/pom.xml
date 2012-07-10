@@ -56,6 +56,10 @@
       <artifactId>commons-io</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.ccil.cowan.tagsoup</groupId>
+      <artifactId>tagsoup</artifactId>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
@@ -69,6 +73,16 @@
       <groupId>org.geotools</groupId>
       <artifactId>gt-opengis</artifactId>
       <scope>test</scope>
+   </dependency>
+   <dependency>
+       <groupId>org.easymock</groupId>
+       <artifactId>easymock</artifactId>
+       <scope>test</scope>
+   </dependency>
+   <dependency>
+       <groupId>org.easymock</groupId>
+       <artifactId>easymockclassextension</artifactId>
+       <scope>test</scope>
    </dependency>
   </dependencies>
 </project>
