@@ -364,7 +364,8 @@ public class ImportPage extends GeoServerSecuredPage {
     boolean doSelectReady(ImportTask task, ImportItemTable table, AjaxRequestTarget target) {
         boolean empty = true;
         List<ImportItem> items = task.getItems();
-        for (int i = 0; i < items.size(); i++) {
+        
+        for (int i = 0; i < items.size() && i < 25; i++) {
             ImportItem item = items.get(i);
             if (item.getState() == ImportItem.State.READY) {
                 //table.selectObject(item);
