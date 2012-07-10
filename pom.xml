@@ -311,6 +311,11 @@
         <version>${gt.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.geotools</groupId>
+        <artifactId>gt-metadata</artifactId>
+        <version>${gt.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.restlet</groupId>
         <artifactId>org.restlet.ext.fileupload</artifactId>
         <version>1.0.8</version>
