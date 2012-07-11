@@ -1,13 +1,16 @@
 package org.geoserver.printng;
 
+import org.geoserver.printng.io.ImagePrintngFactory;
 import org.geoserver.printng.io.PrintngReaderFactory;
 import org.geoserver.printng.io.PrintngWriterFactory;
 import org.geoserver.printng.resource.PrintResource;
+import org.geoserver.rest.RestletException;
 import org.geoserver.rest.format.MediaTypes;
 import org.restlet.Finder;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
+import org.restlet.data.Status;
 import org.restlet.resource.Resource;
 import org.restlet.resource.Variant;
 
@@ -29,6 +32,7 @@ public class PrintFinder extends Finder {
         MediaTypes.registerExtension("pdf", MediaType.APPLICATION_PDF);
         MediaTypes.registerExtension("jpg", MediaType.IMAGE_JPEG);
         MediaTypes.registerExtension("png", MediaType.IMAGE_PNG);
+        MediaTypes.registerExtension("gif", MediaType.IMAGE_GIF);
     }
 
     @Override
@@ -40,14 +44,26 @@ public class PrintFinder extends Finder {
                 return new TemplatePrintResource(request, response);
             }
         } else {
-            // TODO parse the variant here
-            // TODO also instantiate the correct writer factory
-            Object object = request.getAttributes().get("ext");
-            Variant variant = new Variant(MediaType.IMAGE_PNG);
-//            PrintngWriterFactory pwf = new ImagePrintngFactory();
-            PrintngWriterFactory pwf = new PDFPrintngFactory();
-            PrintResource resource = new PrintResource(request, response, variant, prf, pwf);
-            return resource;
+            Variant variant;
+            PrintngWriterFactory pwf;
+            String ext = request.getAttributes().get("ext").toString().toLowerCase();
+            if ("pdf".equals(ext)) {
+                variant = new Variant(MediaType.APPLICATION_PDF);
+                pwf = new PDFPrintngFactory();
+            } else if ("jpg".equals(ext)) {
+                variant = new Variant(MediaType.IMAGE_JPEG);
+                pwf = new ImagePrintngFactory(request, "jpg");
+            } else if ("png".equals(ext)) {
+                variant = new Variant(MediaType.IMAGE_PNG);
+                pwf = new ImagePrintngFactory(request, "png");
+            } else if ("gif".equals(ext)) {
+                variant = new Variant(MediaType.IMAGE_GIF);
+                pwf = new ImagePrintngFactory(request, "gif");
+            } else {
+                String error = String.format("Unknown rendering extension \"%s\"", ext);
+                throw new RestletException(error, Status.CLIENT_ERROR_NOT_FOUND);
+            }
+            return new PrintResource(request, response, variant, prf, pwf);
         }
     }
 }
