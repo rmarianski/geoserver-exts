@@ -17,18 +17,15 @@ import org.restlet.resource.Variant;
  */
 public class PrintFinder extends Finder {
 
-    private final PrintngReaderFactory readerFactory;
-
-    private final PrintngWriterFactory writerFactory;
+    private final PrintngReaderFactory prf;
 
     public PrintFinder() {
-        this(null, null);
+        this(null);
     }
 
     // gets set from spring
-    public PrintFinder(PrintngReaderFactory readerFactory, PrintngWriterFactory writerFactory) {
-        this.readerFactory = readerFactory;
-        this.writerFactory = writerFactory;
+    public PrintFinder(PrintngReaderFactory readerFactory) {
+        this.prf = readerFactory;
         MediaTypes.registerExtension("pdf", MediaType.APPLICATION_PDF);
         MediaTypes.registerExtension("jpg", MediaType.IMAGE_JPEG);
         MediaTypes.registerExtension("png", MediaType.IMAGE_PNG);
@@ -36,7 +33,7 @@ public class PrintFinder extends Finder {
 
     @Override
     public Resource findTarget(Request request, Response response) {
-        if (readerFactory == null || writerFactory == null) {
+        if (prf == null) {
             if (request.getResourceRef().getPath().indexOf("/printng/render") >= 0) {
                 return new HTMLMapPrintResource(request, response);
             } else {
@@ -44,11 +41,12 @@ public class PrintFinder extends Finder {
             }
         } else {
             // TODO parse the variant here
-            // will probably need to instantiate the appropriate reader and writer factories appropriately
-            // or at least the writer factory from the request extension
-            Variant variant = new Variant(MediaType.TEXT_HTML);
-            PrintResource resource = new PrintResource(request, response, variant, readerFactory,
-                    writerFactory);
+            // TODO also instantiate the correct writer factory
+            Object object = request.getAttributes().get("ext");
+            Variant variant = new Variant(MediaType.IMAGE_PNG);
+//            PrintngWriterFactory pwf = new ImagePrintngFactory();
+            PrintngWriterFactory pwf = new PDFPrintngFactory();
+            PrintResource resource = new PrintResource(request, response, variant, prf, pwf);
             return resource;
         }
     }

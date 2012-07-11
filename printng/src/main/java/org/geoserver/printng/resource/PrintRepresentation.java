@@ -7,17 +7,13 @@ import java.io.OutputStream;
 import org.geoserver.printng.io.PrintngWriter;
 import org.restlet.data.MediaType;
 import org.restlet.resource.StreamRepresentation;
-import org.w3c.dom.Document;
 
 public class PrintRepresentation extends StreamRepresentation {
 
-    private final Document document;
-
     private final PrintngWriter writer;
 
-    public PrintRepresentation(MediaType mediaType, Document document, PrintngWriter writer) {
+    public PrintRepresentation(MediaType mediaType, PrintngWriter writer) {
         super(mediaType);
-        this.document = document;
         this.writer = writer;
     }
 
@@ -28,7 +24,7 @@ public class PrintRepresentation extends StreamRepresentation {
 
     @Override
     public void write(OutputStream outputStream) throws IOException {
-        writer.write(document, outputStream);
+        writer.write(outputStream);
     }
 
 }

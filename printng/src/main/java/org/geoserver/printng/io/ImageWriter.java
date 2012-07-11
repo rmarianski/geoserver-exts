@@ -21,11 +21,15 @@ public class ImageWriter implements PrintngWriter {
 
     private final String format;
 
-    public ImageWriter(int width, int height, String format) {
-        this(width, height, format, null, null);
+    private final Document document;
+
+    public ImageWriter(Document document, int width, int height, String format) {
+        this(document, width, height, format, null, null);
     }
 
-    public ImageWriter(int width, int height, String format, String baseURL, Integer dotsPerPixel) {
+    public ImageWriter(Document document, int width, int height, String format, String baseURL,
+            Integer dotsPerPixel) {
+        this.document = document;
         this.width = width;
         this.height = height;
         this.format = format;
@@ -35,7 +39,7 @@ public class ImageWriter implements PrintngWriter {
     }
 
     @Override
-    public void write(Document document, OutputStream out) throws IOException {
+    public void write(OutputStream out) throws IOException {
         Java2DRenderer renderer = new Java2DRenderer(document, width, height);
         SharedContext sharedContext = renderer.getSharedContext();
         if (baseURL != null && !baseURL.isEmpty()) {

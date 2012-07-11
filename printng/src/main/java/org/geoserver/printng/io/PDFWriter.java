@@ -17,19 +17,22 @@ public class PDFWriter implements PrintngWriter {
 
     private final Integer dotsPerPixel;
 
-    public PDFWriter() {
-        this(null, null);
+    private final Document document;
+
+    public PDFWriter(Document document) {
+        this(document, null, null);
     }
 
-    public PDFWriter(String baseURL) {
-        this(baseURL, null);
+    public PDFWriter(Document document, String baseURL) {
+        this(document, baseURL, null);
     }
 
-    public PDFWriter(Integer dotsPerPixel) {
-        this(null, dotsPerPixel);
+    public PDFWriter(Document document, Integer dotsPerPixel) {
+        this(document, null, dotsPerPixel);
     }
 
-    public PDFWriter(String baseURL, Integer dotsPerPixel) {
+    public PDFWriter(Document document, String baseURL, Integer dotsPerPixel) {
+        this.document = document;
         this.baseURL = baseURL;
         this.dotsPerPixel = dotsPerPixel;
         this.renderer = new ITextRenderer();
@@ -37,7 +40,7 @@ public class PDFWriter implements PrintngWriter {
     }
 
     @Override
-    public void write(Document document, OutputStream out) throws IOException {
+    public void write(OutputStream out) throws IOException {
         SharedContext sharedContext = renderer.getSharedContext();
         if (baseURL != null && !baseURL.isEmpty()) {
             sharedContext.setBaseURL(baseURL);
