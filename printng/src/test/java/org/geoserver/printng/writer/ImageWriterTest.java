@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 
@@ -12,7 +13,6 @@ import javax.imageio.ImageIO;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.geoserver.printng.resource.PrintngRestDocumentParser;
 import org.junit.Test;
 import org.w3c.dom.Document;
