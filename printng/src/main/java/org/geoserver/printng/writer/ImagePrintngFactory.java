@@ -24,7 +24,7 @@ public class ImagePrintngFactory implements PrintngWriterFactory {
         Parameter height = form.getFirst("height");
         Parameter dpp = form.getFirst("dpp");
         this.width = parseInt(width, 512);
-        this.height = parseInt(height, 80);
+        this.height = parseInt(height, 256);
         this.dpp = parseInt(dpp, 0);
     }
 

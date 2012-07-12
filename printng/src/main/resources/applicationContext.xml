@@ -35,6 +35,6 @@
     </constructor-arg>
   </bean>
 
-  <bean id="printngReaderRequestBody" class="org.geoserver.printng.io.PrintngReaderRequestBody" />
+  <bean id="printngReaderRequestBody" class="org.geoserver.printng.reader.PrintngReaderRequestBody" />
 
 </beans>
