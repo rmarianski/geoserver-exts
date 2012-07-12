@@ -1,9 +1,10 @@
 package org.geoserver.printng;
 
-import org.geoserver.printng.io.ImagePrintngFactory;
-import org.geoserver.printng.io.PrintngReaderFactory;
-import org.geoserver.printng.io.PrintngWriterFactory;
+import org.geoserver.printng.iface.PrintngReaderFactory;
+import org.geoserver.printng.iface.PrintngWriterFactory;
 import org.geoserver.printng.resource.PrintResource;
+import org.geoserver.printng.writer.ImagePrintngFactory;
+import org.geoserver.printng.writer.PDFPrintngFactory;
 import org.geoserver.rest.RestletException;
 import org.geoserver.rest.format.MediaTypes;
 import org.restlet.Finder;

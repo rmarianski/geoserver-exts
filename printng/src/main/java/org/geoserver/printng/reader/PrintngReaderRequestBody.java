@@ -1,5 +1,7 @@
-package org.geoserver.printng.io;
+package org.geoserver.printng.reader;
 
+import org.geoserver.printng.iface.PrintngReader;
+import org.geoserver.printng.iface.PrintngReaderFactory;
 import org.restlet.data.Request;
 
 public class PrintngReaderRequestBody implements PrintngReaderFactory {

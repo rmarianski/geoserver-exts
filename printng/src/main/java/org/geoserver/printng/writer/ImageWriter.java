@@ -1,9 +1,10 @@
-package org.geoserver.printng.io;
+package org.geoserver.printng.writer;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import org.geoserver.printng.iface.PrintngWriter;
 import org.w3c.dom.Document;
 import org.xhtmlrenderer.layout.SharedContext;
 import org.xhtmlrenderer.swing.Java2DRenderer;

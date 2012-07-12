@@ -1,8 +1,7 @@
-package org.geoserver.printng;
+package org.geoserver.printng.writer;
 
-import org.geoserver.printng.io.PDFWriter;
-import org.geoserver.printng.io.PrintngWriter;
-import org.geoserver.printng.io.PrintngWriterFactory;
+import org.geoserver.printng.iface.PrintngWriter;
+import org.geoserver.printng.iface.PrintngWriterFactory;
 import org.restlet.data.Form;
 import org.restlet.data.Parameter;
 import org.restlet.data.Request;

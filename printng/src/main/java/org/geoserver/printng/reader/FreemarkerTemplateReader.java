@@ -1,4 +1,4 @@
-package org.geoserver.printng.io;
+package org.geoserver.printng.reader;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,6 +8,7 @@ import java.io.StringWriter;
 
 import org.geoserver.config.GeoServerDataDirectory;
 import org.geoserver.platform.GeoServerExtensions;
+import org.geoserver.printng.iface.PrintngReader;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;

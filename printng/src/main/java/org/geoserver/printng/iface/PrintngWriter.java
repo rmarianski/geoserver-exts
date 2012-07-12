@@ -1,4 +1,4 @@
-package org.geoserver.printng.io;
+package org.geoserver.printng.iface;
 
 import java.io.IOException;
 import java.io.OutputStream;

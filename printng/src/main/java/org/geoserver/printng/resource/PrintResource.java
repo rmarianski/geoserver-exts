@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.List;
 
-import org.geoserver.printng.io.PrintngReader;
-import org.geoserver.printng.io.PrintngReaderFactory;
-import org.geoserver.printng.io.PrintngWriter;
-import org.geoserver.printng.io.PrintngWriterFactory;
+import org.geoserver.printng.iface.PrintngReader;
+import org.geoserver.printng.iface.PrintngReaderFactory;
+import org.geoserver.printng.iface.PrintngWriter;
+import org.geoserver.printng.iface.PrintngWriterFactory;
 import org.geoserver.rest.RestletException;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
