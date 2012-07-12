@@ -27,15 +27,18 @@ public class ImageWriter implements PrintngWriter {
         this(document, width, height, format, null, null);
     }
 
-    public ImageWriter(Document document, int width, int height, String format, String baseURL,
-            Integer dotsPerPixel) {
+    public ImageWriter(Document document, int width, int height, String format, Integer dpp) {
+        this(document, width, height, format, dpp, null);
+    }
+
+    public ImageWriter(Document document, int width, int height, String format,
+            Integer dotsPerPixel, String baseURL) {
         this.document = document;
         this.width = width;
         this.height = height;
         this.format = format;
         this.baseURL = baseURL;
         this.dotsPerPixel = dotsPerPixel;
-
     }
 
     @Override

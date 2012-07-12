@@ -49,7 +49,7 @@ public class PrintFinder extends Finder {
             String ext = request.getAttributes().get("ext").toString().toLowerCase();
             if ("pdf".equals(ext)) {
                 variant = new Variant(MediaType.APPLICATION_PDF);
-                pwf = new PDFPrintngFactory();
+                pwf = new PDFPrintngFactory(request);
             } else if ("jpg".equals(ext)) {
                 variant = new Variant(MediaType.IMAGE_JPEG);
                 pwf = new ImagePrintngFactory(request, "jpg");

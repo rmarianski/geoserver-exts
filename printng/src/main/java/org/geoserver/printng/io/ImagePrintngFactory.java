@@ -9,28 +9,29 @@ public class ImagePrintngFactory implements PrintngWriterFactory {
 
     private final String format;
 
-    private int width;
+    private final int width;
 
-    private int height;
+    private final int height;
+
+    private final Integer dpp;
 
     public ImagePrintngFactory(Request request, String format) {
         this.format = format;
         Form form = request.getResourceRef().getQueryAsForm();
-        this.width = 512;
-        this.height = 80;
         Parameter width = form.getFirst("width");
         Parameter height = form.getFirst("height");
-        if (width != null) {
-            this.width = parseInt(width.getValue(), this.width);
-        }
-        if (height != null) {
-            this.height = parseInt(height.getValue(), this.height);
-        }
+        Parameter dpp = form.getFirst("dpp");
+        this.width = parseInt(width, 512);
+        this.height = parseInt(height, 80);
+        this.dpp = parseInt(dpp, 0);
     }
 
-    private int parseInt(String value, int defaultValue) {
+    private int parseInt(Parameter parameter, Integer defaultValue) {
+        if (parameter == null) {
+            return defaultValue;
+        }
         try {
-            return Integer.parseInt(value);
+            return Integer.parseInt(parameter.getValue());
         } catch (NumberFormatException e) {
             return defaultValue;
         }
@@ -38,7 +39,6 @@ public class ImagePrintngFactory implements PrintngWriterFactory {
 
     @Override
     public PrintngWriter printngWriter(Document document) {
-        return new ImageWriter(document, this.width, this.height, format);
+        return new ImageWriter(document, this.width, this.height, format, dpp);
     }
-
 }

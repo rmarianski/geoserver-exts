@@ -24,19 +24,18 @@ public class PDFWriter implements PrintngWriter {
     }
 
     public PDFWriter(Document document, String baseURL) {
-        this(document, baseURL, null);
+        this(document, null, baseURL);
     }
 
     public PDFWriter(Document document, Integer dotsPerPixel) {
-        this(document, null, dotsPerPixel);
+        this(document, dotsPerPixel, null);
     }
 
-    public PDFWriter(Document document, String baseURL, Integer dotsPerPixel) {
+    public PDFWriter(Document document, Integer dotsPerPixel, String baseURL) {
         this.document = document;
         this.baseURL = baseURL;
         this.dotsPerPixel = dotsPerPixel;
         this.renderer = new ITextRenderer();
-
     }
 
     @Override
