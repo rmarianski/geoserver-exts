@@ -1,4 +1,4 @@
-package org.geoserver.printng.resource;
+package org.geoserver.printng.reader;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -6,7 +6,13 @@ import java.io.Reader;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMResult;
+import javax.xml.transform.sax.SAXSource;
 
+import org.ccil.cowan.tagsoup.Parser;
 import org.geoserver.rest.RestletException;
 import org.restlet.data.Status;
 import org.w3c.dom.Document;
@@ -17,9 +23,15 @@ import org.xml.sax.SAXException;
 public class PrintngRestDocumentParser {
 
     private final Reader reader;
-
+    private final boolean useTagSoup;
+    
     public PrintngRestDocumentParser(Reader reader) {
+        this(reader, true);
+    }
+
+    public PrintngRestDocumentParser(Reader reader, boolean useTagSoup) {
         this.reader = reader;
+        this.useTagSoup = useTagSoup;
     }
 
     public Document parse() throws IOException {
@@ -41,11 +53,25 @@ public class PrintngRestDocumentParser {
                 return new InputSource(getClass().getResourceAsStream(resource));
             }
         });
+        Transformer transformer;
         try {
+            transformer = TransformerFactory.newInstance().newTransformer();
+        } catch (Exception e) {
+            String err = "Error creating xml transformer";
+            throw new RestletException(err, Status.SERVER_ERROR_INTERNAL, e);
+        }
+        try {
+            Parser parser = new Parser();
             InputSource inputSource = new InputSource(reader);
-            Document document = builder.parse(inputSource);
+            DOMResult domResult = new DOMResult();
+            if (useTagSoup) {
+                transformer.transform(new SAXSource(parser, inputSource), domResult);
+            } else {
+                transformer.transform(new SAXSource(inputSource), domResult);
+            }
+            Document document = (Document) domResult.getNode();
             return document;
-        } catch (SAXException e) {
+        } catch (TransformerException e) {
             String err = "Error parsing input xml";
             throw new RestletException(err, Status.CLIENT_ERROR_BAD_REQUEST, e);
         }

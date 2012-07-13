@@ -6,7 +6,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 
-import org.geoserver.printng.resource.PrintngRestDocumentParser;
+import org.geoserver.printng.reader.PrintngRestDocumentParser;
 import org.junit.Test;
 import org.w3c.dom.Document;
 

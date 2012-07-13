@@ -15,19 +15,4 @@ public class RestEndpointTest extends GeoServerTestSupport {
         assertEquals("Invalid response", Status.SUCCESS_OK.getCode(), response.getStatusCode());
     }
 
-    @Test
-    public void testInvalidRenderNoXml() throws Exception {
-        MockHttpServletResponse response = postAsServletResponse("/rest/printng/render.png", "");
-        assertEquals("Invalid response", Status.CLIENT_ERROR_BAD_REQUEST.getCode(),
-                response.getStatusCode());
-    }
-
-    @Test
-    public void testInvalidRenderBadXml() throws Exception {
-        MockHttpServletResponse response = postAsServletResponse("/rest/printng/render.png",
-                "<foo>quux</bar>");
-        assertEquals("Invalid response", Status.CLIENT_ERROR_BAD_REQUEST.getCode(),
-                response.getStatusCode());
-    }
-
 }

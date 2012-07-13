@@ -13,7 +13,7 @@ import javax.imageio.ImageIO;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
-import org.geoserver.printng.resource.PrintngRestDocumentParser;
+import org.geoserver.printng.reader.PrintngRestDocumentParser;
 import org.junit.Test;
 import org.w3c.dom.Document;
 
