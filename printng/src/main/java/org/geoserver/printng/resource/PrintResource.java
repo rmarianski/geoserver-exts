@@ -18,6 +18,7 @@ import org.restlet.resource.Variant;
 import org.w3c.dom.Document;
 
 public class PrintResource extends Resource {
+
     private final PrintngReaderFactory readerFactory;
 
     private final PrintngWriterFactory writerFactory;

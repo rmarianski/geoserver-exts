@@ -1,7 +1,5 @@
 package org.geoserver.printng.resource;
 
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -9,7 +7,6 @@ import static org.junit.Assert.fail;
 import java.util.Map;
 
 import org.geoserver.printng.PrintFinder;
-import org.geoserver.printng.iface.PrintngReaderFactory;
 import org.geoserver.rest.RestletException;
 import org.junit.Test;
 import org.restlet.data.Reference;
@@ -21,10 +18,7 @@ public class PrintFinderTest {
 
     @Test
     public void testFindTargetRequestResponse() {
-        PrintngReaderFactory printngReaderFactory = createMock(PrintngReaderFactory.class);
-        replay(printngReaderFactory);
-
-        PrintFinder printFinder = new PrintFinder(printngReaderFactory);
+        PrintFinder printFinder = new PrintFinder(null);
         Reference resourceRef = new Reference();
         resourceRef.setPath("/unused");
         Request request = new Request();
@@ -38,10 +32,7 @@ public class PrintFinderTest {
 
     @Test
     public void testFindTargetNoExtension() throws Exception {
-        PrintngReaderFactory printngReaderFactory = createMock(PrintngReaderFactory.class);
-        replay(printngReaderFactory);
-
-        PrintFinder printFinder = new PrintFinder(printngReaderFactory);
+        PrintFinder printFinder = new PrintFinder(null);
         Reference resourceRef = new Reference();
         resourceRef.setPath("/unused");
         Request request = new Request();

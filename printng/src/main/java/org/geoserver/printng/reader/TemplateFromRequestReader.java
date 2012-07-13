@@ -10,7 +10,7 @@ import org.restlet.data.Request;
 
 public class TemplateFromRequestReader implements PrintngReader {
 
-    private Request request;
+    private final Request request;
 
     public TemplateFromRequestReader(Request request) {
         this.request = request;

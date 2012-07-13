@@ -12,9 +12,9 @@ import com.lowagie.text.DocumentException;
 
 public class PDFWriter implements PrintngWriter {
 
-    private ITextRenderer renderer;
+    private final ITextRenderer renderer;
 
-    private String baseURL;
+    private final String baseURL;
 
     private final Integer dotsPerPixel;
 

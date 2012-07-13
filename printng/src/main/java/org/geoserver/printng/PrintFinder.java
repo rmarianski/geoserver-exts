@@ -38,33 +38,26 @@ public class PrintFinder extends Finder {
 
     @Override
     public Resource findTarget(Request request, Response response) {
-        if (prf == null) {
-            if (request.getResourceRef().getPath().indexOf("/printng/render") >= 0) {
-                return new HTMLMapPrintResource(request, response);
-            } else {
-                return new TemplatePrintResource(request, response);
-            }
+        Variant variant;
+        PrintngWriterFactory pwf;
+        String ext = request.getAttributes().get("ext").toString().toLowerCase();
+        if ("pdf".equals(ext)) {
+            variant = new Variant(MediaType.APPLICATION_PDF);
+            pwf = new PDFPrintngFactory(request);
+        } else if ("jpg".equals(ext)) {
+            variant = new Variant(MediaType.IMAGE_JPEG);
+            pwf = new ImagePrintngFactory(request, "jpg");
+        } else if ("png".equals(ext)) {
+            variant = new Variant(MediaType.IMAGE_PNG);
+            pwf = new ImagePrintngFactory(request, "png");
+        } else if ("gif".equals(ext)) {
+            variant = new Variant(MediaType.IMAGE_GIF);
+            pwf = new ImagePrintngFactory(request, "gif");
         } else {
-            Variant variant;
-            PrintngWriterFactory pwf;
-            String ext = request.getAttributes().get("ext").toString().toLowerCase();
-            if ("pdf".equals(ext)) {
-                variant = new Variant(MediaType.APPLICATION_PDF);
-                pwf = new PDFPrintngFactory(request);
-            } else if ("jpg".equals(ext)) {
-                variant = new Variant(MediaType.IMAGE_JPEG);
-                pwf = new ImagePrintngFactory(request, "jpg");
-            } else if ("png".equals(ext)) {
-                variant = new Variant(MediaType.IMAGE_PNG);
-                pwf = new ImagePrintngFactory(request, "png");
-            } else if ("gif".equals(ext)) {
-                variant = new Variant(MediaType.IMAGE_GIF);
-                pwf = new ImagePrintngFactory(request, "gif");
-            } else {
-                String error = String.format("Unknown rendering extension \"%s\"", ext);
-                throw new RestletException(error, Status.CLIENT_ERROR_NOT_FOUND);
-            }
-            return new PrintResource(request, response, variant, prf, pwf);
+            String error = String.format("Unknown rendering extension \"%s\"", ext);
+            throw new RestletException(error, Status.CLIENT_ERROR_NOT_FOUND);
         }
+        return new PrintResource(request, response, variant, prf, pwf);
     }
+
 }
