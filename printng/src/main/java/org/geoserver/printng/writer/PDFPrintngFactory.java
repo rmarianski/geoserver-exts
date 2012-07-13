@@ -10,6 +10,7 @@ import org.w3c.dom.Document;
 public class PDFPrintngFactory implements PrintngWriterFactory {
 
     private final Integer dpp;
+
     private final String baseURL;
 
     public PDFPrintngFactory(Request request) {
