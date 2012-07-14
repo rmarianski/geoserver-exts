@@ -13,15 +13,9 @@
         </entry>
         <entry>
           <key>
-            <value>/printng/render/{resource}.{ext}</value>
+            <value>/printng/freemarker/{template}.{ext}</value>
           </key>
-          <value>printFinder</value>
-        </entry>
-        <entry>
-          <key>
-            <value>/printng/maps/{map}</value>
-          </key>
-          <value>printFinder</value>
+          <value>printFinderFromFreemarkerTemplate</value>
         </entry>
       </map>
     </property>
@@ -35,6 +29,13 @@
     </constructor-arg>
   </bean>
 
+  <bean id="printFinderFromFreemarkerTemplate" class="org.geoserver.printng.PrintFinder">
+    <constructor-arg index="0">
+      <ref bean="printngReaderFreemarkerTemplate" />
+    </constructor-arg>
+  </bean>
+
   <bean id="printngReaderRequestBody" class="org.geoserver.printng.reader.PrintngReaderRequestBody" />
+  <bean id="printngReaderFreemarkerTemplate" class="org.geoserver.printng.reader.PrintngReaderFromTemplate" />
 
 </beans>
