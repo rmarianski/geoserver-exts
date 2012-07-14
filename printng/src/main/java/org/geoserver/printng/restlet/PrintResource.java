@@ -52,12 +52,20 @@ public class PrintResource extends Resource {
     public Representation getRepresentation(Variant variant) {
         PrintngReader printngReader = readerFactory.printngReader(getRequest());
         Document document;
+        Reader reader = null;
         try {
-            Reader reader = printngReader.reader();
+            reader = printngReader.reader();
             PrintngRestDocumentParser documentParser = new PrintngRestDocumentParser(reader);
             document = documentParser.parse();
         } catch (IOException e) {
             throw new RestletException("Error reading input", Status.SERVER_ERROR_INTERNAL, e);
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                }
+            }
         }
         PrintngWriter writer = writerFactory.printngWriter(document);
         return new PrintRepresentation(variant.getMediaType(), writer);
