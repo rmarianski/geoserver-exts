@@ -17,6 +17,12 @@
           </key>
           <value>printFinderFromFreemarkerTemplate</value>
         </entry>
+        <entry>
+          <key>
+            <value>/printng/freemarker/{template}</value>
+          </key>
+          <value>printFreemarkerTemplateFinder</value>
+        </entry>
       </map>
     </property>
   </bean>
@@ -37,5 +43,8 @@
 
   <bean id="printngReaderRequestBody" class="org.geoserver.printng.reader.PrintngReaderRequestBody" />
   <bean id="printngReaderFreemarkerTemplate" class="org.geoserver.printng.reader.PrintngReaderFromTemplate" />
+
+  <bean id="printFreemarkerTemplateFinder"
+    class="org.geoserver.printng.freemarker.FreemarkerTemplateFinder" />
 
 </beans>
