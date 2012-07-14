@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Writer;
 
-import org.apache.commons.io.output.WriterOutputStream;
 import org.apache.xml.serialize.XMLSerializer;
 import org.geoserver.printng.freemarker.PrintngFreemarkerTemplateFacade;
 import org.geoserver.printng.reader.PrintngRestDocumentParser;
@@ -44,7 +43,7 @@ public class FreemarkerTemplateResource extends Resource {
         }
         InputStream input;
         InputStreamReader reader = null;
-        WriterOutputStream writerOutputStream = null;
+        Writer writer = null;
 
         try {
             try {
@@ -62,14 +61,12 @@ public class FreemarkerTemplateResource extends Resource {
                 throw new RestletException("Error parsing invalid input",
                         Status.CLIENT_ERROR_BAD_REQUEST, e);
             }
-            Writer writer;
             try {
                 writer = PrintngFreemarkerTemplateFacade.newTemplateWriter(templateName);
-                writerOutputStream = new WriterOutputStream(writer);
-                XMLSerializer xmlSerializer = new XMLSerializer(writerOutputStream, null);
+                XMLSerializer xmlSerializer = new XMLSerializer(writer, null);
                 xmlSerializer.serialize(document);
                 getResponse().setEntity(
-                        String.format("Template %s created succesffully", templateName),
+                        String.format("Template %s created succesffully\n", templateName),
                         MediaType.TEXT_PLAIN);
             } catch (IOException e) {
                 throw new RestletException("Error writing new template",
@@ -77,8 +74,8 @@ public class FreemarkerTemplateResource extends Resource {
             }
         } finally {
             try {
-                if (writerOutputStream != null)
-                    writerOutputStream.close();
+                if (writer != null)
+                    writer.close();
             } catch (IOException e) {
             }
             try {
