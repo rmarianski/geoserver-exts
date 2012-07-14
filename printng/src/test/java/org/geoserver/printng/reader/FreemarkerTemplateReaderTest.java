@@ -30,10 +30,9 @@ public class FreemarkerTemplateReaderTest extends GeoServerTestSupport {
 
     @Test
     public void testReaderFound() throws IOException {
-        FreemarkerTemplateReader freemarkerTemplateReader = new FreemarkerTemplateReader("foo",
-                new Object());
+        FreemarkerTemplateReader freemarkerReader = new FreemarkerTemplateReader("foo", null);
         createTemplate("foo", new StringReader("<div>foobar</div>"));
-        Reader reader = freemarkerTemplateReader.reader();
+        Reader reader = freemarkerReader.reader();
         String result = IOUtils.toString(reader);
         assertEquals("Invalid template contents", "<div>foobar</div>", result);
     }
