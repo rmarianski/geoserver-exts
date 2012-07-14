@@ -49,6 +49,22 @@ public class FreemarkerTemplateReaderTest extends GeoServerTestSupport {
         assertEquals("Invalid template interpoloation", "<div>morx</div>", result);
     }
 
+    @Test
+    public void testReaderFoundMissingParams() throws IOException {
+        SimpleHash simpleHash = new SimpleHash();
+        simpleHash.put("quux", "morx");
+        FreemarkerTemplateReader freemarkerTemplateReader = new FreemarkerTemplateReader("foo",
+                simpleHash);
+        createTemplate("foo", new StringReader("<div>${fleem}</div>"));
+        try {
+            freemarkerTemplateReader.reader();
+        } catch (IOException e) {
+            assertTrue(true);
+            return;
+        }
+        fail("Expected IOException thrown for processing bad template params");
+    }
+
     private void createTemplate(String templateName, Reader inputReader) throws IOException {
         GeoServerDataDirectory geoServerDataDirectory = GeoServerExtensions
                 .bean(GeoServerDataDirectory.class);
