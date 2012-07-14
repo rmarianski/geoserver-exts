@@ -30,14 +30,24 @@ public class FreemarkerTemplateReaderTest extends GeoServerTestSupport {
 
     @Test
     public void testReaderFound() throws IOException {
+        FreemarkerTemplateReader freemarkerTemplateReader = new FreemarkerTemplateReader("foo",
+                new Object());
+        createTemplate("foo", new StringReader("<div>foobar</div>"));
+        Reader reader = freemarkerTemplateReader.reader();
+        String result = IOUtils.toString(reader);
+        assertEquals("Invalid template contents", "<div>foobar</div>", result);
+    }
+
+    @Test
+    public void testReaderFoundWithParams() throws IOException {
         SimpleHash simpleHash = new SimpleHash();
         simpleHash.put("quux", "morx");
         FreemarkerTemplateReader freemarkerTemplateReader = new FreemarkerTemplateReader("foo",
                 simpleHash);
-        createTemplate("foo", new StringReader("<div>foobar</div>"));
+        createTemplate("foo", new StringReader("<div>${quux}</div>"));
         Reader reader = freemarkerTemplateReader.reader();
         String result = IOUtils.toString(reader);
-        assertEquals("<div>foobar</div>", result);
+        assertEquals("Invalid template interpoloation", "<div>morx</div>", result);
     }
 
     private void createTemplate(String templateName, Reader inputReader) throws IOException {
