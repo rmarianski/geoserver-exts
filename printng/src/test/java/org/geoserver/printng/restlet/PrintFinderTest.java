@@ -1,4 +1,4 @@
-package org.geoserver.printng.resource;
+package org.geoserver.printng.restlet;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -6,7 +6,7 @@ import static org.junit.Assert.fail;
 
 import java.util.Map;
 
-import org.geoserver.printng.PrintFinder;
+import org.geoserver.printng.restlet.PrintFinder;
 import org.geoserver.rest.RestletException;
 import org.junit.Test;
 import org.restlet.data.Reference;

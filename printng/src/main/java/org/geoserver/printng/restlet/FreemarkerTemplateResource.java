@@ -1,4 +1,4 @@
-package org.geoserver.printng.freemarker;
+package org.geoserver.printng.restlet;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,6 +7,7 @@ import java.io.Writer;
 
 import org.apache.commons.io.output.WriterOutputStream;
 import org.apache.xml.serialize.XMLSerializer;
+import org.geoserver.printng.freemarker.PrintngFreemarkerTemplateFacade;
 import org.geoserver.printng.reader.PrintngRestDocumentParser;
 import org.geoserver.rest.RestletException;
 import org.restlet.data.MediaType;

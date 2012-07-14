@@ -1,8 +1,7 @@
-package org.geoserver.printng;
+package org.geoserver.printng.restlet;
 
 import org.geoserver.printng.iface.PrintngReaderFactory;
 import org.geoserver.printng.iface.PrintngWriterFactory;
-import org.geoserver.printng.resource.PrintResource;
 import org.geoserver.printng.writer.ImagePrintngFactory;
 import org.geoserver.printng.writer.PDFPrintngFactory;
 import org.geoserver.rest.RestletException;

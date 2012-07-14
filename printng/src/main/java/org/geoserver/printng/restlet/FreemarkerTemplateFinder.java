@@ -1,4 +1,4 @@
-package org.geoserver.printng.freemarker;
+package org.geoserver.printng.restlet;
 
 import org.restlet.Finder;
 import org.restlet.data.Request;

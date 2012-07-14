@@ -1,4 +1,4 @@
-package org.geoserver.printng.freemarker;
+package org.geoserver.printng.restlet;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
+import org.geoserver.printng.freemarker.PrintngFreemarkerTemplateFacade;
+import org.geoserver.printng.restlet.FreemarkerTemplateResource;
 import org.geoserver.test.GeoServerTestSupport;
 import org.junit.Test;
 import org.restlet.data.MediaType;

@@ -1,4 +1,4 @@
-package org.geoserver.printng.resource;
+package org.geoserver.printng.restlet;
 
 import java.io.IOException;
 import java.io.Reader;
