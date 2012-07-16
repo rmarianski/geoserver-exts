@@ -6,7 +6,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 
-import org.geoserver.printng.reader.PrintngRestDocumentParser;
+import org.geoserver.printng.reader.PrintngDocumentParser;
 import org.junit.Test;
 import org.w3c.dom.Document;
 
@@ -15,7 +15,7 @@ public class PDFWriterTest {
     @Test
     public void testWrite() throws IOException {
         String input = "<div>foobar</div>";
-        PrintngRestDocumentParser parser = new PrintngRestDocumentParser(new StringReader(input));
+        PrintngDocumentParser parser = new PrintngDocumentParser(new StringReader(input));
         Document document = parser.parse();
         PDFWriter pdfWriter = new PDFWriter(document);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();

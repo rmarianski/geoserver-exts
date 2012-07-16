@@ -20,16 +20,16 @@ import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-public class PrintngRestDocumentParser {
+public class PrintngDocumentParser {
 
     private final Reader reader;
     private final boolean useTagSoup;
     
-    public PrintngRestDocumentParser(Reader reader) {
+    public PrintngDocumentParser(Reader reader) {
         this(reader, true);
     }
 
-    public PrintngRestDocumentParser(Reader reader, boolean useTagSoup) {
+    public PrintngDocumentParser(Reader reader, boolean useTagSoup) {
         this.reader = reader;
         this.useTagSoup = useTagSoup;
     }

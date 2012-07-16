@@ -16,7 +16,7 @@ public class PrintngRestDocumentParserTest {
     public void testParseWithTagSoup() throws IOException {
         String input = "<div>foobar</div>";
         StringReader stringReader = new StringReader(input);
-        PrintngRestDocumentParser parser = new PrintngRestDocumentParser(stringReader);
+        PrintngDocumentParser parser = new PrintngDocumentParser(stringReader);
         Document document = parser.parse();
 
         StringWriter stringWriter = new StringWriter();
@@ -31,7 +31,7 @@ public class PrintngRestDocumentParserTest {
     public void testParseNoTagSoup() throws IOException {
         String input = "<div>foobar</div>";
         StringReader stringReader = new StringReader(input);
-        PrintngRestDocumentParser parser = new PrintngRestDocumentParser(stringReader, false);
+        PrintngDocumentParser parser = new PrintngDocumentParser(stringReader, false);
         Document document = parser.parse();
 
         StringWriter stringWriter = new StringWriter();

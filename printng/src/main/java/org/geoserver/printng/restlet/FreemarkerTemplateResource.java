@@ -7,7 +7,7 @@ import java.io.Writer;
 
 import org.apache.xml.serialize.XMLSerializer;
 import org.geoserver.printng.freemarker.PrintngFreemarkerTemplateFacade;
-import org.geoserver.printng.reader.PrintngRestDocumentParser;
+import org.geoserver.printng.reader.PrintngDocumentParser;
 import org.geoserver.rest.RestletException;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
@@ -53,7 +53,7 @@ public class FreemarkerTemplateResource extends Resource {
                         Status.SERVER_ERROR_INTERNAL, e);
             }
             reader = new InputStreamReader(input);
-            PrintngRestDocumentParser parser = new PrintngRestDocumentParser(reader);
+            PrintngDocumentParser parser = new PrintngDocumentParser(reader);
             Document document;
             try {
                 document = parser.parse();

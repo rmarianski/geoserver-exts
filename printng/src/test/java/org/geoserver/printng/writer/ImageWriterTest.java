@@ -13,7 +13,7 @@ import javax.imageio.ImageIO;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
-import org.geoserver.printng.reader.PrintngRestDocumentParser;
+import org.geoserver.printng.reader.PrintngDocumentParser;
 import org.junit.Test;
 import org.w3c.dom.Document;
 
@@ -39,7 +39,7 @@ public class ImageWriterTest {
 
     private void checkImageWrite(String input, String format, String magic) throws IOException,
             DecoderException {
-        PrintngRestDocumentParser parser = new PrintngRestDocumentParser(new StringReader(input));
+        PrintngDocumentParser parser = new PrintngDocumentParser(new StringReader(input));
         Document document = parser.parse();
         ImageWriter imageWriter = new ImageWriter(document, 100, 50, format);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();

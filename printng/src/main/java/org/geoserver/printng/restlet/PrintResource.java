@@ -8,7 +8,7 @@ import org.geoserver.printng.iface.PrintngReader;
 import org.geoserver.printng.iface.PrintngReaderFactory;
 import org.geoserver.printng.iface.PrintngWriter;
 import org.geoserver.printng.iface.PrintngWriterFactory;
-import org.geoserver.printng.reader.PrintngRestDocumentParser;
+import org.geoserver.printng.reader.PrintngDocumentParser;
 import org.geoserver.rest.RestletException;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
@@ -55,7 +55,7 @@ public class PrintResource extends Resource {
         Reader reader = null;
         try {
             reader = printngReader.reader();
-            PrintngRestDocumentParser documentParser = new PrintngRestDocumentParser(reader);
+            PrintngDocumentParser documentParser = new PrintngDocumentParser(reader);
             document = documentParser.parse();
         } catch (IOException e) {
             throw new RestletException("Error reading input", Status.SERVER_ERROR_INTERNAL, e);
