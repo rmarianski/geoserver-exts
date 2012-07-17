@@ -45,7 +45,6 @@ import org.geotools.data.FeatureStore;
 import org.geotools.data.FeatureWriter;
 import org.geotools.data.Transaction;
 import org.geotools.data.directory.DirectoryDataStore;
-import org.geotools.data.oracle.OracleDialect;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.GeneralEnvelope;
@@ -1059,8 +1058,8 @@ public class Importer implements InitializingBean, DisposableBean {
         String name = featureType.getName().getLocalPart();
         
         //hack for oracle, all names must be upper case
-        if (dataStore instanceof JDBCDataStore 
-            && ((JDBCDataStore)dataStore).getSQLDialect() instanceof OracleDialect) {
+        if (dataStore instanceof JDBCDataStore &&
+            "org.geotools.data.oracle.OracleDialect".equals(((JDBCDataStore)dataStore).getSQLDialect().getClass().getName())) {
             name = name.toUpperCase();
         }
 
