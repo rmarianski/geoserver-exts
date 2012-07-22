@@ -1,4 +1,4 @@
-package org.geoserver.printng.writer;
+package org.geoserver.printng;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -13,7 +13,8 @@ import javax.imageio.ImageIO;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
-import org.geoserver.printng.reader.PrintngDocumentParser;
+import org.geoserver.printng.spi.ImageWriter;
+import org.geoserver.printng.spi.DocumentParser;
 import org.junit.Test;
 import org.w3c.dom.Document;
 
@@ -39,7 +40,7 @@ public class ImageWriterTest {
 
     private void checkImageWrite(String input, String format, String magic) throws IOException,
             DecoderException {
-        PrintngDocumentParser parser = new PrintngDocumentParser(new StringReader(input));
+        DocumentParser parser = new DocumentParser(new StringReader(input));
         Document document = parser.parse();
         ImageWriter imageWriter = new ImageWriter(document, 100, 50, format);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();

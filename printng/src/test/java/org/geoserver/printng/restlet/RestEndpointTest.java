@@ -5,7 +5,7 @@ import java.io.StringReader;
 import java.io.Writer;
 
 import org.apache.commons.io.IOUtils;
-import org.geoserver.printng.freemarker.PrintngFreemarkerTemplateFacade;
+import org.geoserver.printng.FreemarkerSupport;
 import org.geoserver.test.GeoServerTestSupport;
 import org.junit.Test;
 import org.restlet.data.Status;
@@ -31,7 +31,7 @@ public class RestEndpointTest extends GeoServerTestSupport {
 
     private void createPrintngFreemarkerTemplate(String templateName, String templateContents)
             throws IOException {
-        Writer writer = PrintngFreemarkerTemplateFacade.newTemplateWriter(templateName);
+        Writer writer = FreemarkerSupport.newTemplateWriter(templateName);
         IOUtils.copy(new StringReader(templateContents), writer);
     }
 

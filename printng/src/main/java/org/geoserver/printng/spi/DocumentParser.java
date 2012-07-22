@@ -1,4 +1,4 @@
-package org.geoserver.printng.reader;
+package org.geoserver.printng.spi;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -20,16 +20,16 @@ import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-public class PrintngDocumentParser {
+public class DocumentParser {
 
     private final Reader reader;
     private final boolean useTagSoup;
     
-    public PrintngDocumentParser(Reader reader) {
+    public DocumentParser(Reader reader) {
         this(reader, true);
     }
 
-    public PrintngDocumentParser(Reader reader, boolean useTagSoup) {
+    public DocumentParser(Reader reader, boolean useTagSoup) {
         this.reader = reader;
         this.useTagSoup = useTagSoup;
     }

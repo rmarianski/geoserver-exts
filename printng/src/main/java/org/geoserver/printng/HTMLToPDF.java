@@ -9,10 +9,10 @@ import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.LinkedList;
 
-import org.geoserver.printng.iface.PrintngWriter;
-import org.geoserver.printng.reader.PrintngDocumentParser;
-import org.geoserver.printng.writer.ImageWriter;
-import org.geoserver.printng.writer.PDFWriter;
+import org.geoserver.printng.api.PrintngWriter;
+import org.geoserver.printng.spi.ImageWriter;
+import org.geoserver.printng.spi.PDFWriter;
+import org.geoserver.printng.spi.DocumentParser;
 import org.w3c.dom.Document;
 
 /**
@@ -41,7 +41,7 @@ public class HTMLToPDF {
         }
         while (true) {
             FileReader fileReader = new FileReader(inputFile);
-            PrintngDocumentParser printngDocumentParser = new PrintngDocumentParser(fileReader);
+            DocumentParser printngDocumentParser = new DocumentParser(fileReader);
             Document document = printngDocumentParser.parse();
 
             System.out.print("rendering...");

@@ -1,9 +1,9 @@
-package org.geoserver.printng.reader;
+package org.geoserver.printng.spi;
 
 import java.util.Set;
 
-import org.geoserver.printng.iface.PrintngReader;
-import org.geoserver.printng.iface.PrintngReaderFactory;
+import org.geoserver.printng.api.PrintngReader;
+import org.geoserver.printng.api.PrintngReaderFactory;
 import org.geoserver.rest.RestletException;
 import org.restlet.data.Form;
 import org.restlet.data.Request;
@@ -11,7 +11,7 @@ import org.restlet.data.Status;
 
 import freemarker.template.SimpleHash;
 
-public class PrintngReaderFromTemplate implements PrintngReaderFactory {
+public class FreemarkerReaderFactory implements PrintngReaderFactory {
 
     @Override
     public PrintngReader printngReader(Request request) {
@@ -26,7 +26,7 @@ public class PrintngReaderFromTemplate implements PrintngReaderFactory {
             String value = form.getFirst(name).getValue();
             simpleHash.put(name, value);
         }
-        return new FreemarkerTemplateReader(templateName, simpleHash);
+        return new FreemarkerReader(templateName, simpleHash);
     }
 
 }

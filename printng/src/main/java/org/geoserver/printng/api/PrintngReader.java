@@ -1,4 +1,4 @@
-package org.geoserver.printng.iface;
+package org.geoserver.printng.api;
 
 import java.io.IOException;
 import java.io.Reader;

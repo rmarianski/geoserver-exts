@@ -6,8 +6,8 @@ import java.io.InputStreamReader;
 import java.io.Writer;
 
 import org.apache.xml.serialize.XMLSerializer;
-import org.geoserver.printng.freemarker.PrintngFreemarkerTemplateFacade;
-import org.geoserver.printng.reader.PrintngDocumentParser;
+import org.geoserver.printng.FreemarkerSupport;
+import org.geoserver.printng.spi.DocumentParser;
 import org.geoserver.rest.RestletException;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
@@ -53,7 +53,7 @@ public class FreemarkerTemplateResource extends Resource {
                         Status.SERVER_ERROR_INTERNAL, e);
             }
             reader = new InputStreamReader(input);
-            PrintngDocumentParser parser = new PrintngDocumentParser(reader);
+            DocumentParser parser = new DocumentParser(reader);
             Document document;
             try {
                 document = parser.parse();
@@ -62,7 +62,7 @@ public class FreemarkerTemplateResource extends Resource {
                         Status.CLIENT_ERROR_BAD_REQUEST, e);
             }
             try {
-                writer = PrintngFreemarkerTemplateFacade.newTemplateWriter(templateName);
+                writer = FreemarkerSupport.newTemplateWriter(templateName);
                 XMLSerializer xmlSerializer = new XMLSerializer(writer, null);
                 xmlSerializer.serialize(document);
                 getResponse().setEntity(

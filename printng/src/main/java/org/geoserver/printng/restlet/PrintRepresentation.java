@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.geoserver.printng.iface.PrintngWriter;
+import org.geoserver.printng.api.PrintngWriter;
 import org.restlet.data.MediaType;
 import org.restlet.resource.StreamRepresentation;
 

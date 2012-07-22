@@ -1,4 +1,4 @@
-package org.geoserver.printng.reader;
+package org.geoserver.printng;
 
 import static org.junit.Assert.assertEquals;
 
@@ -7,16 +7,17 @@ import java.io.StringReader;
 import java.io.StringWriter;
 
 import org.apache.xml.serialize.XMLSerializer;
+import org.geoserver.printng.spi.DocumentParser;
 import org.junit.Test;
 import org.w3c.dom.Document;
 
-public class PrintngRestDocumentParserTest {
+public class DocumentParserTest {
 
     @Test
     public void testParseWithTagSoup() throws IOException {
         String input = "<div>foobar</div>";
         StringReader stringReader = new StringReader(input);
-        PrintngDocumentParser parser = new PrintngDocumentParser(stringReader);
+        DocumentParser parser = new DocumentParser(stringReader);
         Document document = parser.parse();
 
         StringWriter stringWriter = new StringWriter();
@@ -31,7 +32,7 @@ public class PrintngRestDocumentParserTest {
     public void testParseNoTagSoup() throws IOException {
         String input = "<div>foobar</div>";
         StringReader stringReader = new StringReader(input);
-        PrintngDocumentParser parser = new PrintngDocumentParser(stringReader, false);
+        DocumentParser parser = new DocumentParser(stringReader, false);
         Document document = parser.parse();
 
         StringWriter stringWriter = new StringWriter();

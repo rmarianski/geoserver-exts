@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
-import org.geoserver.printng.freemarker.PrintngFreemarkerTemplateFacade;
+import org.geoserver.printng.FreemarkerSupport;
 import org.geoserver.printng.restlet.FreemarkerTemplateResource;
 import org.geoserver.test.GeoServerTestSupport;
 import org.junit.Test;
@@ -30,7 +30,7 @@ public class FreemarkerTemplateResourceTest extends GeoServerTestSupport {
         freemarkerTemplateResource.handlePost();
         assertEquals("Invalid response", Status.SUCCESS_OK, response.getStatus());
 
-        File directory = PrintngFreemarkerTemplateFacade.getPrintngTemplateDirectory();
+        File directory = FreemarkerSupport.getPrintngTemplateDirectory();
         File template = new File(directory, "foo.ftl");
         assertTrue("template wasn't created", template.exists());
         String contents = IOUtils.toString(new FileReader(template));

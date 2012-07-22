@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.List;
 
-import org.geoserver.printng.iface.PrintngReader;
-import org.geoserver.printng.iface.PrintngReaderFactory;
-import org.geoserver.printng.iface.PrintngWriter;
-import org.geoserver.printng.iface.PrintngWriterFactory;
-import org.geoserver.printng.reader.PrintngDocumentParser;
+import org.geoserver.printng.api.PrintngReader;
+import org.geoserver.printng.api.PrintngReaderFactory;
+import org.geoserver.printng.api.PrintngWriter;
+import org.geoserver.printng.api.PrintngWriterFactory;
+import org.geoserver.printng.spi.DocumentParser;
 import org.geoserver.rest.RestletException;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
@@ -55,7 +55,7 @@ public class PrintResource extends Resource {
         Reader reader = null;
         try {
             reader = printngReader.reader();
-            PrintngDocumentParser documentParser = new PrintngDocumentParser(reader);
+            DocumentParser documentParser = new DocumentParser(reader);
             document = documentParser.parse();
         } catch (IOException e) {
             throw new RestletException("Error reading input", Status.SERVER_ERROR_INTERNAL, e);

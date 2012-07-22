@@ -1,9 +1,9 @@
 package org.geoserver.printng.restlet;
 
-import org.geoserver.printng.iface.PrintngReaderFactory;
-import org.geoserver.printng.iface.PrintngWriterFactory;
-import org.geoserver.printng.writer.ImagePrintngFactory;
-import org.geoserver.printng.writer.PDFPrintngFactory;
+import org.geoserver.printng.api.PrintngReaderFactory;
+import org.geoserver.printng.api.PrintngWriterFactory;
+import org.geoserver.printng.spi.ImageWriterFactory;
+import org.geoserver.printng.spi.PDFWriterFactory;
 import org.geoserver.rest.RestletException;
 import org.geoserver.rest.format.MediaTypes;
 import org.restlet.Finder;
@@ -42,16 +42,16 @@ public class PrintFinder extends Finder {
         String ext = request.getAttributes().get("ext").toString().toLowerCase();
         if ("pdf".equals(ext)) {
             variant = new Variant(MediaType.APPLICATION_PDF);
-            pwf = new PDFPrintngFactory(request);
+            pwf = new PDFWriterFactory(request);
         } else if ("jpg".equals(ext)) {
             variant = new Variant(MediaType.IMAGE_JPEG);
-            pwf = new ImagePrintngFactory(request, "jpg");
+            pwf = new ImageWriterFactory(request, "jpg");
         } else if ("png".equals(ext)) {
             variant = new Variant(MediaType.IMAGE_PNG);
-            pwf = new ImagePrintngFactory(request, "png");
+            pwf = new ImageWriterFactory(request, "png");
         } else if ("gif".equals(ext)) {
             variant = new Variant(MediaType.IMAGE_GIF);
-            pwf = new ImagePrintngFactory(request, "gif");
+            pwf = new ImageWriterFactory(request, "gif");
         } else {
             String error = String.format("Unknown rendering extension \"%s\"", ext);
             throw new RestletException(error, Status.CLIENT_ERROR_NOT_FOUND);

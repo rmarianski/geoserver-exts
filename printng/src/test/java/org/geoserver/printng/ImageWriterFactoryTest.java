@@ -1,13 +1,14 @@
-package org.geoserver.printng.writer;
+package org.geoserver.printng;
 
 import static org.junit.Assert.assertNotNull;
 
-import org.geoserver.printng.iface.PrintngWriter;
+import org.geoserver.printng.api.PrintngWriter;
+import org.geoserver.printng.spi.ImageWriterFactory;
 import org.junit.Test;
 import org.restlet.data.Reference;
 import org.restlet.data.Request;
 
-public class ImagePrintngFactoryTest {
+public class ImageWriterFactoryTest {
 
     @Test
     public void testPrintngWriter() {
@@ -15,7 +16,7 @@ public class ImagePrintngFactoryTest {
         resourceRef.setQuery("");
         Request request = new Request();
         request.setResourceRef(resourceRef);
-        ImagePrintngFactory imagePrintngFactory = new ImagePrintngFactory(request, "pdf");
+        ImageWriterFactory imagePrintngFactory = new ImageWriterFactory(request, "pdf");
         PrintngWriter printngWriter = imagePrintngFactory.printngWriter(null);
         assertNotNull(printngWriter);
     }

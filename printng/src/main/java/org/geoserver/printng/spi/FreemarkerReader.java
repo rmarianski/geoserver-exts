@@ -1,4 +1,4 @@
-package org.geoserver.printng.reader;
+package org.geoserver.printng.spi;
 
 import java.io.File;
 import java.io.IOException;
@@ -6,21 +6,21 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 
-import org.geoserver.printng.freemarker.PrintngFreemarkerTemplateFacade;
-import org.geoserver.printng.iface.PrintngReader;
+import org.geoserver.printng.FreemarkerSupport;
+import org.geoserver.printng.api.PrintngReader;
 
 import freemarker.template.Configuration;
 import freemarker.template.SimpleHash;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 
-public class FreemarkerTemplateReader implements PrintngReader {
+public class FreemarkerReader implements PrintngReader {
 
     private final String templateName;
 
     private final SimpleHash templateModel;
 
-    public FreemarkerTemplateReader(String templateName, SimpleHash templateModel) {
+    public FreemarkerReader(String templateName, SimpleHash templateModel) {
         this.templateName = templateName;
         this.templateModel = templateModel;
     }
@@ -39,7 +39,7 @@ public class FreemarkerTemplateReader implements PrintngReader {
     }
 
     private Template findTemplate(String templateName) throws IOException {
-        File templateDirectory = PrintngFreemarkerTemplateFacade.getPrintngTemplateDirectory();
+        File templateDirectory = FreemarkerSupport.getPrintngTemplateDirectory();
         Configuration configuration = new Configuration();
         configuration.setDirectoryForTemplateLoading(templateDirectory);
         Template template;

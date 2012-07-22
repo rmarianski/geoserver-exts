@@ -1,4 +1,4 @@
-package org.geoserver.printng.writer;
+package org.geoserver.printng;
 
 import static org.junit.Assert.assertEquals;
 
@@ -6,7 +6,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 
-import org.geoserver.printng.reader.PrintngDocumentParser;
+import org.geoserver.printng.spi.PDFWriter;
+import org.geoserver.printng.spi.DocumentParser;
 import org.junit.Test;
 import org.w3c.dom.Document;
 
@@ -15,7 +16,7 @@ public class PDFWriterTest {
     @Test
     public void testWrite() throws IOException {
         String input = "<div>foobar</div>";
-        PrintngDocumentParser parser = new PrintngDocumentParser(new StringReader(input));
+        DocumentParser parser = new DocumentParser(new StringReader(input));
         Document document = parser.parse();
         PDFWriter pdfWriter = new PDFWriter(document);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();

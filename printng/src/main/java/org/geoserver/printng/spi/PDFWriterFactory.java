@@ -1,19 +1,19 @@
-package org.geoserver.printng.writer;
+package org.geoserver.printng.spi;
 
-import org.geoserver.printng.iface.PrintngWriter;
-import org.geoserver.printng.iface.PrintngWriterFactory;
+import org.geoserver.printng.api.PrintngWriter;
+import org.geoserver.printng.api.PrintngWriterFactory;
 import org.restlet.data.Form;
 import org.restlet.data.Parameter;
 import org.restlet.data.Request;
 import org.w3c.dom.Document;
 
-public class PDFPrintngFactory implements PrintngWriterFactory {
+public class PDFWriterFactory implements PrintngWriterFactory {
 
     private final Integer dpp;
 
     private final String baseURL;
 
-    public PDFPrintngFactory(Request request) {
+    public PDFWriterFactory(Request request) {
         Form form = request.getResourceRef().getQueryAsForm();
         Integer dppValue = null;
         Parameter dppParam = form.getFirst("dpp");

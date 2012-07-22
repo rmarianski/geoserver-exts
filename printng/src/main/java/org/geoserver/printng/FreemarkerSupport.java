@@ -1,4 +1,4 @@
-package org.geoserver.printng.freemarker;
+package org.geoserver.printng;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -8,7 +8,7 @@ import java.io.Writer;
 import org.geoserver.config.GeoServerDataDirectory;
 import org.geoserver.platform.GeoServerExtensions;
 
-public class PrintngFreemarkerTemplateFacade {
+public class FreemarkerSupport {
 
     public static File getPrintngTemplateDirectory() throws IOException {
         GeoServerDataDirectory dataDir = GeoServerExtensions.bean(GeoServerDataDirectory.class);
@@ -17,7 +17,7 @@ public class PrintngFreemarkerTemplateFacade {
     }
 
     public static Writer newTemplateWriter(String templateName) throws IOException {
-        File directory = PrintngFreemarkerTemplateFacade.getPrintngTemplateDirectory();
+        File directory = FreemarkerSupport.getPrintngTemplateDirectory();
         File template = new File(directory, templateName);
         return new FileWriter(template);
     }

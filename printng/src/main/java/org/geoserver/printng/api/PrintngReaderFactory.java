@@ -1,4 +1,4 @@
-package org.geoserver.printng.iface;
+package org.geoserver.printng.api;
 
 import org.restlet.data.Request;
 

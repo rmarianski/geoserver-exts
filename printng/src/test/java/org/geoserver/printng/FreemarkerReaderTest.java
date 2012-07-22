@@ -1,4 +1,4 @@
-package org.geoserver.printng.reader;
+package org.geoserver.printng;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -9,16 +9,17 @@ import java.io.StringReader;
 import org.apache.commons.io.IOUtils;
 import org.geoserver.config.GeoServerDataDirectory;
 import org.geoserver.platform.GeoServerExtensions;
+import org.geoserver.printng.spi.FreemarkerReader;
 import org.geoserver.test.GeoServerTestSupport;
 import org.junit.Test;
 
 import freemarker.template.SimpleHash;
 
-public class FreemarkerTemplateReaderTest extends GeoServerTestSupport {
+public class FreemarkerReaderTest extends GeoServerTestSupport {
 
     @Test
     public void testReaderNotFound() throws IOException {
-        FreemarkerTemplateReader templateReader = new FreemarkerTemplateReader("foo", null);
+        FreemarkerReader templateReader = new FreemarkerReader("foo", null);
         try {
             templateReader.reader();
         } catch (IOException e) {
@@ -30,7 +31,7 @@ public class FreemarkerTemplateReaderTest extends GeoServerTestSupport {
 
     @Test
     public void testReaderFound() throws IOException {
-        FreemarkerTemplateReader freemarkerReader = new FreemarkerTemplateReader("foo", null);
+        FreemarkerReader freemarkerReader = new FreemarkerReader("foo", null);
         createTemplate("foo", new StringReader("<div>foobar</div>"));
         Reader reader = freemarkerReader.reader();
         String result = IOUtils.toString(reader);
@@ -41,7 +42,7 @@ public class FreemarkerTemplateReaderTest extends GeoServerTestSupport {
     public void testReaderFoundWithParams() throws IOException {
         SimpleHash simpleHash = new SimpleHash();
         simpleHash.put("quux", "morx");
-        FreemarkerTemplateReader freemarkerTemplateReader = new FreemarkerTemplateReader("foo",
+        FreemarkerReader freemarkerTemplateReader = new FreemarkerReader("foo",
                 simpleHash);
         createTemplate("foo", new StringReader("<div>${quux}</div>"));
         Reader reader = freemarkerTemplateReader.reader();
@@ -53,7 +54,7 @@ public class FreemarkerTemplateReaderTest extends GeoServerTestSupport {
     public void testReaderFoundMissingParams() throws IOException {
         SimpleHash simpleHash = new SimpleHash();
         simpleHash.put("quux", "morx");
-        FreemarkerTemplateReader freemarkerTemplateReader = new FreemarkerTemplateReader("foo",
+        FreemarkerReader freemarkerTemplateReader = new FreemarkerReader("foo",
                 simpleHash);
         createTemplate("foo", new StringReader("<div>${fleem}</div>"));
         try {
