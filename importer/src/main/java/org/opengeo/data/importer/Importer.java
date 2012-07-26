@@ -210,6 +210,26 @@ public class Importer implements InitializingBean, DisposableBean {
         return createContext(data, null, null); 
     }
     
+    /**
+     * Create a context with the provided optional id.
+     * The provided id must be higher than the current mark.
+     * @param id optional id to use
+     * @return Created ImportContext
+     * @throws IOException
+     * @throws IllegalArgumentException if the provided id is invalid
+     */
+    public ImportContext createContext(Long id) throws IOException, IllegalArgumentException {
+        ImportContext context = new ImportContext();
+        if (id != null) {
+            context.setId(id);
+            contextStore.advanceId(id);
+            contextStore.save(context);
+        } else {
+            contextStore.add(context);
+        }
+        return context;
+    }
+    
     public ImportContext createContext(ImportData data, WorkspaceInfo targetWorkspace, 
         StoreInfo targetStore) throws IOException {
         return createContext(data, targetWorkspace, targetStore, null);

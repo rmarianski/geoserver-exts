@@ -26,6 +26,14 @@ public class MemoryImportStore implements ImportStore {
         }
         return null;
     }
+
+    @Override
+    public void advanceId(Long id) {
+        if (id <= idseq.longValue()) {
+            throw new IllegalArgumentException("invalid advance");
+        }
+        idseq.set(id);
+    }
     
     @Override
     public void add(ImportContext context) {
@@ -48,6 +56,8 @@ public class MemoryImportStore implements ImportStore {
 
     @Override
     public void save(ImportContext context) {
+        imports.remove(context);
+        imports.add(context);
     }
     
     @Override

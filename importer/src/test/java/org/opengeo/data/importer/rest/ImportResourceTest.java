@@ -184,6 +184,19 @@ public class ImportResourceTest extends ImporterTestSupport {
 
         assertEquals(id, imprt.getInt("id"));
     }
+    
+    public void testPutWithId() throws Exception {
+        
+        MockHttpServletResponse resp = putAsServletResponse("/rest/imports/8675309");
+        assertEquals(201, resp.getStatusCode());
+
+        resp = getAsServletResponse("/rest/imports/8675309");
+        assertEquals(200, resp.getStatusCode());
+        JSONObject json = (JSONObject) json(resp);
+        JSONObject imprt = json.getJSONObject("import");
+        
+        assertEquals(8675309, imprt.getInt("id"));
+    }
 
     public void testPostWithTarget() throws Exception {
         createH2DataStore("sf", "skunkworks");

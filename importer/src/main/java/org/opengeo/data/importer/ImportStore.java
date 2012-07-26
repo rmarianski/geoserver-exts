@@ -15,6 +15,8 @@ public interface ImportStore {
     }
 
     void init();
+    
+    void advanceId(Long id);
 
     ImportContext get(long id);
 
