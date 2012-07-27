@@ -22,7 +22,7 @@ public class CSVLatLonStrategy implements CSVStrategy {
 
     private static final String GEOMETRY_COLUMN = "location";
 
-    private SimpleFeatureType featureType;
+    private volatile SimpleFeatureType featureType;
 
     private String[] headers;
 
