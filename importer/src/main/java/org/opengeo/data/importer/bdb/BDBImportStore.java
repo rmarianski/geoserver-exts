@@ -157,12 +157,12 @@ public class BDBImportStore implements ImportStore {
     }
 
     @Override
-    public void advanceId(Long id) {
+    public Long advanceId(Long id) {
         assert id != null;
         // if not an advance, error
         long current = importIdSeq.getStats(StatsConfig.DEFAULT).getCurrent();
-        if (id.longValue() <= current ) {
-            throw new IllegalArgumentException("proposed id less than current");
+        if (id.longValue() < current ) {
+            id = new Long(current);
         }
         // verify existing doesn't exists (shouldn't but just in case)
         ImportContext existing = get(id);
@@ -174,6 +174,7 @@ public class BDBImportStore implements ImportStore {
         importIdSeq.get(null, delta);
         existing = new ImportContext(importIdSeq.getStats(StatsConfig.DEFAULT).getCurrent());
         put(existing);
+        return id;
     }
     
     public ImportContext get(long id) {

@@ -38,6 +38,7 @@ import org.geoserver.catalog.impl.StoreInfoImpl;
 import org.geoserver.config.util.XStreamPersister;
 import org.geoserver.config.util.XStreamPersister.CRSConverter;
 import org.geoserver.config.util.XStreamPersisterFactory;
+import org.geoserver.platform.GeoServerExtensions;
 import org.geotools.data.DataStore;
 import org.geotools.data.DefaultTransaction;
 import org.geotools.data.FeatureReader;
@@ -103,9 +104,12 @@ public class Importer implements InitializingBean, DisposableBean {
 
     ImportStore createContextStore() {
         //look up system property
-        String store = System.getProperty("org.opengeo.importer.store");
+        String store = GeoServerExtensions.getProperty("org.opengeo.importer.store");
         if ("bdb".equalsIgnoreCase(store)) {
+            LOGGER.info("Enabling BDB Import Store");
             return new BDBImportStore(this);
+        } else if (store != null) {
+            LOGGER.warning("Invalid specification for Import Store");
         }
         return new MemoryImportStore();
     }
@@ -221,8 +225,9 @@ public class Importer implements InitializingBean, DisposableBean {
     public ImportContext createContext(Long id) throws IOException, IllegalArgumentException {
         ImportContext context = new ImportContext();
         if (id != null) {
-            context.setId(id);
-            contextStore.advanceId(id);
+            Long retval = contextStore.advanceId(id);
+            assert retval >= id;
+            context.setId(retval);
             contextStore.save(context);
         } else {
             contextStore.add(context);

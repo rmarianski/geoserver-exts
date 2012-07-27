@@ -28,11 +28,13 @@ public class MemoryImportStore implements ImportStore {
     }
 
     @Override
-    public void advanceId(Long id) {
+    public Long advanceId(Long id) {
         if (id <= idseq.longValue()) {
-            throw new IllegalArgumentException("invalid advance");
+            id = idseq.incrementAndGet();
+        } else {
+            idseq.set(id);
         }
-        idseq.set(id);
+        return id;
     }
     
     @Override

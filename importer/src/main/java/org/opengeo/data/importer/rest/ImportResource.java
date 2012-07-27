@@ -132,9 +132,6 @@ public class ImportResource extends AbstractResource {
             getResponse().redirectSeeOther(getPageInfo().rootURI("/imports/"+context.getId()));
             getResponse().setEntity(new ImportContextJSONFormat().toRepresentation(context));
             getResponse().setStatus(Status.SUCCESS_CREATED);
-            if (id != null) {
-                context.setId(id);
-            }
             importer.changed(context);
         } 
         catch (IOException e) {
@@ -188,8 +185,7 @@ public class ImportResource extends AbstractResource {
                 throw new RestletException("Invalid ID : " + i, Status.CLIENT_ERROR_BAD_REQUEST);
             }
             ImportContext context = createImport(id);
-            assert context.getId() == id;
-            getResponse().setStatus(Status.SUCCESS_CREATED);
+            assert context.getId() >= id;
         } else {
             throw new RestletException("ID must be provided for PUT", Status.CLIENT_ERROR_BAD_REQUEST);
         }
