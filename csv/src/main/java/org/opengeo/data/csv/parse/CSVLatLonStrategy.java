@@ -67,13 +67,13 @@ public class CSVLatLonStrategy implements CSVStrategy {
         String lonSpelling = null;
         for (String col : headers) {
             Class<?> type = typesFromData.get(col);
-            if ("lat".equalsIgnoreCase(col)) {
+            if (isLatitude(col)) {
                 seenLat = true;
                 latSpelling = col;
                 if (type == Double.class || type == Integer.class) {
                     validLat = true;
                 }
-            } else if ("lon".equalsIgnoreCase(col) || "lng".equalsIgnoreCase(col)) {
+            } else if (isLongitude(col)) {
                 seenLon = true;
                 lonSpelling = col;
                 if (type == Double.class || type == Integer.class) {
@@ -168,10 +168,9 @@ public class CSVLatLonStrategy implements CSVStrategy {
             String header = headers[i];
             if (i < csvRecord.length) {
                 String value = csvRecord[i].trim();
-                if (geometryDescriptor != null && "lat".equalsIgnoreCase(header)) {
+                if (geometryDescriptor != null && isLatitude(header)) {
                     y = Double.valueOf(value);
-                } else if ((geometryDescriptor != null && "lon".equalsIgnoreCase(header))
-                        || (geometryDescriptor != null && "lng".equalsIgnoreCase(header))) {
+                } else if (geometryDescriptor != null && isLongitude(header)) {
                     x = Double.valueOf(value);
                 } else {
                     // geotools converters take care of converting for us
@@ -187,5 +186,14 @@ public class CSVLatLonStrategy implements CSVStrategy {
             builder.set(geometryDescriptor.getLocalName(), point);
         }
         return builder.buildFeature(csvFileState.getTypeName() + "-" + recordId);
+    }
+
+    private boolean isLatitude(String s) {
+        return "latitude".equalsIgnoreCase(s) || "lat".equalsIgnoreCase(s);
+    }
+
+    private boolean isLongitude(String s) {
+        return "lon".equalsIgnoreCase(s) || "lng".equalsIgnoreCase(s) || "long".equalsIgnoreCase(s)
+                || "longitude".equalsIgnoreCase(s);
     }
 }

@@ -278,6 +278,40 @@ public class CSVLatLonStrategyTest {
         assertEquals("Invalid attribute value", "morx", feature.getAttribute("fleem"));
     }
 
+    @Test
+    public void testLongColumnSpelling() throws IOException {
+        String input = buildInputString("lat,long,fleem", "73.239,-42.389,morx");
+        CSVFileState fileState = new CSVFileState(input, "typename", WGS84);
+        CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
+        SimpleFeatureType featureType = strategy.getFeatureType();
+        assertNotNull("No geometry found", featureType.getGeometryDescriptor());
+        assertEquals("Invalid attribute count", 2, featureType.getAttributeCount());
+        CSVIterator iterator = strategy.iterator();
+        SimpleFeature feature = iterator.next();
+        Point geometry = (Point) feature.getDefaultGeometry();
+        Coordinate coordinate = geometry.getCoordinate();
+        assertEquals("Invalid lat", -42.389, coordinate.x, 0.1);
+        assertEquals("Invalid lon", 73.239, coordinate.y, 0.1);
+        assertEquals("Invalid attribute value", "morx", feature.getAttribute("fleem"));
+    }
+
+    @Test
+    public void testLatLngColumnsSpelledOut() throws Exception {
+        String input = buildInputString("latitude,longitude,fleem", "73.239,-42.389,morx");
+        CSVFileState fileState = new CSVFileState(input, "typename", WGS84);
+        CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
+        SimpleFeatureType featureType = strategy.getFeatureType();
+        assertNotNull("No geometry found", featureType.getGeometryDescriptor());
+        assertEquals("Invalid attribute count", 2, featureType.getAttributeCount());
+        CSVIterator iterator = strategy.iterator();
+        SimpleFeature feature = iterator.next();
+        Point geometry = (Point) feature.getDefaultGeometry();
+        Coordinate coordinate = geometry.getCoordinate();
+        assertEquals("Invalid lat", -42.389, coordinate.x, 0.1);
+        assertEquals("Invalid lon", 73.239, coordinate.y, 0.1);
+        assertEquals("Invalid attribute value", "morx", feature.getAttribute("fleem"));
+    }
+
     private String getBindingName(SimpleFeatureType featureType, String col) {
         AttributeDescriptor descriptor = featureType.getDescriptor(col);
         AttributeType attributeType = descriptor.getType();
