@@ -2,12 +2,15 @@ package org.geoserver.printng;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Collections;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
@@ -18,6 +21,7 @@ import org.geoserver.printng.api.PrintSpec;
 import org.geoserver.printng.spi.DocumentParser;
 import org.geoserver.printng.spi.ImageWriter;
 import org.geoserver.printng.spi.MapPrintSpec;
+import org.geoserver.printng.spi.PrintSpecException;
 import org.junit.Test;
 import org.w3c.dom.Document;
 
@@ -62,6 +66,19 @@ public class ImageWriterTest {
         byte[] magicBytes = new byte[nMagicBytes];
         System.arraycopy(bytes, 0, magicBytes, 0, nMagicBytes);
         assertArrayEquals("Invalid magic bytes", expectedBytes, magicBytes);
+    }
+
+    @Test
+    public void testBadPrintSpec() throws Exception {
+        ImageWriter imageWriter = new ImageWriter("foo");
+        Map<String, Object> map = Collections.emptyMap();
+        PrintSpec printSpec = new MapPrintSpec(map);
+        try {
+            imageWriter.write(null, printSpec, null);
+            fail("exception should have been thrown");
+        } catch (PrintSpecException e) {
+            assertTrue(true);
+        }
     }
 
 }

@@ -6,9 +6,10 @@ import java.io.Reader;
 
 import org.geoserver.printng.api.PrintSpec;
 import org.geoserver.printng.api.PrintngReader;
-import org.geoserver.printng.api.ReaderSource;
 import org.geoserver.printng.api.PrintngWriter;
+import org.geoserver.printng.api.ReaderSource;
 import org.geoserver.printng.spi.DocumentParser;
+import org.geoserver.printng.spi.PrintSpecException;
 import org.geoserver.rest.RestletException;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
@@ -106,7 +107,11 @@ public class PrintngFacade {
         Document document = readDocument();
         PrintngWriter writer = getWriter();
         PrintSpec printSpec = getPrintSpec();
-        writer.write(document, printSpec, outputStream);
+        try {
+            writer.write(document, printSpec, outputStream);
+        } catch (PrintSpecException e) {
+            throw new RestletException(e.getMessage(), Status.CLIENT_ERROR_BAD_REQUEST, e);
+        }
     }
 
 }

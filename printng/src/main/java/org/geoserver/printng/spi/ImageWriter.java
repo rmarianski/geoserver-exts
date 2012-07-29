@@ -21,7 +21,12 @@ public class ImageWriter implements PrintngWriter {
 
     @Override
     public void write(Document document, PrintSpec spec, OutputStream out) throws IOException {
-        Java2DRenderer renderer = new Java2DRenderer(document, spec.getWidth(), spec.getHeight());
+        Integer width = spec.getWidth();
+        Integer height = spec.getHeight();
+        if (width == null || height == null) {
+            throw new PrintSpecException("Invalid print spec, missing width / height");
+        }
+        Java2DRenderer renderer = new Java2DRenderer(document, width, height);
         SharedContext sharedContext = renderer.getSharedContext();
         String baseURL = spec.getBaseURL();
         if (baseURL != null && !baseURL.isEmpty()) {
