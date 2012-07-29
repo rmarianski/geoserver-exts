@@ -30,9 +30,9 @@ public class RequestPrintSpecTest {
         request.setResourceRef(reference);
         PrintSpec printSpec = new RequestPrintSpec(request);
         assertEquals("foo", printSpec.getBaseURL());
-        assertEquals(new Integer(5), printSpec.getDotsPerPixel());
-        assertEquals(new Integer(500), printSpec.getWidth());
-        assertEquals(new Integer(80), printSpec.getHeight());
+        assertEquals(Integer.valueOf(5), printSpec.getDotsPerPixel());
+        assertEquals(Integer.valueOf(500), printSpec.getWidth());
+        assertEquals(Integer.valueOf(80), printSpec.getHeight());
     }
 
 }

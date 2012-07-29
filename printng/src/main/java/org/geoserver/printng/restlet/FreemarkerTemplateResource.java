@@ -66,7 +66,7 @@ public class FreemarkerTemplateResource extends Resource {
                 XMLSerializer xmlSerializer = new XMLSerializer(writer, null);
                 xmlSerializer.serialize(document);
                 getResponse().setEntity(
-                        String.format("Template %s created succesffully\n", templateName),
+                        String.format("Template %s created succesffully%n", templateName),
                         MediaType.TEXT_PLAIN);
             } catch (IOException e) {
                 throw new RestletException("Error writing new template",
