@@ -9,11 +9,15 @@ import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.LinkedList;
 
+import org.geoserver.printng.api.PrintSpec;
 import org.geoserver.printng.api.PrintngWriter;
-import org.geoserver.printng.spi.ImageWriter;
-import org.geoserver.printng.spi.PDFWriter;
 import org.geoserver.printng.spi.DocumentParser;
+import org.geoserver.printng.spi.ImageWriter;
+import org.geoserver.printng.spi.MapPrintSpec;
+import org.geoserver.printng.spi.PDFWriter;
 import org.w3c.dom.Document;
+
+import com.google.common.collect.ImmutableMap;
 
 /**
  * Use this as an interactive test driver.
@@ -23,7 +27,7 @@ import org.w3c.dom.Document;
 public class HTMLToPDF {
 
     public static void main(String[] args) throws Exception {
-        int ppd = 20;
+        int dpp = 20;
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         LinkedList<String> argList = new LinkedList<String>(Arrays.asList(args));
         boolean img = argList.remove("-img");
@@ -43,16 +47,19 @@ public class HTMLToPDF {
             FileReader fileReader = new FileReader(inputFile);
             DocumentParser printngDocumentParser = new DocumentParser(fileReader);
             Document document = printngDocumentParser.parse();
+            ImmutableMap<String, ? extends Object> options = ImmutableMap.of("width", 1280,
+                    "height", 768, "dpp", dpp);
+            PrintSpec printSpec = new MapPrintSpec(options);
 
             System.out.print("rendering...");
             if (img) {
-                writer = new ImageWriter(document, 1280, 768, "png", ppd);
+                writer = new ImageWriter("png");
             } else {
-                writer = new PDFWriter(document, ppd);
+                writer = new PDFWriter();
             }
 
             FileOutputStream fileOutputStream = new FileOutputStream(outputFile);
-            writer.write(fileOutputStream);
+            writer.write(document, printSpec, fileOutputStream);
 
             System.out.println("done");
             if (loop) {
@@ -63,7 +70,7 @@ public class HTMLToPDF {
                     break;
                 }
                 try {
-                    ppd = Integer.parseInt(line);
+                    dpp = Integer.parseInt(line);
                 } catch (NumberFormatException nfe) {
                 }
             } else {

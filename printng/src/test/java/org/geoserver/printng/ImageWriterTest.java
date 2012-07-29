@@ -8,15 +8,20 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
-import org.geoserver.printng.spi.ImageWriter;
+import org.geoserver.printng.api.PrintSpec;
 import org.geoserver.printng.spi.DocumentParser;
+import org.geoserver.printng.spi.ImageWriter;
+import org.geoserver.printng.spi.MapPrintSpec;
 import org.junit.Test;
 import org.w3c.dom.Document;
+
+import com.google.common.collect.ImmutableMap;
 
 public class ImageWriterTest {
 
@@ -42,9 +47,11 @@ public class ImageWriterTest {
             DecoderException {
         DocumentParser parser = new DocumentParser(new StringReader(input));
         Document document = parser.parse();
-        ImageWriter imageWriter = new ImageWriter(document, 100, 50, format);
+        Map<String, Integer> options = ImmutableMap.of("width", 100, "height", 50);
+        PrintSpec printSpec = new MapPrintSpec(options);
+        ImageWriter imageWriter = new ImageWriter(format);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        imageWriter.write(byteArrayOutputStream);
+        imageWriter.write(document, printSpec, byteArrayOutputStream);
         byte[] bytes = byteArrayOutputStream.toByteArray();
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
         BufferedImage image = ImageIO.read(byteArrayInputStream);

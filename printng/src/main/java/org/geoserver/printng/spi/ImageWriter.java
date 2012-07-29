@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import org.geoserver.printng.api.PrintSpec;
 import org.geoserver.printng.api.PrintngWriter;
 import org.w3c.dom.Document;
 import org.xhtmlrenderer.layout.SharedContext;
@@ -12,43 +13,21 @@ import org.xhtmlrenderer.util.FSImageWriter;
 
 public class ImageWriter implements PrintngWriter {
 
-    private final int width;
-
-    private final int height;
-
-    private final Integer dotsPerPixel;
-
-    private final String baseURL;
-
     private final String format;
 
-    private final Document document;
-
-    public ImageWriter(Document document, int width, int height, String format) {
-        this(document, width, height, format, null, null);
-    }
-
-    public ImageWriter(Document document, int width, int height, String format, Integer dpp) {
-        this(document, width, height, format, dpp, null);
-    }
-
-    public ImageWriter(Document document, int width, int height, String format,
-            Integer dotsPerPixel, String baseURL) {
-        this.document = document;
-        this.width = width;
-        this.height = height;
+    public ImageWriter(String format) {
         this.format = format;
-        this.baseURL = baseURL;
-        this.dotsPerPixel = dotsPerPixel;
     }
 
     @Override
-    public void write(OutputStream out) throws IOException {
-        Java2DRenderer renderer = new Java2DRenderer(document, width, height);
+    public void write(Document document, PrintSpec spec, OutputStream out) throws IOException {
+        Java2DRenderer renderer = new Java2DRenderer(document, spec.getWidth(), spec.getHeight());
         SharedContext sharedContext = renderer.getSharedContext();
+        String baseURL = spec.getBaseURL();
         if (baseURL != null && !baseURL.isEmpty()) {
             sharedContext.setBaseURL(baseURL);
         }
+        Integer dotsPerPixel = spec.getDotsPerPixel();
         if (dotsPerPixel != null && dotsPerPixel > 0) {
             sharedContext.setDotsPerPixel(dotsPerPixel);
         }
