@@ -39,8 +39,8 @@
     </constructor-arg>
   </bean>
 
-  <bean id="printngReaderRequestBody" class="org.geoserver.printng.spi.RequestBodyReaderFactory" />
-  <bean id="printngReaderFreemarkerTemplate" class="org.geoserver.printng.spi.FreemarkerReaderFactory" />
+  <bean id="printngReaderRequestBody" class="org.geoserver.printng.spi.RequestBodyReaderSource" />
+  <bean id="printngReaderFreemarkerTemplate" class="org.geoserver.printng.spi.FreemarkerReaderSource" />
 
   <bean id="printFreemarkerTemplateFinder"
     class="org.geoserver.printng.restlet.FreemarkerTemplateFinder" />

@@ -6,12 +6,12 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 
 import org.geoserver.printng.api.PrintngReader;
-import org.geoserver.printng.api.PrintngReaderFactory;
+import org.geoserver.printng.api.ReaderSource;
 import org.geoserver.rest.RestletException;
 import org.restlet.data.Request;
 import org.restlet.data.Status;
 
-public class RequestBodyReaderFactory implements PrintngReaderFactory {
+public class RequestBodyReaderSource implements ReaderSource {
 
     @Override
     public PrintngReader printngReader(Request request) {

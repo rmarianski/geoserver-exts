@@ -3,7 +3,7 @@ package org.geoserver.printng.spi;
 import java.util.Set;
 
 import org.geoserver.printng.api.PrintngReader;
-import org.geoserver.printng.api.PrintngReaderFactory;
+import org.geoserver.printng.api.ReaderSource;
 import org.geoserver.rest.RestletException;
 import org.restlet.data.Form;
 import org.restlet.data.Request;
@@ -11,7 +11,7 @@ import org.restlet.data.Status;
 
 import freemarker.template.SimpleHash;
 
-public class FreemarkerReaderFactory implements PrintngReaderFactory {
+public class FreemarkerReaderSource implements ReaderSource {
 
     @Override
     public PrintngReader printngReader(Request request) {

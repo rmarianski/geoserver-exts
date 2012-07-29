@@ -6,7 +6,7 @@ import java.io.Reader;
 
 import org.geoserver.printng.api.PrintSpec;
 import org.geoserver.printng.api.PrintngReader;
-import org.geoserver.printng.api.PrintngReaderFactory;
+import org.geoserver.printng.api.ReaderSource;
 import org.geoserver.printng.api.PrintngWriter;
 import org.geoserver.printng.spi.DocumentParser;
 import org.geoserver.rest.RestletException;
@@ -23,16 +23,16 @@ public class PrintngFacade {
 
     private final Response response;
 
-    private final PrintngReaderFactory readerFactory;
+    private final ReaderSource readerSource;
 
     private final OutputDescriptor outputDescriptor;
 
     private volatile Document document;
 
-    public PrintngFacade(Request request, Response response, PrintngReaderFactory readerFactory) {
+    public PrintngFacade(Request request, Response response, ReaderSource readerSource) {
         this.request = request;
         this.response = response;
-        this.readerFactory = readerFactory;
+        this.readerSource = readerSource;
 
         String extension = request.getAttributes().get("ext").toString().toLowerCase();
         outputDescriptor = new OutputDescriptor(extension);
@@ -41,7 +41,7 @@ public class PrintngFacade {
     }
 
     private Document parseDocument() {
-        PrintngReader printngReader = readerFactory.printngReader(request);
+        PrintngReader printngReader = readerSource.printngReader(request);
         Reader reader = null;
         try {
             reader = printngReader.reader();
