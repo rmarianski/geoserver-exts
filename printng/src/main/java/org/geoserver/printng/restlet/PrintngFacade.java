@@ -89,7 +89,7 @@ public class PrintngFacade {
 
     public Document readDocument() {
         if (document == null) {
-            synchronized (document) {
+            synchronized (this) {
                 if (document == null) {
                     document = parseDocument();
                 }
