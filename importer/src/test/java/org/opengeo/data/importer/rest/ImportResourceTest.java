@@ -57,6 +57,12 @@ public class ImportResourceTest extends ImporterTestSupport {
         assertEquals(2, imprt.getInt("id"));
         assertTrue(imprt.getString("href").endsWith("/imports/2"));
     }
+    
+    public void testGetNonExistantImport() throws Exception {
+        MockHttpServletResponse resp = getAsServletResponse(("/rest/imports/9999"));
+        
+        assertEquals(404, resp.getStatusCode());
+    }
 
     public void testGetImport() throws Exception {
         JSONObject json = (JSONObject) getAsJSON("/rest/imports/0");

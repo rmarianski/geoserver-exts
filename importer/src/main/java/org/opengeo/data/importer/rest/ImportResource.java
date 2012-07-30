@@ -54,7 +54,13 @@ public class ImportResource extends AbstractResource {
         if (formatGet == null) {
             formatGet = new ImportContextJSONFormat();
         }
-        getResponse().setEntity(formatGet.toRepresentation(lookupContext(true, false)));
+        Object lookupContext = lookupContext(true, false);
+        if (lookupContext == null) {
+            // this means a specific lookup failed
+            getResponse().setStatus(Status.CLIENT_ERROR_NOT_FOUND);
+        } else {
+            getResponse().setEntity(formatGet.toRepresentation(lookupContext));
+        }
     }
 
     @Override
