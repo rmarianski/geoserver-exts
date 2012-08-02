@@ -401,6 +401,7 @@
     <module>importer</module>
     <module>printng</module>
     <module>web</module>
+    <module>gsr</module>
   </modules>
 
   <properties>
