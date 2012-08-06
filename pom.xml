@@ -402,6 +402,7 @@
     <module>printng</module>
     <module>gsr</module>
     <module>web</module>
+    <module>gsr</module>
   </modules>
 
   <properties>
