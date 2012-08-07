@@ -400,7 +400,6 @@
     <module>csv</module>
     <module>importer</module>
     <module>printng</module>
-    <module>gsr</module>
     <module>web</module>
     <module>gsr</module>
   </modules>
