@@ -24,6 +24,8 @@ public class CSVFileState {
 
     private final String dataInput;
 
+    private volatile String[] headers = null;
+
     public CSVFileState(File file, String typeName, CoordinateReferenceSystem crs, URI namespace) {
         this.file = file;
         this.typeName = typeName;
@@ -74,5 +76,30 @@ public class CSVFileState {
             throw new IOException("Error reading csv headers");
         }
         return csvReader;
+    }
+
+    public String[] getCSVHeaders() {
+        if (headers == null) {
+            synchronized (this) {
+                if (headers == null) {
+                    headers = readCSVHeaders();
+                }
+            }
+        }
+        return headers;
+    }
+
+    private String[] readCSVHeaders() {
+        CsvReader csvReader = null;
+        try {
+            csvReader = openCSVReader();
+            return csvReader.getHeaders();
+        } catch (IOException e) {
+            throw new RuntimeException("Failure reading csv headers", e);
+        } finally {
+            if (csvReader != null) {
+                csvReader.close();
+            }
+        }
     }
 }

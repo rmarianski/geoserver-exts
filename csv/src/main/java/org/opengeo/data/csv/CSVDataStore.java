@@ -33,8 +33,6 @@ public class CSVDataStore extends ContentDataStore implements FileDataStore {
 
     private final File file;
 
-    private CSVFileState csvFileState;
-
     static {
         try {
             crs = CRS.decode("EPSG:4326");
@@ -43,12 +41,21 @@ public class CSVDataStore extends ContentDataStore implements FileDataStore {
         }
     }
 
+    public static enum StrategyType {
+        ONLY_ATTRIBUTES, GEOMETRY_FROM_LATLNG
+    }
+
     public CSVDataStore(File file) throws IOException {
         this(file, null);
     }
 
     public CSVDataStore(File file, URI namespace) throws IOException {
-        this(file, namespace, null);
+        this(file, namespace, StrategyType.GEOMETRY_FROM_LATLNG);
+    }
+
+    public CSVDataStore(File file, URI namespace, StrategyType strategyType) throws IOException {
+        this(file, namespace, strategyType, new CSVFileState(file,
+                getTypeName(file).getLocalPart(), crs, namespace));
     }
 
     public CSVDataStore(File file, URI namespace, CSVStrategyFactory csvStrategyFactory)
@@ -57,14 +64,29 @@ public class CSVDataStore extends ContentDataStore implements FileDataStore {
 
         if (csvStrategyFactory == null) {
             String typeName = getTypeName().getLocalPart();
-            this.csvFileState = new CSVFileState(file, typeName, crs, namespace);
+            CSVFileState csvFileState = new CSVFileState(file, typeName, crs, namespace);
             csvStrategyFactory = new CSVLatLonStrategyFactory(csvFileState);
         }
         this.csvStrategy = csvStrategyFactory.createCSVStrategy();
     }
 
-    public Name getTypeName() {
+    public CSVDataStore(File file, URI namespace, StrategyType strategyType,
+            CSVFileState csvFileState) throws IOException {
+        this(file, namespace, createStrategyFactory(strategyType, csvFileState));
+    }
+
+    private static CSVStrategyFactory createStrategyFactory(StrategyType strategyType,
+            CSVFileState csvFileState) {
+        return StrategyType.ONLY_ATTRIBUTES.equals(strategyType) ? new CSVAttributesOnlyStrategyFactory(
+                csvFileState) : new CSVLatLonStrategyFactory(csvFileState);
+    }
+
+    private static Name getTypeName(File file) {
         return new NameImpl(FilenameUtils.getBaseName(file.getPath()));
+    }
+
+    public Name getTypeName() {
+        return getTypeName(file);
     }
 
     @Override

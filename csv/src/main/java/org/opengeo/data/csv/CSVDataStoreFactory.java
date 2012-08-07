@@ -14,6 +14,7 @@ import org.geotools.data.DataStore;
 import org.geotools.data.FileDataStore;
 import org.geotools.data.FileDataStoreFactorySpi;
 import org.geotools.util.KVP;
+import org.opengeo.data.csv.CSVDataStore.StrategyType;
 
 public class CSVDataStoreFactory implements FileDataStoreFactorySpi {
 
@@ -24,6 +25,8 @@ public class CSVDataStoreFactory implements FileDataStoreFactorySpi {
     public static final Param FILE_PARAM = new Param("file", File.class, FILE_TYPE + " file", false);
 
     public static final Param URL_PARAM = new Param("url", URL.class, FILE_TYPE + " file", false);
+
+    public static final Param CONTEXT_PARAM = new Param("context", String.class, "Context", false);
 
     public static final Param NAMESPACEP = new Param("namespace", URI.class,
             "uri to the namespace", false, null, new KVP(Param.LEVEL, "advanced"));
@@ -90,23 +93,32 @@ public class CSVDataStoreFactory implements FileDataStoreFactorySpi {
     }
 
     public FileDataStore createDataStoreFromFile(File file) throws IOException {
-        return createDataStoreFromFile(file, null);
+        return createDataStoreFromFile(file, null, StrategyType.GEOMETRY_FROM_LATLNG);
     }
 
-    public FileDataStore createDataStoreFromFile(File file, URI namespace) throws IOException {
+    public FileDataStore createDataStoreFromFile(File file, URI namespace, StrategyType strategyType)
+            throws IOException {
         if (file == null) {
             throw new IllegalArgumentException("Cannot create store from null file");
         } else if (!file.exists()) {
             throw new IllegalArgumentException("Cannot create store with file that does not exist");
         }
-        return new CSVDataStore(file, namespace);
+        return new CSVDataStore(file, namespace, strategyType);
     }
 
     @Override
     public FileDataStore createDataStore(Map<String, Serializable> params) throws IOException {
         File file = fileFromParams(params);
         URI namespace = (URI) NAMESPACEP.lookUp(params);
-        return createDataStoreFromFile(file, namespace);
+        Object context = CONTEXT_PARAM.lookUp(params);
+        StrategyType strategyType = StrategyType.GEOMETRY_FROM_LATLNG;
+        if (context != null) {
+            String contextValue = context.toString();
+            if (contextValue.equalsIgnoreCase("importer")) {
+                strategyType = StrategyType.ONLY_ATTRIBUTES;
+            }
+        }
+        return createDataStoreFromFile(file, namespace, strategyType);
     }
 
     @Override
