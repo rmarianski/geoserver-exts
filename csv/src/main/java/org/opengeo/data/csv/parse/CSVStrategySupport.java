@@ -89,4 +89,8 @@ public class CSVStrategySupport {
         }
         return result;
     }
+
+    public static boolean isNumeric(Class<?> clazz) {
+        return clazz != null && (clazz == Double.class || clazz == Integer.class);
+    }
 }

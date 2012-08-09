@@ -13,6 +13,7 @@ import java.util.List;
 import org.geotools.data.FeatureReader;
 import org.junit.Before;
 import org.junit.Test;
+import org.opengeo.data.csv.parse.CSVLatLonStrategy;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.Name;
@@ -29,7 +30,9 @@ public class CSVDataStoreTest {
         URL resource = CSVDataStoreFactory.class.getResource("locations.csv");
         assertNotNull("Failure finding locations csv file", resource);
         File file = new File(resource.getFile());
-        csvDataStore = new CSVDataStore(file);
+        CSVFileState csvFileState = new CSVFileState(file);
+        CSVLatLonStrategy csvStrategy = new CSVLatLonStrategy(csvFileState);
+        csvDataStore = new CSVDataStore(csvFileState, csvStrategy);
     }
 
     @Test

@@ -14,7 +14,11 @@ import org.geotools.data.DataStore;
 import org.geotools.data.FileDataStore;
 import org.geotools.data.FileDataStoreFactorySpi;
 import org.geotools.util.KVP;
-import org.opengeo.data.csv.CSVDataStore.StrategyType;
+import org.opengeo.data.csv.parse.CSVAttributesOnlyStrategy;
+import org.opengeo.data.csv.parse.CSVLatLonStrategy;
+import org.opengeo.data.csv.parse.CSVSpecifiedLatLngStrategy;
+import org.opengeo.data.csv.parse.CSVSpecifiedWKTStrategy;
+import org.opengeo.data.csv.parse.CSVStrategy;
 
 public class CSVDataStoreFactory implements FileDataStoreFactorySpi {
 
@@ -26,10 +30,19 @@ public class CSVDataStoreFactory implements FileDataStoreFactorySpi {
 
     public static final Param URL_PARAM = new Param("url", URL.class, FILE_TYPE + " file", false);
 
-    public static final Param CONTEXT_PARAM = new Param("context", String.class, "Context", false);
-
     public static final Param NAMESPACEP = new Param("namespace", URI.class,
             "uri to the namespace", false, null, new KVP(Param.LEVEL, "advanced"));
+
+    public static final Param STRATEGYP = new Param("strategy", String.class, "strategy", false);
+
+    public static final Param LATFIELDP = new Param("latField", String.class,
+            "Latitude field. Assumes a CSVSpecifiedLatLngStrategy", false);
+
+    public static final Param LnGFIELDP = new Param("lngField", String.class,
+            "Longitude field. Assumes a CSVSpecifiedLatLngStrategy", false);
+
+    public static final Param WKTP = new Param("wktField", String.class,
+            "WKT field. Assumes a CSVSpecifiedWKTStrategy", false);
 
     public static final Param[] parametersInfo = new Param[] { FILE_PARAM };
 
@@ -93,32 +106,62 @@ public class CSVDataStoreFactory implements FileDataStoreFactorySpi {
     }
 
     public FileDataStore createDataStoreFromFile(File file) throws IOException {
-        return createDataStoreFromFile(file, null, StrategyType.GEOMETRY_FROM_LATLNG);
+        return createDataStoreFromFile(file, null);
     }
 
-    public FileDataStore createDataStoreFromFile(File file, URI namespace, StrategyType strategyType)
-            throws IOException {
+    public FileDataStore createDataStoreFromFile(File file, URI namespace) throws IOException {
         if (file == null) {
             throw new IllegalArgumentException("Cannot create store from null file");
         } else if (!file.exists()) {
             throw new IllegalArgumentException("Cannot create store with file that does not exist");
         }
-        return new CSVDataStore(file, namespace, strategyType);
+        Map<String, Serializable> noParams = Collections.emptyMap();
+        return createDataStoreFromFile(file, namespace, noParams);
     }
 
     @Override
     public FileDataStore createDataStore(Map<String, Serializable> params) throws IOException {
         File file = fileFromParams(params);
-        URI namespace = (URI) NAMESPACEP.lookUp(params);
-        Object context = CONTEXT_PARAM.lookUp(params);
-        StrategyType strategyType = StrategyType.GEOMETRY_FROM_LATLNG;
-        if (context != null) {
-            String contextValue = context.toString();
-            if (contextValue.equalsIgnoreCase("importer")) {
-                strategyType = StrategyType.ONLY_ATTRIBUTES;
-            }
+        if (file == null) {
+            throw new IllegalArgumentException(
+                    "Could not find file from params to create csv data store");
         }
-        return createDataStoreFromFile(file, namespace, strategyType);
+        URI namespace = (URI) NAMESPACEP.lookUp(params);
+        return createDataStoreFromFile(file, namespace, params);
+    }
+
+    private FileDataStore createDataStoreFromFile(File file, URI namespace,
+            Map<String, Serializable> params) throws IOException {
+        CSVFileState csvFileState = new CSVFileState(file, namespace);
+        Object strategyParam = STRATEGYP.lookUp(params);
+        CSVStrategy csvStrategy = null;
+        if (strategyParam != null) {
+            String strategyString = strategyParam.toString();
+            if (strategyString.equalsIgnoreCase("guess")) {
+                csvStrategy = new CSVLatLonStrategy(csvFileState);
+            } else if (strategyString.equalsIgnoreCase("specify")) {
+                Object latParam = LATFIELDP.lookUp(params);
+                Object lngParam = LnGFIELDP.lookUp(params);
+                if (latParam == null || lngParam == null) {
+                    throw new IllegalArgumentException(
+                            "'specify' csv strategy selected, but lat/lng params both not specified");
+                }
+                csvStrategy = new CSVSpecifiedLatLngStrategy(csvFileState, latParam.toString(),
+                        lngParam.toString());
+            } else if (strategyString.equalsIgnoreCase("wkt")) {
+                Object wktParam = WKTP.lookUp(params);
+                if (wktParam == null) {
+                    throw new IllegalArgumentException(
+                            "'wkt' csv strategy selected, but wktField param not specified");
+                }
+                csvStrategy = new CSVSpecifiedWKTStrategy(csvFileState, wktParam.toString());
+            } else {
+                csvStrategy = new CSVAttributesOnlyStrategy(csvFileState);
+            }
+        } else {
+            csvStrategy = new CSVAttributesOnlyStrategy(csvFileState);
+        }
+        return new CSVDataStore(csvFileState, csvStrategy);
     }
 
     @Override

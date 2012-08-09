@@ -2,13 +2,12 @@ package org.opengeo.data.csv.parse;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -19,30 +18,24 @@ import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
 import org.opengis.feature.type.GeometryDescriptor;
 
-public class CSVAttributesOnlyStrategyTest {
+import com.vividsolutions.jts.geom.Point;
+
+public class CSVSpecifiedLatLngStrategyTest {
 
     @Test
     public void testBuildFeatureType() {
         String input = CSVTestStrategySupport.buildInputString("quux,morx\n");
         CSVFileState fileState = new CSVFileState(input, "foo");
-        CSVStrategy strategy = new CSVAttributesOnlyStrategy(fileState);
+        CSVStrategy strategy = new CSVSpecifiedLatLngStrategy(fileState, "quux", "morx");
         SimpleFeatureType featureType = strategy.getFeatureType();
 
-        assertEquals("Invalid attribute count", 2, featureType.getAttributeCount());
+        assertEquals("Invalid attribute count", 1, featureType.getAttributeCount());
         assertEquals("Invalid featuretype name", "foo", featureType.getName().getLocalPart());
         assertEquals("Invalid name", "foo", featureType.getTypeName());
 
-        List<AttributeDescriptor> attrs = featureType.getAttributeDescriptors();
-        assertEquals("Invalid number of attributes", 2, attrs.size());
-        List<String> attrNames = new ArrayList<String>(2);
-        for (AttributeDescriptor attr : attrs) {
-            if (!(attr instanceof GeometryDescriptor)) {
-                attrNames.add(attr.getName().getLocalPart());
-            }
-        }
-        Collections.sort(attrNames);
-        assertEquals("Invalid property descriptor", "morx", attrNames.get(0));
-        assertEquals("Invalid property descriptor", "quux", attrNames.get(1));
+        GeometryDescriptor geometryDescriptor = featureType.getGeometryDescriptor();
+        assertEquals("Invalid geometry attribute name", "location",
+                geometryDescriptor.getLocalName());
     }
 
     @Test
@@ -50,30 +43,29 @@ public class CSVAttributesOnlyStrategyTest {
         String input = CSVTestStrategySupport.buildInputString("fleem,zoo,morx", "3,4,car",
                 "8,9.9,cdr");
         CSVFileState fileState = new CSVFileState(input, "bar");
-        CSVStrategy strategy = new CSVAttributesOnlyStrategy(fileState);
+        CSVStrategy strategy = new CSVSpecifiedLatLngStrategy(fileState, "fleem", "zoo");
 
         SimpleFeatureType featureType = strategy.getFeatureType();
-        assertEquals("Invalid attribute count", 3, featureType.getAttributeCount());
+        assertEquals("Invalid attribute count", 2, featureType.getAttributeCount());
         List<AttributeDescriptor> attrs = featureType.getAttributeDescriptors();
-        CSVTestStrategySupport.verifyType(attrs.get(0), Integer.class);
-        CSVTestStrategySupport.verifyType(attrs.get(1), Double.class);
-        CSVTestStrategySupport.verifyType(attrs.get(2), String.class);
+        CSVTestStrategySupport.verifyType(attrs.get(0), String.class);
+        CSVTestStrategySupport.verifyType(attrs.get(1), Point.class);
 
         CSVIterator iterator = strategy.iterator();
 
         assertTrue("next value not read", iterator.hasNext());
         SimpleFeature feature = iterator.next();
-        assertEquals("Invalid feature property", 3, feature.getAttribute("fleem"));
-        assertEquals("Invalid feature property", 4.0,
-                Double.parseDouble(feature.getAttribute("zoo").toString()), 0.1);
+        assertNull("Unexpected property", feature.getAttribute("fleem"));
+        assertNull("Unexpected property", feature.getAttribute("zoo"));
         assertEquals("Invalid feature property", "car", feature.getAttribute("morx"));
+        assertNotNull("Missing geometry", feature.getDefaultGeometry());
 
         assertTrue("next value not read", iterator.hasNext());
         feature = iterator.next();
-        assertEquals("Invalid feature property", 8, feature.getAttribute("fleem"));
-        assertEquals("Invalid feature property", 9.9,
-                Double.parseDouble(feature.getAttribute("zoo").toString()), 0.1);
+        assertNull("Unexpected property", feature.getAttribute("fleem"));
+        assertNull("Unexpected property", feature.getAttribute("zoo"));
         assertEquals("Invalid feature property", "cdr", feature.getAttribute("morx"));
+        assertNotNull("Missing geometry", feature.getDefaultGeometry());
         assertFalse("extra next value", iterator.hasNext());
 
         try {
@@ -85,14 +77,29 @@ public class CSVAttributesOnlyStrategyTest {
     }
 
     @Test
-    public void testCreateNoGeometry() throws IOException {
+    public void testCreateSpecifiedLatLngColumnsDontExist() throws IOException {
         String input = CSVTestStrategySupport.buildInputString("blub", "fubar");
         CSVFileState fileState = new CSVFileState(input, "zul");
-        CSVStrategy strategy = new CSVAttributesOnlyStrategy(fileState);
+        CSVStrategy strategy = new CSVSpecifiedLatLngStrategy(fileState, "non", "existing");
+        SimpleFeatureType featureType = strategy.getFeatureType();
+        assertEquals("Invalid attribute count", 1, featureType.getAttributeCount());
         CSVIterator iterator = strategy.iterator();
         assertTrue("next value not read", iterator.hasNext());
         SimpleFeature feature = iterator.next();
-        Object defaultGeometry = feature.getDefaultGeometry();
-        assertNull("Unexpected geometry", defaultGeometry);
+        assertNull("Unexpected geometry", feature.getDefaultGeometry());
     }
+
+    @Test
+    public void testCreateSpecifiedLatLngColumnsNotNumeric() throws IOException {
+        String input = CSVTestStrategySupport.buildInputString("foo,bar", "3.8,quux");
+        CSVFileState fileState = new CSVFileState(input, "zul");
+        CSVStrategy strategy = new CSVSpecifiedLatLngStrategy(fileState, "foo", "bar");
+        SimpleFeatureType featureType = strategy.getFeatureType();
+        assertEquals("Invalid attribute count", 2, featureType.getAttributeCount());
+        CSVIterator iterator = strategy.iterator();
+        assertTrue("next value not read", iterator.hasNext());
+        SimpleFeature feature = iterator.next();
+        assertNull("Unexpected geometry", feature.getDefaultGeometry());
+    }
+
 }

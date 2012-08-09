@@ -4,18 +4,25 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.geotools.data.FileDataStore;
 import org.junit.Before;
 import org.junit.Test;
+import org.opengeo.data.csv.parse.CSVAttributesOnlyStrategy;
+import org.opengeo.data.csv.parse.CSVLatLonStrategy;
+import org.opengeo.data.csv.parse.CSVSpecifiedLatLngStrategy;
+import org.opengeo.data.csv.parse.CSVSpecifiedWKTStrategy;
+import org.opengeo.data.csv.parse.CSVStrategy;
 
 public class CSVDataStoreFactoryTest {
 
@@ -89,7 +96,7 @@ public class CSVDataStoreFactoryTest {
 
     @Test
     public void testInvalidParamsCreation() throws Exception {
-        Map<String, Serializable> params = new HashMap<String, Serializable>(0);
+        Map<String, Serializable> params = Collections.emptyMap();
         try {
             csvDataStoreFactory.createDataStore(params);
         } catch (IllegalArgumentException e) {
@@ -97,7 +104,7 @@ public class CSVDataStoreFactoryTest {
             return;
         } catch (Exception e) {
         }
-        assertTrue("Did not throw illegal argument exception for null file", false);
+        fail("Did not throw illegal argument exception for null file");
     }
 
     @Test
@@ -110,5 +117,73 @@ public class CSVDataStoreFactoryTest {
         } catch (Exception e) {
         }
         assertTrue("Did not throw illegal argument exception for non-existent file", false);
+    }
+
+    @Test
+    public void testCSVStrategyDefault() throws Exception {
+        CSVDataStore datastore = (CSVDataStore) csvDataStoreFactory.createDataStoreFromFile(file);
+        CSVStrategy csvStrategy = datastore.getCSVStrategy();
+        assertEquals("Unexpected default csv strategy", CSVAttributesOnlyStrategy.class,
+                csvStrategy.getClass());
+    }
+
+    @Test
+    public void testCSVStrategyGuess() throws Exception {
+        Map<String, Serializable> params = new HashMap<String, Serializable>();
+        params.put("strategy", "guess");
+        params.put("file", file);
+        CSVDataStore datastore = (CSVDataStore) csvDataStoreFactory.createDataStore(params);
+        CSVStrategy csvStrategy = datastore.getCSVStrategy();
+        assertEquals("Unexpected strategy", CSVLatLonStrategy.class, csvStrategy.getClass());
+    }
+
+    @Test
+    public void testCSVStrategySpecifiedBadParams() throws Exception {
+        Map<String, Serializable> params = new HashMap<String, Serializable>();
+        params.put("strategy", "specify");
+        params.put("file", file);
+        try {
+            csvDataStoreFactory.createDataStore(params);
+        } catch (IllegalArgumentException e) {
+            return;
+        }
+        fail("Expected illegal argument exception for missing latField and lngField");
+    }
+
+    @Test
+    public void testCSVStrategySpecified() throws Exception {
+        Map<String, Serializable> params = new HashMap<String, Serializable>();
+        params.put("strategy", "specify");
+        params.put("file", file);
+        params.put("latField", "foo");
+        params.put("lngField", "bar");
+        CSVDataStore datastore = (CSVDataStore) csvDataStoreFactory.createDataStore(params);
+        CSVStrategy csvStrategy = datastore.getCSVStrategy();
+        assertEquals("Unexpected strategy", CSVSpecifiedLatLngStrategy.class,
+                csvStrategy.getClass());
+    }
+
+    @Test
+    public void testCSVStrategyWKTMissingWktField() throws IOException {
+        Map<String, Serializable> params = new HashMap<String, Serializable>();
+        params.put("strategy", "wkt");
+        params.put("file", file);
+        try {
+            csvDataStoreFactory.createDataStore(params);
+        } catch (IllegalArgumentException e) {
+            return;
+        }
+        fail("Expected illegal argument exception for missing wktField");
+    }
+
+    @Test
+    public void testCSVStrategyWKT() throws IOException {
+        Map<String, Serializable> params = new HashMap<String, Serializable>();
+        params.put("strategy", "wkt");
+        params.put("wktField", "whatever");
+        params.put("file", file);
+        CSVDataStore datastore = (CSVDataStore) csvDataStoreFactory.createDataStore(params);
+        CSVStrategy csvStrategy = datastore.getCSVStrategy();
+        assertEquals("Unexpected strategy", CSVSpecifiedWKTStrategy.class, csvStrategy.getClass());
     }
 }

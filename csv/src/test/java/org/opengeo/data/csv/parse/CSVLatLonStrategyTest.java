@@ -1,6 +1,5 @@
 package org.opengeo.data.csv.parse;
 
-import static org.geotools.referencing.crs.DefaultGeographicCRS.WGS84;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -22,7 +21,6 @@ import org.opengis.feature.type.AttributeDescriptor;
 import org.opengis.feature.type.AttributeType;
 import org.opengis.feature.type.GeometryDescriptor;
 import org.opengis.feature.type.GeometryType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Point;
@@ -32,7 +30,7 @@ public class CSVLatLonStrategyTest {
     @Test
     public void testBuildFeatureType() {
         String input = CSVTestStrategySupport.buildInputString("lat,lon,quux,morx\n");
-        CSVFileState fileState = new CSVFileState(input, "foo", WGS84);
+        CSVFileState fileState = new CSVFileState(input, "foo");
         CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
         SimpleFeatureType featureType = strategy.getFeatureType();
 
@@ -55,16 +53,13 @@ public class CSVLatLonStrategyTest {
         GeometryDescriptor geometryDescriptor = featureType.getGeometryDescriptor();
         GeometryType geometryType = geometryDescriptor.getType();
         assertEquals("Invalid geometry name", "location", geometryType.getName().getLocalPart());
-
-        CoordinateReferenceSystem crs = featureType.getCoordinateReferenceSystem();
-        assertEquals("Unknown crs", WGS84, crs);
     }
 
     @Test
     public void testBuildFeature() throws IOException {
         String input = CSVTestStrategySupport.buildInputString("lat,lon,fleem,zoo", "3,4,car,cdr",
                 "8,9,blub,frob");
-        CSVFileState fileState = new CSVFileState(input, "bar", WGS84);
+        CSVFileState fileState = new CSVFileState(input, "bar");
         CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
 
         CSVIterator iterator = strategy.iterator();
@@ -101,7 +96,7 @@ public class CSVLatLonStrategyTest {
         String input = CSVTestStrategySupport.buildInputString(
                 "doubleval,intval,lat,stringval,lon", "3.8,7,73.28,foo,-14.39",
                 "9.12,-38,0,bar,29", "-37,0,49,baz,0");
-        CSVFileState fileState = new CSVFileState(input, "typename", WGS84);
+        CSVFileState fileState = new CSVFileState(input, "typename");
         CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
         CSVIterator iterator = strategy.iterator();
 
@@ -147,7 +142,7 @@ public class CSVLatLonStrategyTest {
     @Test
     public void testNoGeometry() throws IOException {
         String input = CSVTestStrategySupport.buildInputString("a,b", "foo,bar");
-        CSVFileState fileState = new CSVFileState(input, "typename", WGS84);
+        CSVFileState fileState = new CSVFileState(input, "typename");
         CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
         SimpleFeatureType featureType = strategy.getFeatureType();
 
@@ -166,7 +161,7 @@ public class CSVLatLonStrategyTest {
     @Test
     public void testOnlyLat() throws IOException {
         String input = CSVTestStrategySupport.buildInputString("lat,quux", "foo,morx");
-        CSVFileState fileState = new CSVFileState(input, "typename", WGS84);
+        CSVFileState fileState = new CSVFileState(input, "typename");
         CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
         SimpleFeatureType featureType = strategy.getFeatureType();
         assertEquals("Invalid number of attributes", 2, featureType.getAttributeCount());
@@ -185,7 +180,7 @@ public class CSVLatLonStrategyTest {
     public void testDataDoesNotContainAllFields() throws IOException {
         String input = CSVTestStrategySupport.buildInputString("lat,lon,foo,bar",
                 "-72.3829,42.29,quux");
-        CSVFileState fileState = new CSVFileState(input, "typename", WGS84);
+        CSVFileState fileState = new CSVFileState(input, "typename");
         CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
         SimpleFeatureType featureType = strategy.getFeatureType();
         assertEquals("Invalid attribute count", 3, featureType.getAttributeCount());
@@ -203,7 +198,7 @@ public class CSVLatLonStrategyTest {
     public void testDataContainsMoreFields() throws IOException {
         String input = CSVTestStrategySupport.buildInputString("lat,lon,foo",
                 "-72.3829,42.29,quux,morx");
-        CSVFileState fileState = new CSVFileState(input, "typename", WGS84);
+        CSVFileState fileState = new CSVFileState(input, "typename");
         CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
         SimpleFeatureType featureType = strategy.getFeatureType();
         assertEquals("Invalid attribute count", 2, featureType.getAttributeCount());
@@ -218,7 +213,7 @@ public class CSVLatLonStrategyTest {
     public void testDataDifferentTypes() throws IOException {
         String input = CSVTestStrategySupport.buildInputString("lat,lon,foo", "-72.3829,42.29,38",
                 "12,-13.21,9", "foo,2.5,7.8");
-        CSVFileState fileState = new CSVFileState(input, "typename", WGS84);
+        CSVFileState fileState = new CSVFileState(input, "typename");
         CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
         SimpleFeatureType featureType = strategy.getFeatureType();
         assertEquals("Invalid attribute count", 3, featureType.getAttributeCount());
@@ -247,7 +242,7 @@ public class CSVLatLonStrategyTest {
     @Test
     public void testDataFewerRowsDifferentType() throws IOException {
         String input = CSVTestStrategySupport.buildInputString("a,b", "foo");
-        CSVFileState fileState = new CSVFileState(input, "typename", WGS84);
+        CSVFileState fileState = new CSVFileState(input, "typename");
         CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
         SimpleFeatureType featureType = strategy.getFeatureType();
         assertEquals("Invalid attribute count", 2, featureType.getAttributeCount());
@@ -260,7 +255,7 @@ public class CSVLatLonStrategyTest {
     public void testLngColumnSpelling() throws IOException {
         String input = CSVTestStrategySupport.buildInputString("lat,lng,fleem",
                 "73.239,-42.389,morx");
-        CSVFileState fileState = new CSVFileState(input, "typename", WGS84);
+        CSVFileState fileState = new CSVFileState(input, "typename");
         CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
         SimpleFeatureType featureType = strategy.getFeatureType();
         assertNotNull("No geometry found", featureType.getGeometryDescriptor());
@@ -278,7 +273,7 @@ public class CSVLatLonStrategyTest {
     public void testLongColumnSpelling() throws IOException {
         String input = CSVTestStrategySupport.buildInputString("lat,long,fleem",
                 "73.239,-42.389,morx");
-        CSVFileState fileState = new CSVFileState(input, "typename", WGS84);
+        CSVFileState fileState = new CSVFileState(input, "typename");
         CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
         SimpleFeatureType featureType = strategy.getFeatureType();
         assertNotNull("No geometry found", featureType.getGeometryDescriptor());
@@ -296,7 +291,7 @@ public class CSVLatLonStrategyTest {
     public void testLatLngColumnsSpelledOut() throws Exception {
         String input = CSVTestStrategySupport.buildInputString("latitude,longitude,fleem",
                 "73.239,-42.389,morx");
-        CSVFileState fileState = new CSVFileState(input, "typename", WGS84);
+        CSVFileState fileState = new CSVFileState(input, "typename");
         CSVLatLonStrategy strategy = new CSVLatLonStrategy(fileState);
         SimpleFeatureType featureType = strategy.getFeatureType();
         assertNotNull("No geometry found", featureType.getGeometryDescriptor());

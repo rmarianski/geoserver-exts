@@ -8,11 +8,15 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.net.URI;
 
+import org.apache.commons.io.FilenameUtils;
+import org.geotools.referencing.CRS;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import com.csvreader.CsvReader;
 
 public class CSVFileState {
+
+    private static CoordinateReferenceSystem DEFAULT_CRS;
 
     private final File file;
 
@@ -26,7 +30,23 @@ public class CSVFileState {
 
     private volatile String[] headers = null;
 
-    public CSVFileState(File file, String typeName, CoordinateReferenceSystem crs, URI namespace) {
+    static {
+        try {
+            DEFAULT_CRS = CRS.decode("EPSG:4326");
+        } catch (Exception e) {
+            throw new RuntimeException("Could not decode EPSG:4326");
+        }
+    }
+
+    public CSVFileState(File file) {
+        this(file, null, null, null);
+    }
+
+    public CSVFileState(File file, URI namespace) {
+        this(file, namespace, null, null);
+    }
+
+    public CSVFileState(File file, URI namespace, String typeName, CoordinateReferenceSystem crs) {
         this.file = file;
         this.typeName = typeName;
         this.crs = crs;
@@ -35,17 +55,16 @@ public class CSVFileState {
     }
 
     // used by unit tests
-    public CSVFileState(String dataInput, String typeName, CoordinateReferenceSystem crs,
-            URI namespace) {
-        this.dataInput = dataInput;
-        this.typeName = typeName;
-        this.crs = crs;
-        this.namespace = namespace;
-        this.file = null;
+    public CSVFileState(String dataInput) {
+        this(dataInput, null);
     }
 
-    public CSVFileState(String dataInput, String typeName, CoordinateReferenceSystem crs) {
-        this(dataInput, typeName, crs, null);
+    public CSVFileState(String dataInput, String typeName) {
+        this.dataInput = dataInput;
+        this.typeName = typeName;
+        this.crs = null;
+        this.namespace = null;
+        this.file = null;
     }
 
     public URI getNamespace() {
@@ -57,11 +76,11 @@ public class CSVFileState {
     }
 
     public String getTypeName() {
-        return typeName;
+        return typeName != null ? typeName : FilenameUtils.getBaseName(file.getPath());
     }
 
     public CoordinateReferenceSystem getCrs() {
-        return crs;
+        return crs != null ? crs : CSVFileState.DEFAULT_CRS;
     }
 
     public CsvReader openCSVReader() throws IOException {
