@@ -177,7 +177,7 @@ public class ImportContext implements Serializable {
     }
 
     private void updateState() {
-        State newState = State.COMPLETE;
+        State newState = tasks.isEmpty() ? State.PENDING : State.COMPLETE;
      O: for (ImportTask task : tasks) {
             switch(task.getState()) {
                 case PENDING:

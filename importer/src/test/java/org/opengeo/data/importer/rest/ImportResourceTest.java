@@ -188,6 +188,7 @@ public class ImportResourceTest extends ImporterTestSupport {
         JSONObject json = (JSONObject) json(resp);
         JSONObject imprt = json.getJSONObject("import");
 
+        assertEquals(ImportContext.State.PENDING.name(), imprt.get("state"));
         assertEquals(id, imprt.getInt("id"));
     }
     
