@@ -102,6 +102,36 @@ public class ItemResourceTest extends ImporterTestSupport {
         State state = context.getState();
         assertEquals("Invalid context state", State.READY, state);
     }
+    
+    /**
+     * Ideally, many variations of error handling could be tested here.
+     * (For performance - otherwise too much tear-down/setup)
+     * @throws Exception
+     */
+    public void testErrorHandling() throws Exception {
+        JSONObject json = (JSONObject) getAsJSON("/rest/imports/0/tasks/0/items/0");
+        JSONObject item = json.getJSONObject("item");
+        
+        JSONObjectBuilder badDateFormatTransform = new JSONObjectBuilder();
+        badDateFormatTransform.
+            object().
+                key("item").object().
+                    key("transformChain").object().
+                        key("type").value("VectorTransformChain").
+                        key("transforms").array().
+                            object().
+                                key("field").value("datefield").
+                                key("type").value("DateFormatTransform").
+                                key("format").value("xxx").
+                            endObject().
+                        endArray().
+                    endObject().
+                endObject().
+            endObject();
+        
+        MockHttpServletResponse resp = putAsServletResponse("/rest/imports/0/tasks/0/items/0", badDateFormatTransform.buildObject().toString(), "application/json");
+        assertErrorResponse(resp, "Invalid date parsing format");
+    }
 
     public void testDeleteItem() throws Exception {
         MockHttpServletResponse response = deleteAsServletResponse("/rest/imports/0/tasks/0/items/0");
