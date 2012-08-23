@@ -774,6 +774,7 @@ public class Importer implements InitializingBean, DisposableBean {
                         // force computation
                         CatalogBuilder cb = new CatalogBuilder(getCatalog());
                         ReferencedEnvelope nativeBounds = cb.getNativeBounds(resource);
+                        resource.setNativeBoundingBox(nativeBounds);
                         resource.setLatLonBoundingBox(cb.getLatLonBounds(nativeBounds, resource.getCRS()));
                         getCatalog().save(resource);
                     }

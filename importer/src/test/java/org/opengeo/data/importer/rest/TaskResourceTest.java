@@ -210,6 +210,7 @@ public class TaskResourceTest extends ImporterTestSupport {
         context.getTasks().get(0).getItems().get(0).getTransform().add(new AttributesToPointGeometryTransform("LAT","LON"));
         completeAndVerifyUpload(id, false, "locations");
         FeatureTypeInfo featureTypeByName = importer.getCatalog().getFeatureTypeByName("locations");
+        assertEquals("ReferencedEnvelope[-123.365556 : 151.211111, -33.925278 : 48.428611]",featureTypeByName.getNativeBoundingBox().toString());
         assertEquals("ReferencedEnvelope[-123.365556 : 151.211111, -33.925278 : 48.428611]",featureTypeByName.getLatLonBoundingBox().toString());
     }
         
