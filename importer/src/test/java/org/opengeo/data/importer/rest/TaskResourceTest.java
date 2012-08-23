@@ -48,6 +48,8 @@ import org.springframework.security.core.context.SecurityContextImpl;
 
 import com.mockrunner.mock.web.MockHttpServletRequest;
 import com.mockrunner.mock.web.MockHttpServletResponse;
+import org.geoserver.catalog.FeatureTypeInfo;
+import org.opengeo.data.importer.transform.AttributesToPointGeometryTransform;
 
 /**
  * @todo extract postgis stuff to online test case
@@ -131,7 +133,6 @@ public class TaskResourceTest extends ImporterTestSupport {
 
         ImportTask task = context.getTasks().get(0);
         assertTrue(task.getData() instanceof SpatialFile);
-        assertEquals(ImportTask.State.READY, task.getState());
         
         return id;
     }
@@ -162,7 +163,6 @@ public class TaskResourceTest extends ImporterTestSupport {
 
         ImportTask task = context.getTasks().get(0);
         assertTrue(task.getData() instanceof SpatialFile);
-        assertEquals(ImportTask.State.READY, task.getState());
         
         return id;
     }
@@ -191,7 +191,7 @@ public class TaskResourceTest extends ImporterTestSupport {
         if (jdbcStore == null) return;
         
         Integer id = upload("shape/archsites_epsg_prj.zip", true);
-        completeAndVerifyUpload(id);
+        completeAndVerifyUpload(id, true, "archsites");
     }
 
 
@@ -199,10 +199,24 @@ public class TaskResourceTest extends ImporterTestSupport {
         if (jdbcStore == null) return;
         
         Integer id = upload("shape/archsites_epsg_prj.zip", false);
-        completeAndVerifyUpload(id);
+        completeAndVerifyUpload(id, true, "archsites");
+    }
+    
+    public void testUploadToPostGISCSV() throws Exception {
+        if (jdbcStore == null) return;
+        Integer id = upload("shape/locations.zip", false);
+        setSRSRequest("/rest/imports/"+ id + "/tasks/0/items/0", "EPSG:4326");
+        ImportContext context = importer.getContext(id);
+        context.getTasks().get(0).getItems().get(0).getTransform().add(new AttributesToPointGeometryTransform("LAT","LON"));
+        completeAndVerifyUpload(id, false, "locations");
+        FeatureTypeInfo featureTypeByName = importer.getCatalog().getFeatureTypeByName("locations");
+        assertEquals("ReferencedEnvelope[-123.365556 : 151.211111, -33.925278 : 48.428611]",featureTypeByName.getLatLonBoundingBox().toString());
     }
         
-    void completeAndVerifyUpload(Integer id) throws Exception {
+    void completeAndVerifyUpload(Integer id, boolean addIndex, String expectedTypeName) throws Exception {
+        ImportContext context = importer.getContext(id);
+        ImportTask task = context.getTasks().get(0);
+        assertEquals(ImportTask.State.READY, task.getState());
         
         JSONObjectBuilder builder = new JSONObjectBuilder();
         builder.object().key("task").object()
@@ -222,9 +236,11 @@ public class TaskResourceTest extends ImporterTestSupport {
         assertEquals(204,resp.getStatusCode());
         
         // @todo formalize and extract this test
-        ImportContext context = importer.getContext(id);
-        context.getTasks().get(0).getItems().get(0).getTransform().add(new CreateIndexTransform("CAT_ID"));
-        importer.changed(context);
+        if (addIndex) {
+            context = importer.getContext(id);
+            context.getTasks().get(0).getItems().get(0).getTransform().add(new CreateIndexTransform("CAT_ID"));
+            importer.changed(context);
+        }
         
         resp = postAsServletResponse("/rest/imports/" + id,"","application/text");
         assertEquals(204,resp.getStatusCode());
@@ -240,7 +256,7 @@ public class TaskResourceTest extends ImporterTestSupport {
         JSONArray featureType = (JSONArray) featureTypes.get("featureType");
         JSONObject type = (JSONObject) featureType.get(0);
         // @todo why is generated type name possibly getting a '0' appended to it when we drop the table???
-        assertTrue(type.getString("name").startsWith("archsites"));
+        assertTrue(type.getString("name").startsWith(expectedTypeName));
         
         File archive = importer.getArchiveFile(context.getTasks().get(0));
         assertTrue(archive.exists());

@@ -147,6 +147,11 @@ public class ItemResource extends AbstractResource {
                 } catch (FactoryException ex) {
                     throw new RestletException("Error with referencing",Status.SERVER_ERROR_INTERNAL,ex);
                 }
+                // make this the specified native if none exists
+                // useful for csv or other files
+                if (resource.getNativeCRS() == null) {
+                    resource.setNativeCRS(newRefSystem);
+                }
             }
         }
 

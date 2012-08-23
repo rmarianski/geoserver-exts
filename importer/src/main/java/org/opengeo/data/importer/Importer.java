@@ -17,13 +17,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.geoserver.catalog.Catalog;
+import org.geoserver.catalog.CatalogBuilder;
 import org.geoserver.catalog.CoverageInfo;
 import org.geoserver.catalog.CoverageStoreInfo;
 import org.geoserver.catalog.DataStoreInfo;
@@ -34,7 +33,6 @@ import org.geoserver.catalog.ResourceInfo;
 import org.geoserver.catalog.StoreInfo;
 import org.geoserver.catalog.StyleInfo;
 import org.geoserver.catalog.WorkspaceInfo;
-import org.geoserver.catalog.impl.StoreInfoImpl;
 import org.geoserver.config.util.XStreamPersister;
 import org.geoserver.config.util.XStreamPersister.CRSConverter;
 import org.geoserver.config.util.XStreamPersisterFactory;
@@ -765,6 +763,19 @@ public class Importer implements InitializingBean, DisposableBean {
                     //if (task.getUpdateMode() == null) {
                     if (!canceled && item.updateMode() == null) {
                         addToCatalog(item, task);
+                    }
+                    
+                    // verify that the newly created featuretype's resource
+                    // has bounding boxes computed - this might be required
+                    // for csv or other uploads that have a geometry that is
+                    // the result of a transform. there may be another way...
+                    FeatureTypeInfo resource = getCatalog().getResourceByName(featureType.getQualifiedName(), FeatureTypeInfo.class);
+                    if (resource.getNativeBoundingBox().isEmpty()) {
+                        // force computation
+                        CatalogBuilder cb = new CatalogBuilder(getCatalog());
+                        ReferencedEnvelope nativeBounds = cb.getNativeBounds(resource);
+                        resource.setLatLonBoundingBox(cb.getLatLonBounds(nativeBounds, resource.getCRS()));
+                        getCatalog().save(resource);
                     }
                 }
                 catch(Exception e) {

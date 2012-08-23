@@ -134,6 +134,21 @@ public abstract class ImporterTestSupport extends GeoServerTestSupport {
         return ds;
     }
     
+    private String createSRSJSON(String srs) {
+        return "{" + 
+          "\"resource\": {" + 
+            "\"featureType\":   {" + 
+               "\"srs\": \"" + srs + "\"" +
+             "}" + 
+           "}" + 
+        "}";
+    }
+    
+    protected MockHttpServletResponse setSRSRequest(String url, String srs) throws Exception {
+        String srsRequest = createSRSJSON(srs);
+        return putAsServletResponse(url, srsRequest, "application/json");
+    }
+    
     protected void assertErrorResponse(MockHttpServletResponse resp, String... errs) {
         assertEquals(400, resp.getStatusCode());
         JSONObject json = JSONObject.fromObject(resp.getOutputStreamContent());
