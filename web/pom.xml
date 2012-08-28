@@ -1,112 +1,24 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
- <modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
 
- <parent>
+  <parent>
+    <groupId>org.opengeo</groupId>
+    <artifactId>geoserver-exts</artifactId>
+    <version>2.2-SNAPSHOT</version>
+  </parent>
+
   <groupId>org.opengeo</groupId>
-  <artifactId>geoserver-exts</artifactId>
-  <version>2.2-SNAPSHOT</version>
- </parent>
+  <artifactId>geoserver-exts.web</artifactId>
+  <packaging>pom</packaging>
+  <name>OpenGeo GeoServer Web UI Extensions</name>
 
- <groupId>org.opengeo.geoserver</groupId>
- <artifactId>web</artifactId>
- <packaging>jar</packaging>
- <name>GeoServer Test Web App Module</name>
-
- <properties>
-  <jetty.version>6.1.8</jetty.version>
-  <warSourceDirectory>${basedir}/src/main/webapp</warSourceDirectory>
-  <webappSourceDirectory>${basedir}/src/main/webapp</webappSourceDirectory>
- </properties>
-
- <dependencies>
-
-  <dependency>
-   <groupId>org.geoserver.web</groupId>
-   <artifactId>web-app</artifactId>
-  </dependency>
-  <dependency>
-   <groupId>org.geoserver.web</groupId>
-   <artifactId>web-security</artifactId>
-  </dependency>
-
-  <dependency>
-   <groupId>org.opengeo.geoserver</groupId>
-   <artifactId>importer</artifactId>
-   <version>${gs.version}</version>
-   <scope>runtime</scope>
-  </dependency>
-  <dependency>
-    <groupId>org.opengeo.data.csv</groupId>
-    <artifactId>csv</artifactId>
-    <version>${gs.version}</version>
-    <scope>runtime</scope>
-  </dependency>
-  <dependency>
-   <groupId>org.opengeo.geoserver</groupId>
-   <artifactId>analytics</artifactId>
-   <version>${gs.version}</version>
-  </dependency>
-  <dependency>
-   <groupId>org.opengeo.geoserver</groupId>
-   <artifactId>printng</artifactId>
-   <version>${gs.version}</version>
-   <scope>runtime</scope>
-  </dependency>
-
-  <dependency>
-   <groupId>org.mortbay.jetty</groupId>
-   <artifactId>jetty</artifactId>
-   <scope>test</scope>
-   <version>${jetty.version}</version>
-  </dependency>
-  <dependency>
-   <groupId>org.mortbay.jetty</groupId>
-   <artifactId>jetty-naming</artifactId>
-   <scope>test</scope>
-   <version>${jetty.version}</version>
-  </dependency>
-  <dependency>
-   <groupId>org.mortbay.jetty</groupId>
-   <artifactId>jetty-plus</artifactId>
-   <scope>test</scope>
-   <version>${jetty.version}</version>
-  </dependency>
- </dependencies>
-
- <build>
-  <plugins>
-   <plugin>
-    <inherited>true</inherited>
-    <groupId>org.apache.maven.plugins</groupId>
-    <artifactId>maven-war-plugin</artifactId>
-    <configuration>
-     <warName>geoserver</warName>
-     <webappDirectory>${project.build.directory}/geoserver</webappDirectory>
-    </configuration>
-    <executions>
-     <execution>
-      <phase>install</phase>
-      <goals>
-       <goal>war</goal>
-      </goals>
-     </execution>
-    </executions>
-   </plugin>
-  </plugins>
- </build>
-
- <profiles>
-     <profile>
-      <id>wps</id>
-      <dependencies>
-        <dependency>
-          <groupId>org.geoserver.extension</groupId>
-          <artifactId>web-wps</artifactId>
-          <version>${project.version}</version>
-        </dependency>
-      </dependencies>
-    </profile>
- </profiles>
- 
+  <modules>
+    <module>app</module>
+  </modules>
 </project>
+
+
