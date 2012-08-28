@@ -4,12 +4,12 @@
 
  <parent>
   <groupId>org.opengeo</groupId>
-  <artifactId>geoserver-exts</artifactId>
+  <artifactId>geoserver-exts.web</artifactId>
   <version>2.2-SNAPSHOT</version>
  </parent>
 
  <groupId>org.opengeo.geoserver</groupId>
- <artifactId>web</artifactId>
+ <artifactId>app</artifactId>
  <packaging>jar</packaging>
  <name>GeoServer Test Web App Module</name>
 
@@ -33,6 +33,11 @@
   <dependency>
    <groupId>org.opengeo.geoserver</groupId>
    <artifactId>importer</artifactId>
+   <version>${gs.version}</version>
+  </dependency>
+  <dependency>
+   <groupId>org.opengeo.geoserver</groupId>
+   <artifactId>wps</artifactId>
    <version>${gs.version}</version>
   </dependency>
   <dependency>
