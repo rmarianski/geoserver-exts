@@ -769,15 +769,15 @@ public class Importer implements InitializingBean, DisposableBean {
                     // has bounding boxes computed - this might be required
                     // for csv or other uploads that have a geometry that is
                     // the result of a transform. there may be another way...
-                    FeatureTypeInfo resource = getCatalog().getResourceByName(featureType.getQualifiedName(), FeatureTypeInfo.class);
-                    if (resource.getNativeBoundingBox().isEmpty()) {
-                        // force computation
-                        CatalogBuilder cb = new CatalogBuilder(getCatalog());
-                        ReferencedEnvelope nativeBounds = cb.getNativeBounds(resource);
-                        resource.setNativeBoundingBox(nativeBounds);
-                        resource.setLatLonBoundingBox(cb.getLatLonBounds(nativeBounds, resource.getCRS()));
-                        getCatalog().save(resource);
-                    }
+                    FeatureTypeInfo resource = getCatalog().getResourceByName(
+                            featureType.getQualifiedName(), FeatureTypeInfo.class);
+                    // force computation
+                    CatalogBuilder cb = new CatalogBuilder(getCatalog());
+                    ReferencedEnvelope nativeBounds = cb.getNativeBounds(resource);
+                    resource.setNativeBoundingBox(nativeBounds);
+                    resource.setLatLonBoundingBox(cb.getLatLonBounds(nativeBounds,
+                            resource.getCRS()));
+                    getCatalog().save(resource);
                 }
                 catch(Exception e) {
                     LOGGER.log(Level.SEVERE, "Error occured during import", e);
