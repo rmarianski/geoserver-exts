@@ -1,0 +1,51 @@
+<html xmlns:wicket="http://wicket.apache.org/">
+<wicket:head>
+<style type="text/css">
+td select { width: 120px }
+</style>
+</wicket:head>
+<head>
+<title><wicket:message key="page.title">Process List</wicket:message></title>
+</head>
+<body>
+<wicket:extend>
+  <div wicket:id="processes"></div>
+  <div wicket:id="popup"></div>
+
+  <wicket:fragment wicket:id="links">
+    <a style="white-space: nowrap;" href="#" wicket:id="details"><wicket:message key="processDetails"/></a>
+    <a style="white-space: nowrap;" href="#" wicket:id="builder"><wicket:message key="processBuilder"/></a>
+  </wicket:fragment>
+
+  <wicket:fragment wicket:id="detail">
+    <div style="margin:6px">
+      <h2>
+        <span wicket:id="title"></span>
+        <span wicket:id="name" style="font-family: monospace; font-size: smaller;"></span>
+      </h2>
+      <p wicket:id="description"></p>
+
+      <h3><wicket:message key="processInputs"/></h3>
+      <p>
+      <ul>
+      <li wicket:id="input">
+         <span style="font-weight: bold;" wicket:id="name"></span>
+         (<span wicket:id="type"></span>)
+      </li>
+      </ul>
+      </p>
+
+      <h3><wicket:message key="processOutputs"/></h3>
+      <p>
+      <ul>
+      <li wicket:id="output">
+         <span style="font-weight: bold;" wicket:id="name"></span>
+         (<span wicket:id="type"></span>)
+      </li>
+      </ul>
+      </p>
+    </div>
+  </wicket:fragment>
+</wicket:extend>
+</body>
+</html>

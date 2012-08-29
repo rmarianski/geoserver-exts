@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<beans>
+
+  <bean id="processListDemo" class="org.geoserver.web.MenuPageInfo">
+    <property name="id" value="processListDemo"/>
+    <property name="titleKey" value="OpenGeoProcessListPage.title"/>
+    <property name="descriptionKey" value="OpenGeoProcessListPage.description"/>
+    <property name="category" ref="dataCategory"/>
+    <property name="componentClass" value="org.geoserver.web.wps.OpenGeoProcessListPage"/>
+    <property name="order" value="50"/>
+    <property name="icon" value="cog.png"/>
+  </bean>
+</beans>

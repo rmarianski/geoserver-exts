@@ -9,7 +9,7 @@
  </parent>
 
  <groupId>org.opengeo.geoserver</groupId>
- <artifactId>wps</artifactId>
+ <artifactId>web-wps</artifactId>
  <packaging>jar</packaging>
  <name>OpenGeo WPS GUI Extensions</name>
 
@@ -20,10 +20,18 @@
  </properties>
 
  <dependencies>
-
+  <dependency>
+   <groupId>org.geoserver.extension</groupId>
+   <artifactId>wps-core</artifactId>
+   <version>${gs.version}</version>
+  </dependency>
+  <dependency>
+   <groupId>org.geoserver.extension</groupId>
+   <artifactId>web-wps</artifactId>
+  </dependency>
   <dependency>
    <groupId>org.geoserver.web</groupId>
-   <artifactId>web-app</artifactId>
+   <artifactId>web-core</artifactId>
   </dependency>
  </dependencies>
 </project>

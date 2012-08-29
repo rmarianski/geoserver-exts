@@ -37,7 +37,7 @@
   </dependency>
   <dependency>
    <groupId>org.opengeo.geoserver</groupId>
-   <artifactId>wps</artifactId>
+   <artifactId>web-wps</artifactId>
    <version>${gs.version}</version>
   </dependency>
   <dependency>
