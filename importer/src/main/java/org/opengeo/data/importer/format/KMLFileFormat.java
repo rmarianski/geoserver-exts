@@ -38,16 +38,16 @@ public class KMLFileFormat extends VectorFormat {
 
     static CoordinateReferenceSystem KML_CRS;
 
+    private static ReferencedEnvelope EMPTY_BOUNDS = new ReferencedEnvelope();
+
     static {
         try {
             KML_CRS = CRS.decode(KML_SRS);
         } catch (Exception e) {
             throw new RuntimeException("Could not decode: EPSG:4326", e);
         }
+        EMPTY_BOUNDS.setToNull();
     }
-
-    private static ReferencedEnvelope WORLD_BOUNDS = new ReferencedEnvelope(-180, 180, -90, 90,
-            KML_CRS);
 
     @SuppressWarnings("rawtypes")
     @Override
@@ -150,7 +150,7 @@ public class KMLFileFormat extends VectorFormat {
         ResourceInfo resource = layer.getResource();
         resource.setSRS(KML_SRS);
         resource.setNativeCRS(KML_CRS);
-        resource.setNativeBoundingBox(WORLD_BOUNDS);
+        resource.setNativeBoundingBox(EMPTY_BOUNDS);
         ImportItem item = new ImportItem(layer);
         item.getMetadata().put(FeatureType.class, featureType);
         return Collections.singletonList(item);
