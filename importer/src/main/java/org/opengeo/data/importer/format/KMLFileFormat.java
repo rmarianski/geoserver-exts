@@ -91,7 +91,7 @@ public class KMLFileFormat extends VectorFormat {
 
     @Override
     public String getName() {
-        return "KML File Format";
+        return "KML";
     }
 
     @Override
