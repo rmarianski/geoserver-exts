@@ -584,12 +584,17 @@ public class ImporterDataTest extends ImporterTestSupport {
         TransformChain transformChain = item.getTransform();
         transformChain.add(new DescriptionLimitingTransform());
         importer.run(context);
-        assertNull("Unexpected error", item.getError());
+        Exception error = item.getError();
+        if (error != null) {
+            error.printStackTrace();
+            fail(error.getMessage());
+        }
         assertEquals(
                 "Bounding box not updated",
                 "ReferencedEnvelope[-122.0860162273783 : -77.0531553685479, 36.07954952145647 : 38.87291016281703]",
                 resource.getNativeBoundingBox().toString());
         FeatureTypeInfo fti = (FeatureTypeInfo) resource;
+        assertEquals("Invalid type name", "sample", fti.getName());
         FeatureSource<? extends FeatureType, ? extends Feature> featureSource = fti.getFeatureSource(null, null);
         assertEquals("Unexpected feature count", 20, featureSource.getCount(Query.ALL));
     }

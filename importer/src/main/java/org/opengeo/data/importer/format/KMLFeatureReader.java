@@ -1,17 +1,15 @@
 package org.opengeo.data.importer.format;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.NoSuchElementException;
 
-import org.apache.commons.io.FilenameUtils;
 import org.geotools.data.FeatureReader;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.kml.v22.KML;
 import org.geotools.kml.v22.KMLConfiguration;
 import org.geotools.xml.PullParser;
+import org.opengeo.data.importer.transform.KMLPlacemarkTransform;
 import org.opengis.feature.Feature;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
@@ -19,9 +17,9 @@ import org.opengis.feature.type.FeatureType;
 
 public class KMLFeatureReader implements FeatureReader<FeatureType, Feature> {
 
-    private final File file;
+    private final String typeName;
 
-    private final FileInputStream fileInputStream;
+    private final InputStream inputStream;
 
     private final PullParser parser;
 
@@ -29,12 +27,15 @@ public class KMLFeatureReader implements FeatureReader<FeatureType, Feature> {
 
     private SimpleFeature firstFeature;
 
-    public KMLFeatureReader(File file) throws FileNotFoundException {
-        this.file = file;
-        fileInputStream = new FileInputStream(file);
-        parser = new PullParser(new KMLConfiguration(), fileInputStream, KML.Placemark);
+    private final KMLPlacemarkTransform placemarkTransformer;
+
+    public KMLFeatureReader(String typeName, InputStream inputStream) {
+        this.typeName = typeName;
+        this.inputStream = inputStream;
+        parser = new PullParser(new KMLConfiguration(), inputStream, KML.Placemark);
         next = null;
         firstFeature = null;
+        placemarkTransformer = new KMLPlacemarkTransform();
     }
 
     @Override
@@ -50,14 +51,14 @@ public class KMLFeatureReader implements FeatureReader<FeatureType, Feature> {
         SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
         SimpleFeatureType typeFromFeature = firstFeature.getFeatureType();
         builder.init(typeFromFeature);
-        builder.setName(FilenameUtils.getBaseName(file.getName()));
+        builder.setName(typeName);
         builder.setCRS(KMLFileFormat.KML_CRS);
-        // these 3 attributes force the jdbc read only flag to be set
-        // and we cannot import into postgis as a result
-        builder.remove("LookAt");
-        builder.remove("Style");
-        builder.remove("Region");
         SimpleFeatureType featureType = builder.buildFeatureType();
+        try {
+            featureType = placemarkTransformer.apply(null, null, featureType);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return featureType;
     }
 
@@ -68,9 +69,18 @@ public class KMLFeatureReader implements FeatureReader<FeatureType, Feature> {
         } catch (Exception e) {
             throw new IOException(e);
         }
+        if (parsedObject == null) {
+            return null;
+        }
         SimpleFeature feature = (SimpleFeature) parsedObject;
+        SimpleFeature transformedFeature;
+        try {
+            transformedFeature = placemarkTransformer.apply(null, null, feature, feature);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         if (firstFeature == null) {
-            firstFeature = feature;
+            firstFeature = transformedFeature;
         }
         return feature;
     }
@@ -109,7 +119,7 @@ public class KMLFeatureReader implements FeatureReader<FeatureType, Feature> {
 
     @Override
     public void close() throws IOException {
-        fileInputStream.close();
+        inputStream.close();
         next = null;
         firstFeature = null;
     }

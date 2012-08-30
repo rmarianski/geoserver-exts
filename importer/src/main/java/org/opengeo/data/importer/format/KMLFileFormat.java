@@ -1,11 +1,13 @@
 package org.opengeo.data.importer.format;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.io.FilenameUtils;
 import org.geoserver.catalog.AttributeTypeInfo;
 import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.CatalogBuilder;
@@ -59,7 +61,8 @@ public class KMLFileFormat extends VectorFormat {
     private FeatureReader<FeatureType, Feature> read(File file) {
         // SimpleFeatureType featureType = buildKMLFeatureType(file);
         try {
-            return new KMLFeatureReader(file);
+            String typeName = FilenameUtils.getBaseName(file.getName());
+            return new KMLFeatureReader(typeName, new FileInputStream(file));
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
