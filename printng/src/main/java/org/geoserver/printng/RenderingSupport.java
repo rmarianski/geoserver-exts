@@ -32,7 +32,6 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.geotools.util.logging.Logging;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -52,6 +51,18 @@ import com.lowagie.text.DocumentException;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
+import java.net.PasswordAuthentication;
+import java.util.logging.Level;
+import org.apache.commons.httpclient.Cookie;
+import org.apache.commons.httpclient.Credentials;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.commons.httpclient.UsernamePasswordCredentials;
+import org.apache.commons.httpclient.auth.AuthScope;
+import org.apache.commons.httpclient.cookie.CookiePolicy;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.xhtmlrenderer.swing.ImageResourceLoader;
+import org.xhtmlrenderer.swing.SwingReplacedElementFactory;
 
 /**
  * Support for rendering raw html or templates to images or pdf output while hiding some of the details
@@ -67,20 +78,30 @@ public class RenderingSupport {
     private boolean allowXHTMLTransitional = false;
     private Document dom;
     private String url;
-//    private File imageCacheDir;
+    private File imageCacheDir;
     private String templateOutput;
     private Integer dpp;
-    private Logger logger = Logging.getLogger(getClass());
+    private Logger logger = Logger.getLogger("WTF");// Logging.getLogger(getClass());
+    private Map<String, PasswordAuthentication> credentials = new HashMap<String, PasswordAuthentication>();
+    private List<Cookie> cookies = new ArrayList<Cookie>();
 
     public RenderingSupport(File imageCacheDir) {
-//        this.imageCacheDir = imageCacheDir;
+        this.imageCacheDir = imageCacheDir;
+    }
+    
+    public void addCookie(String host, String name, String value) {
+        cookies.add(new Cookie(host, name, value));
+    }
+    
+    public void addCredentials(String host, String name, String pass) {
+        credentials.put(host, new PasswordAuthentication(name, pass.toCharArray()));
     }
     
     /**
      * Disable all image caching.
      */
     public void disableImageCaching() {
-//        this.imageCacheDir = null;
+        this.imageCacheDir = null;
     }
     
     /**
@@ -192,6 +213,8 @@ public class RenderingSupport {
         }
         out.flush();
         out.close();
+        
+        ((PreloadUserAgentCallback)renderer.getSharedContext().getUserAgentCallback()).cleanup();
     }
 
     public void renderImage(File out, int width, int height) throws IOException {
@@ -201,17 +224,43 @@ public class RenderingSupport {
 
     public void renderImage(OutputStream out, String format, int width, int height) throws IOException {
         final Java2DRenderer renderer = new Java2DRenderer(dom, width, height);
+        renderer.setBufferedImageType(BufferedImage.TYPE_INT_ARGB);
         if (dpp != null) {
             logger.warning("image rendering will ignore dpp");
             dpp = null;
         }
         configureContext(renderer.getSharedContext());
+        
+        // @hack-o-matic - the Java2DRenderer uses URL deep inside it's internals
+        // so this overrides this ImageResourceLoader to use our preloaded cache
+        final PreloadUserAgentCallback agent = (PreloadUserAgentCallback) renderer.getSharedContext().getUserAgentCallback();
+        ImageResourceLoader loader = new ImageResourceLoader() {
+
+            @Override
+            public synchronized ImageResource get(String uri, int width, int height) {
+                ImageResource resource = agent.getImageResource(uri);
+                if (resource != null) {
+                    // tell the loader this image has been loaded
+                    loaded(resource, -1, -1);
+                    if (width != -1 && height != -1) {
+                        // this will ensure that the loaded image gets scaled using
+                        // the internal algorithm - no sense rewriting that
+                        resource = super.get(uri, width, height);
+                    }
+                }
+                return resource;
+            }
+            
+        };
+        renderer.getSharedContext().setReplacedElementFactory(new SwingReplacedElementFactory(ImageResourceLoader.NO_OP_REPAINT_LISTENER,loader));
 
         final FSImageWriter writer = new FSImageWriter(format);
         BufferedImage image = renderer.getImage();
         writer.write(image, out);
         out.flush();
         out.close();
+        
+        ((PreloadUserAgentCallback)renderer.getSharedContext().getUserAgentCallback()).cleanup();
     }
 
     private void configureContext(SharedContext context) {
@@ -220,10 +269,17 @@ public class RenderingSupport {
         }
         context.setBaseURL(url);
         
-        // @todo this still needs work
-        //PreloadUserAgentCallback callback = new PreloadUserAgentCallback(dom, imageCacheDir, context.getUserAgentCallback());
-        //callback.preload();
-        //context.setUserAgentCallback(callback);
+        PreloadUserAgentCallback callback = new PreloadUserAgentCallback(dom, imageCacheDir, context.getUserAgentCallback());
+        for (Map.Entry<String, PasswordAuthentication> entry : credentials.entrySet()) {
+            PasswordAuthentication creds = entry.getValue();
+            callback.addCredentials(entry.getKey(), creds.getUserName(), new String(creds.getPassword()));
+        }
+        try {
+            callback.preload();
+        } catch (IOException ioe) {
+            logger.log(Level.WARNING,"Preload failed",ioe);
+        }
+        context.setUserAgentCallback(callback);
     }
 
     private void parseInput(InputSource src) throws IOException {
@@ -289,6 +345,8 @@ public class RenderingSupport {
         private final UserAgentCallback callback;
         private final Document dom;
         private final File cacheDir;
+        private final List<File> tempFiles = new ArrayList<File>();
+        private final HttpClient httpClient = new HttpClient(new MultiThreadedHttpConnectionManager());
 
         public PreloadUserAgentCallback(Document dom, File cacheDir, UserAgentCallback callback) {
             this.callback = callback;
@@ -301,8 +359,41 @@ public class RenderingSupport {
             this.cacheDir = cacheDir;
         }
         
-        public void preload() {
+        public void addCredentials(String host, String user, String pass) {
+            Credentials creds = new UsernamePasswordCredentials(user, pass);
+            int idx = host.indexOf(":");
+            int port = 80;
+            if (idx > 0) {
+                port = Integer.parseInt(host.substring(idx + 1));
+                host = host.substring(0, idx);
+            }
+            httpClient.getState().setCredentials(new AuthScope(host, port, AuthScope.ANY_REALM), creds);
+        }
+        
+        private List<Element> getImages() {
+            // special hack to optimize open layers map processing
+            List<Element> images = new ArrayList<Element>();
             NodeList imgs = dom.getElementsByTagName("img");
+            nextimg: for (int i = 0; i < imgs.getLength(); i++) {
+                Element el = (Element) imgs.item(i);
+                String style = ((Element)el.getParentNode()).getAttribute("style");
+                if (style != null) {
+                    String[] parts = style.split(";");
+                    for (int j = 0; j < parts.length; j++) {
+                        String[] chunks = parts[j].split(":");
+                        if (chunks[0].trim().equals("display")) {
+                            if (chunks[1].trim().equals("none")) {
+                                break nextimg;
+                            }
+                        }
+                    }
+                }
+                images.add(el);
+            }
+            return images;
+        }
+        
+        public void preload() throws IOException {
             MessageDigest digest;
             try {
                 digest = MessageDigest.getInstance("SHA-256");
@@ -311,8 +402,9 @@ public class RenderingSupport {
             }
             List<String> imagesToResolve = new ArrayList<String>();
             List<File> cacheDestination = new ArrayList<File>();
-            for (int i = 0; i < imgs.getLength(); i++) {
-                String href = ((Element) imgs.item(i)).getAttribute("src");
+            List<Element> elements = getImages();
+            for (int i = 0; i < elements.size(); i++) {
+                String href = elements.get(i).getAttribute("src");
                 if (cacheDir == null) {
                     imagesToResolve.add(href);
                     continue;
@@ -329,7 +421,7 @@ public class RenderingSupport {
                     cacheDestination.add(cacheFile);
                 } else {
                     try {
-                        cache.put(href, callback.getImageResource(cacheFile.toURI().toString()));
+                        cache(href, callback.getImageResource(cacheFile.toURI().toString()));
                     } catch (Exception ex) {
                         throw new RuntimeException("inconceivable", ex);
                     }
@@ -341,7 +433,7 @@ public class RenderingSupport {
                 List<Future<File>> futures = new ArrayList<Future<File>>(imagesToResolve.size());
                 for (int i = 0; i < imagesToResolve.size(); i++) {
                     final String href = imagesToResolve.get(i);
-                    final File dest = cacheDestination.isEmpty() ? null : cacheDestination.get(i);
+                    final File dest = cacheDestination.isEmpty() ? getTempFile() : cacheDestination.get(i);
                     futures.add(executor.submit(new Callable<File>() {
                         public File call() throws Exception {
                             return resolve(href,dest);
@@ -362,7 +454,7 @@ public class RenderingSupport {
                     }
                     if (result != null) {
                         try {
-                            cache.put( resource, callback.getImageResource(result.toURI().toString()) );
+                            cache( resource, callback.getImageResource(result.toURI().toString()) );
                         } catch (Exception ex) {
                             throw new RuntimeException("Error reading resource " + resource,ex);
                         }
@@ -372,6 +464,33 @@ public class RenderingSupport {
             }
         }
         
+        protected InputStream resolveAndOpenStream(String uri) {
+            GetMethod get = new GetMethod(uri);
+            InputStream is = null;
+            try {
+                Cookie cookie = findCookie(get.getURI().getHost());
+                if (cookie != null) {
+                    // this made things work - not sure what I was doing wrong with
+                    // other cookie API
+                    get.getParams().setCookiePolicy(CookiePolicy.IGNORE_COOKIES);
+                    get.setRequestHeader("Cookie", cookie.getName() + "=" + cookie.getValue());
+                }
+                httpClient.executeMethod(get);
+                if (get.getStatusCode() == 200) {
+                    is = get.getResponseBodyAsStream();
+                } else {
+                    logger.warning("Error fetching : " + uri + ", status is : " + get.getStatusCode());
+                }
+            } catch (java.net.MalformedURLException e) {
+                logger.log(Level.WARNING,"bad URL given: " + uri, e);
+            } catch (java.io.FileNotFoundException e) {
+                logger.log(Level.WARNING,"item at URI " + uri + " not found");
+            } catch (java.io.IOException e) {
+                logger.log(Level.WARNING,"IO problem for " + uri, e);
+            }
+            return is;
+        }
+        
         private File resolve(String href, File dest) throws Exception {
             href = href.trim();
             if (href.length() == 0) {
@@ -379,9 +498,7 @@ public class RenderingSupport {
             }
             InputStream in = resolveAndOpenStream(href);
             File retval = null;
-            if (in == null) {
-                Logging.getLogger(getClass()).info("Could not resolve : " + href);
-            } else {
+            if (in != null) {
                 IOUtils.copy(in, new FileOutputStream(dest));
                 in.close();
                 retval = dest;
@@ -405,19 +522,42 @@ public class RenderingSupport {
         
         @Override
         public ImageResource getImageResource(String uri) {
-            ImageResource r;
-            if (cacheDir != null) {
-                r = cache.get(uri);
-            } else {
-                r = super.getImageResource(uri);
-            }
+            ImageResource r = cache.get(uri);
             if (r == null || r.getImage() == null) {
+                r = callback.getImageResource(uri);
+            }
+            if (r == null) {
                 warn(uri);
             }
             return r;
         }
         
-        
+        private void cleanup() {
+            for (File f: tempFiles) {
+                f.delete();
+            }
+        }
+
+        private File getTempFile() throws IOException {
+            File temp = File.createTempFile("printcache", null);
+            tempFiles.add(temp);
+            return temp;
+        }
+
+        private Cookie findCookie(String host) {
+            Cookie c = null;
+            for (int i = 0; i < cookies.size(); i++) {
+                if (host.equals(cookies.get(i).getDomain())) {
+                    c = cookies.get(i);
+                    break;
+                }
+            }
+            return c;
+        }
+
+        private void cache(String resource, ImageResource imageResource) {
+            cache.put(resource, new ImageResource(resource, imageResource.getImage()));
+        }
 
     }
 }

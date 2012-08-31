@@ -86,6 +86,12 @@ public class HTMLMapPrintResource extends PrintResource {
 //            getLogger().info("Ignoring request with content type " + req.getEntity().getMediaType());
 //            throw new RestletException("Invalid request",Status.CLIENT_ERROR_BAD_REQUEST);
 //        }
+        String cookie = params.getFirstValue("cookie");
+        if (cookie != null) {
+            String[] parts = cookie.split(",");
+            renderer.addCookie(parts[0], parts[1], parts[2]);
+        }
+        
         Variant variant = getVariants().get(0);
         String ext = MediaTypes.getExtensionForMediaType(variant.getMediaType());
         Representation rep;
