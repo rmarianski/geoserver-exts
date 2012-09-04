@@ -25,26 +25,34 @@ td select { width: 120px }
       </h2>
       <p wicket:id="description"></p>
 
+      <p> <a wicket:id="describeprocess" href="#">WPS DescribeProcess</a> </p>
+
       <h3><wicket:message key="processInputs"/></h3>
-      <p>
-      <ul>
-      <li wicket:id="input">
-         <span style="font-weight: bold;" wicket:id="name"></span>
-         (<span wicket:id="type"></span>)
-      </li>
-      </ul>
-      </p>
+      <table wicket:id="input"></table>
 
       <h3><wicket:message key="processOutputs"/></h3>
-      <p>
-      <ul>
-      <li wicket:id="output">
-         <span style="font-weight: bold;" wicket:id="name"></span>
-         (<span wicket:id="type"></span>)
-      </li>
-      </ul>
-      </p>
+      <table wicket:id="output"></table>
     </div>
+  </wicket:fragment>
+
+  <wicket:fragment wicket:id="paramlist">
+    <table>
+      <tr>
+        <th><wicket:message key="param.name"/></th>
+        <th><wicket:message key="param.title"/></th>
+        <th><wicket:message key="param.type"/></th>
+        <th><wicket:message key="param.minOccurs"/></th>
+        <th><wicket:message key="param.maxOccurs"/></th>
+      </tr>
+      <tr wicket:id="param">
+        <td wicket:id="name"></td>
+        <td wicket:id="title"></td>
+        <td wicket:id="type"></td>
+        <td wicket:id="minOccurs"></td>
+        <td wicket:id="maxOccurs"></td>
+      </tr>
+    </table>
+    <p/> <!-- TODO: paragraph for spacing here, we should fix the theme to avoid the need. -->
   </wicket:fragment>
 </wicket:extend>
 </body>
