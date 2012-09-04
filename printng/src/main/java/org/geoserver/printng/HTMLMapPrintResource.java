@@ -91,6 +91,11 @@ public class HTMLMapPrintResource extends PrintResource {
             String[] parts = cookie.split(",");
             renderer.addCookie(parts[0], parts[1], parts[2]);
         }
+        String auth = params.getFirstValue("auth");
+        if (auth != null) {
+            String[] parts = auth.split(",");
+            renderer.addCredentials(parts[0], parts[1], parts[2]);
+        }
         
         Variant variant = getVariants().get(0);
         String ext = MediaTypes.getExtensionForMediaType(variant.getMediaType());
@@ -99,15 +104,15 @@ public class HTMLMapPrintResource extends PrintResource {
             rep = getPDFRepresentation();
         } else {
             Element root = renderer.getDocument().getDocumentElement();
-            String width = root.getAttribute("width");
-            String height = root.getAttribute("height");
             int w = 512;
             int h = 256;
-            if (width.length() > 0) {
-                w = Integer.parseInt(width);
+            String val = params.getFirstValue("width");
+            if (val != null) {
+                w = Integer.parseInt(val);
             }
-            if (height.length() > 0) {
-                h = Integer.parseInt(height);
+            val = params.getFirstValue("height");
+            if (val != null) {
+                h = Integer.parseInt(val);
             }
             rep = getImageRepresentation(variant.getMediaType(), ext, w, h);
         }

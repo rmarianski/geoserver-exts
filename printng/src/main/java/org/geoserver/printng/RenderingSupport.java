@@ -51,6 +51,9 @@ import com.lowagie.text.DocumentException;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.geom.AffineTransform;
 import java.net.PasswordAuthentication;
 import java.util.logging.Level;
 import org.apache.commons.httpclient.Cookie;
@@ -61,6 +64,7 @@ import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.geotools.util.logging.Logging;
 import org.xhtmlrenderer.swing.ImageResourceLoader;
 import org.xhtmlrenderer.swing.SwingReplacedElementFactory;
 
@@ -81,7 +85,7 @@ public class RenderingSupport {
     private File imageCacheDir;
     private String templateOutput;
     private Integer dpp;
-    private Logger logger = Logger.getLogger("WTF");// Logging.getLogger(getClass());
+    private Logger logger = Logging.getLogger(getClass());
     private Map<String, PasswordAuthentication> credentials = new HashMap<String, PasswordAuthentication>();
     private List<Cookie> cookies = new ArrayList<Cookie>();
 
@@ -94,6 +98,7 @@ public class RenderingSupport {
     }
     
     public void addCredentials(String host, String name, String pass) {
+        System.out.println("add credentials: " + host + "," + name + "," + pass);
         credentials.put(host, new PasswordAuthentication(name, pass.toCharArray()));
     }
     
@@ -106,7 +111,6 @@ public class RenderingSupport {
     
     /**
      * Get any template output generated from renderTemplate
-     * @see renderTemplate
      * @return template output
      * @throws IllegalStateException if no template has been rendered
      */
@@ -223,7 +227,30 @@ public class RenderingSupport {
     }
 
     public void renderImage(OutputStream out, String format, int width, int height) throws IOException {
-        final Java2DRenderer renderer = new Java2DRenderer(dom, width, height);
+        // @todo clean this up
+        Integer nativeWidth = null;
+        Integer nativeHeight = null;
+        
+        // try to extract native width/height from document
+        String style = dom.getDocumentElement().getAttribute("style");
+        String[] chunks = style.split(";");
+        for (int i = 0; i < chunks.length; i++) {
+            String[] parts = chunks[i].split(":");
+            if (parts[0].trim().equals("width")) {
+                nativeWidth = new Integer(parts[1].trim());
+            }
+            else if (parts[0].trim().equals("height")) {
+                nativeHeight = new Integer(parts[1].trim());
+            }
+        }
+        if (nativeWidth == null) {
+            nativeWidth = width;
+        }
+        if (nativeHeight == null) {
+            nativeHeight = height;
+        }
+        
+        final Java2DRenderer renderer = new Java2DRenderer(dom, nativeWidth, nativeHeight);
         renderer.setBufferedImageType(BufferedImage.TYPE_INT_ARGB);
         if (dpp != null) {
             logger.warning("image rendering will ignore dpp");
@@ -242,11 +269,9 @@ public class RenderingSupport {
                 if (resource != null) {
                     // tell the loader this image has been loaded
                     loaded(resource, -1, -1);
-                    if (width != -1 && height != -1) {
-                        // this will ensure that the loaded image gets scaled using
-                        // the internal algorithm - no sense rewriting that
-                        resource = super.get(uri, width, height);
-                    }
+                    // this will ensure that the loaded image gets scaled using
+                    // the internal algorithm - no sense rewriting that
+                    resource = super.get(uri, width, height);
                 }
                 return resource;
             }
@@ -256,11 +281,48 @@ public class RenderingSupport {
 
         final FSImageWriter writer = new FSImageWriter(format);
         BufferedImage image = renderer.getImage();
+        if (image.getWidth() != width && image.getHeight() != height) {
+            image = niceImage(image, width, height, true);
+        }
         writer.write(image, out);
         out.flush();
         out.close();
         
         ((PreloadUserAgentCallback)renderer.getSharedContext().getUserAgentCallback()).cleanup();
+    }
+    
+    private BufferedImage niceImage(BufferedImage im, int width, int height, boolean exact) {
+        int ts = Math.max(width, height);
+        double aspect = im.getWidth() / im.getHeight();
+        int sw = ts;
+        int sh = ts;
+
+        if (aspect < 1) {
+            sw *= aspect;
+        } else if (aspect > 1) {
+            sh /= aspect;
+        }
+        double scale = (double) Math.max(sw, sh) / Math.max(im.getWidth(), im.getHeight());
+        BufferedImage scaled;
+        if (exact) {
+            if (scale * im.getWidth() < width) {
+                scale = (double) width / im.getWidth();
+            }
+            if (scale * im.getHeight() < height) {
+                scale = (double) height / im.getHeight();
+            }
+            scaled = new BufferedImage(width, height, im.getType());
+        } else {
+            scaled = new BufferedImage(sw, sh, im.getType());
+        }
+        Graphics2D g2 = scaled.createGraphics();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        AffineTransform trans = new AffineTransform();
+        trans.scale(scale, scale);
+
+        g2.drawRenderedImage(im, trans);
+        return scaled;
     }
 
     private void configureContext(SharedContext context) {
@@ -361,13 +423,7 @@ public class RenderingSupport {
         
         public void addCredentials(String host, String user, String pass) {
             Credentials creds = new UsernamePasswordCredentials(user, pass);
-            int idx = host.indexOf(":");
-            int port = 80;
-            if (idx > 0) {
-                port = Integer.parseInt(host.substring(idx + 1));
-                host = host.substring(0, idx);
-            }
-            httpClient.getState().setCredentials(new AuthScope(host, port, AuthScope.ANY_REALM), creds);
+            httpClient.getState().setCredentials(new AuthScope(host, -1, AuthScope.ANY_REALM), creds);
         }
         
         private List<Element> getImages() {
@@ -469,10 +525,17 @@ public class RenderingSupport {
             InputStream is = null;
             try {
                 Cookie cookie = findCookie(get.getURI().getHost());
+                Credentials creds = httpClient.getState().getCredentials(new AuthScope(get.getURI().getHost(), -1, AuthScope.ANY_REALM));
+                if (creds != null) {
+                    // geoserver doesn't challenge - things are just hidden
+                    // this makes things faster even if server challenges
+                    get.getHostAuthState().setPreemptive();
+                }
+                // even if using basic auth, disable cookies
+                get.getParams().setCookiePolicy(CookiePolicy.IGNORE_COOKIES);
                 if (cookie != null) {
                     // this made things work - not sure what I was doing wrong with
                     // other cookie API
-                    get.getParams().setCookiePolicy(CookiePolicy.IGNORE_COOKIES);
                     get.setRequestHeader("Cookie", cookie.getName() + "=" + cookie.getValue());
                 }
                 httpClient.executeMethod(get);

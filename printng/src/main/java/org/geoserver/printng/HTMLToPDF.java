@@ -22,10 +22,6 @@ public class HTMLToPDF {
     public static void main(String[] args)
             throws Exception {
         Logger.getLogger("").addAppender(new ConsoleAppender());
-//        System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
-//        System.setProperty("org.apache.commons.logging.simplelog.showdatetime", "true");
-//        System.setProperty("org.apache.commons.logging.simplelog.log.httpclient.wire.header", "debug");
-//        System.setProperty("org.apache.commons.logging.simplelog.log.org.apache.commons.httpclient", "debug");
         int ppd = 20;
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         LinkedList<String> argList = new LinkedList<String>(Arrays.asList(args));
@@ -33,6 +29,12 @@ public class HTMLToPDF {
         boolean loop = argList.removeFirstOccurrence("-loop");
         boolean cache = argList.removeFirstOccurrence("-cache");
         int idx = argList.indexOf("-auth");
+        if (argList.removeFirstOccurrence("-loghttp")) {
+            System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
+            System.setProperty("org.apache.commons.logging.simplelog.showdatetime", "true");
+            System.setProperty("org.apache.commons.logging.simplelog.log.httpclient.wire.header", "debug");
+            System.setProperty("org.apache.commons.logging.simplelog.log.org.apache.commons.httpclient", "debug");
+        }
         List<String> creds = null;
         List<String> cookie = null;
         if (idx >= 0) {
@@ -70,7 +72,7 @@ public class HTMLToPDF {
             renderer.parseInput(inputFile);
             System.out.print("rendering...");
             if (img) {
-                renderer.renderImage(outputFile, 512, 256);
+                renderer.renderImage(outputFile, 256, 128);
             } else {
                 renderer.setDotsPerPixel(ppd);
                 renderer.renderPDF(outputFile);
