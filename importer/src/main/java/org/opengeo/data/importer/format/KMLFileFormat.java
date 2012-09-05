@@ -2,7 +2,6 @@ package org.opengeo.data.importer.format;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -18,6 +17,7 @@ import org.geoserver.catalog.ResourceInfo;
 import org.geoserver.catalog.StoreInfo;
 import org.geoserver.catalog.WorkspaceInfo;
 import org.geotools.data.FeatureReader;
+import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import org.opengeo.data.importer.FileData;
@@ -25,7 +25,9 @@ import org.opengeo.data.importer.ImportData;
 import org.opengeo.data.importer.ImportItem;
 import org.opengeo.data.importer.VectorFormat;
 import org.opengeo.data.importer.job.ProgressMonitor;
+import org.opengeo.data.importer.transform.KMLPlacemarkTransform;
 import org.opengis.feature.Feature;
+import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
 import org.opengis.feature.type.FeatureType;
@@ -59,11 +61,10 @@ public class KMLFileFormat extends VectorFormat {
     }
 
     private FeatureReader<FeatureType, Feature> read(File file) {
-        // SimpleFeatureType featureType = buildKMLFeatureType(file);
         try {
-            String typeName = FilenameUtils.getBaseName(file.getName());
-            return new KMLFeatureReader(typeName, new FileInputStream(file));
-        } catch (FileNotFoundException e) {
+            SimpleFeatureType featureType = parseFeatureType(file);
+            return new KMLTransformingFeatureReader(featureType, new FileInputStream(file));
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -76,20 +77,9 @@ public class KMLFileFormat extends VectorFormat {
 
     @Override
     public int getFeatureCount(ImportData data, ImportItem item) throws IOException {
-        int n = 0;
-        FeatureReader<FeatureType, Feature> reader = null;
-        try {
-            reader = read(getFileFromData(data));
-            while (reader.hasNext()) {
-                reader.next();
-                n++;
-            }
-        } finally {
-            if (reader != null) {
-                reader.close();
-            }
-        }
-        return n;
+        // we don't have a fast way to get the count
+        // instead of parsing through the entire file
+        return -1;
     }
 
     @Override
@@ -118,13 +108,34 @@ public class KMLFileFormat extends VectorFormat {
     }
 
     public SimpleFeatureType parseFeatureType(File file) throws IOException {
+        String baseName = FilenameUtils.getBaseName(file.getName());
+        FileInputStream fileInputStream = null;
         FeatureReader<FeatureType, Feature> featureReader = null;
         try {
-            featureReader = read(file);
-            return (SimpleFeatureType) featureReader.getFeatureType();
+            fileInputStream = new FileInputStream(file);
+            featureReader = new KMLRawFeatureReader(fileInputStream);
+            if (!featureReader.hasNext()) {
+                throw new IllegalArgumentException("KML file " + file.getName()
+                        + " has no features");
+            }
+            SimpleFeature feature = (SimpleFeature) featureReader.next();
+            SimpleFeatureType type = feature.getType();
+            KMLPlacemarkTransform transform = new KMLPlacemarkTransform();
+            SimpleFeatureType transformedType = transform.convertFeatureType(type);
+            SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
+            tb.init(transformedType);
+            tb.setName(baseName);
+            tb.setCRS(KML_CRS);
+            SimpleFeatureType featureType = tb.buildFeatureType();
+            return featureType;
         } finally {
             if (featureReader != null) {
                 featureReader.close();
+            }
+            if (fileInputStream != null) {
+                // closing the feature reader should close the stream as well
+                // but in case something went wrong
+                fileInputStream.close();
             }
         }
     }
