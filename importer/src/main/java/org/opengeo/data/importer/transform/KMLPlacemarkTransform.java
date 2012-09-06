@@ -35,7 +35,6 @@ public class KMLPlacemarkTransform extends AbstractVectorTransform implements In
         ftb.setDescription(oldFeatureType.getDescription());
         ftb.setCRS(KMLFileFormat.KML_CRS);
         ftb.setSRS(KMLFileFormat.KML_SRS);
-        makeStringAttribute(ftb, "Region");
         makeStringAttribute(ftb, "Style");
         SimpleFeatureType ft = ftb.buildFeatureType();
         return ft;
@@ -45,12 +44,6 @@ public class KMLPlacemarkTransform extends AbstractVectorTransform implements In
         SimpleFeatureBuilder fb = new SimpleFeatureBuilder(targetFeatureType);
         SimpleFeature newFeature = fb.buildFeature(old.getID());
         FeatureDataConverter.DEFAULT.convert(old, newFeature);
-
-        // Object regionObj = old.getAttribute("Region");
-        // if (regionObj != null) {
-        // Envelope envelope = (Envelope) regionObj;
-        // newFeature.setAttribute("Region", envelope.toString());
-        // }
         Object styleObj = old.getAttribute("Style");
         if (styleObj != null) {
             FeatureTypeStyle style = (FeatureTypeStyle) styleObj;

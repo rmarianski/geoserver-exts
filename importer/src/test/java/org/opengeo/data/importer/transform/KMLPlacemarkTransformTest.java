@@ -10,9 +10,9 @@ import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
 
 import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.LinearRing;
 import com.vividsolutions.jts.geom.Point;
 
 public class KMLPlacemarkTransformTest extends TestCase {
@@ -31,8 +31,8 @@ public class KMLPlacemarkTransformTest extends TestCase {
         origBuilder.setName("origtype");
         origBuilder.add("name", String.class);
         origBuilder.add("description", String.class);
-        origBuilder.add("LookAt", Coordinate.class);
-        origBuilder.add("Region", Envelope.class);
+        origBuilder.add("LookAt", Point.class);
+        origBuilder.add("Region", LinearRing.class);
         origBuilder.add("Style", FeatureTypeStyle.class);
         origBuilder.add("Geometry", Geometry.class);
         origBuilder.setDefaultGeometry("Geometry");
@@ -42,8 +42,8 @@ public class KMLPlacemarkTransformTest extends TestCase {
         transformedBuilder.setName("transformedtype");
         transformedBuilder.add("name", String.class);
         transformedBuilder.add("description", String.class);
-        transformedBuilder.add("LookAt", String.class);
-        transformedBuilder.add("Region", String.class);
+        transformedBuilder.add("LookAt", Point.class);
+        transformedBuilder.add("Region", LinearRing.class);
         transformedBuilder.add("Style", String.class);
         transformedBuilder.add("Geometry", Geometry.class);
         transformedBuilder.setDefaultGeometry("Geometry");
@@ -52,8 +52,8 @@ public class KMLPlacemarkTransformTest extends TestCase {
 
     public void testFeatureType() throws Exception {
         SimpleFeatureType result = kmlPlacemarkTransform.convertFeatureType(origType);
-        assertBinding(result, "LookAt", String.class);
-        assertBinding(result, "Region", String.class);
+        assertBinding(result, "LookAt", Point.class);
+        assertBinding(result, "Region", LinearRing.class);
         assertBinding(result, "Style", String.class);
     }
 
@@ -81,13 +81,14 @@ public class KMLPlacemarkTransformTest extends TestCase {
 
     public void testLookAtProperty() throws Exception {
         SimpleFeatureBuilder fb = new SimpleFeatureBuilder(origType);
-        fb.set("LookAt", new Coordinate(3d, 4d));
+        GeometryFactory gf = new GeometryFactory();
+        Coordinate c = new Coordinate(3d, 4d);
+        fb.set("LookAt", gf.createPoint(c));
         SimpleFeature feature = fb.buildFeature("testlookat");
-        assertEquals("Unexpected LookAt attribute class", Coordinate.class,
+        assertEquals("Unexpected LookAt attribute class", Point.class,
                 feature.getAttribute("LookAt").getClass());
         SimpleFeature result = kmlPlacemarkTransform.convertFeature(feature, transformedType);
-        assertEquals("Invalid LookAt attribute class", String.class, result.getAttribute("LookAt")
+        assertEquals("Invalid LookAt attribute class", Point.class, result.getAttribute("LookAt")
                 .getClass());
     }
-
 }
