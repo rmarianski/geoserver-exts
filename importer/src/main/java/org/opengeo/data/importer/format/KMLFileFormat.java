@@ -38,9 +38,9 @@ public class KMLFileFormat extends VectorFormat {
     /** serialVersionUID */
     private static final long serialVersionUID = 1L;
 
-    private static String KML_SRS = "EPSG:4326";
+    public static String KML_SRS = "EPSG:4326";
 
-    static CoordinateReferenceSystem KML_CRS;
+    public static CoordinateReferenceSystem KML_CRS;
 
     private static ReferencedEnvelope EMPTY_BOUNDS = new ReferencedEnvelope();
 
@@ -126,6 +126,7 @@ public class KMLFileFormat extends VectorFormat {
             tb.init(transformedType);
             tb.setName(baseName);
             tb.setCRS(KML_CRS);
+            tb.setSRS(KML_SRS);
             SimpleFeatureType featureType = tb.buildFeatureType();
             return featureType;
         } finally {
