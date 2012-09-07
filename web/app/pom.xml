@@ -9,7 +9,7 @@
  </parent>
 
  <groupId>org.opengeo.geoserver</groupId>
- <artifactId>app</artifactId>
+ <artifactId>web-app</artifactId>
  <packaging>jar</packaging>
  <name>GeoServer Test Web App Module</name>
 
