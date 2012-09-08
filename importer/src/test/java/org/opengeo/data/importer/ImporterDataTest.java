@@ -156,8 +156,13 @@ public class ImporterDataTest extends ImporterTestSupport {
         importer.changed(item);
 
         assertEquals(ImportItem.State.READY, item.getState());
-        assertNotNull(item.getLayer().getResource().getLatLonBoundingBox());
+
+        ResourceInfo r = item.getLayer().getResource();
+        assertNotNull(r.getLatLonBoundingBox());
+        assertNotNull(r.boundingBox());
+        assertNotNull(r.boundingBox().getCoordinateReferenceSystem());
     }
+
     public void testImportUnknownFile() throws Exception {
         File dir = unpack("gml/states_wfs11.xml.gz");
 
