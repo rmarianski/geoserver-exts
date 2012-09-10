@@ -29,6 +29,7 @@ import org.geoserver.catalog.DataStoreInfo;
 import org.geoserver.catalog.FeatureTypeInfo;
 import org.geoserver.catalog.LayerInfo;
 import org.geoserver.catalog.NamespaceInfo;
+import org.geoserver.catalog.ProjectionPolicy;
 import org.geoserver.catalog.ResourceInfo;
 import org.geoserver.catalog.StoreInfo;
 import org.geoserver.catalog.StyleInfo;
@@ -536,6 +537,9 @@ public class Importer implements InitializingBean, DisposableBean {
                 item.setError(e);
                 return false;
             }
+
+            //also since this resource has no native crs set the project policy to force declared
+            item.getLayer().getResource().setProjectionPolicy(ProjectionPolicy.FORCE_DECLARED);
         }
 
         //bounds
