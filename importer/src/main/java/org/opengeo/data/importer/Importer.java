@@ -768,18 +768,20 @@ public class Importer implements InitializingBean, DisposableBean {
                     if (!canceled && item.updateMode() == null) {
                         addToCatalog(item, task);
                     }
-                    
+
                     // verify that the newly created featuretype's resource
                     // has bounding boxes computed - this might be required
                     // for csv or other uploads that have a geometry that is
                     // the result of a transform. there may be another way...
-                    FeatureTypeInfo resource = getCatalog().getResourceByName(featureType.getQualifiedName(), FeatureTypeInfo.class);
+                    FeatureTypeInfo resource = getCatalog().getResourceByName(
+                            featureType.getQualifiedName(), FeatureTypeInfo.class);
                     if (resource.getNativeBoundingBox().isEmpty()) {
                         // force computation
                         CatalogBuilder cb = new CatalogBuilder(getCatalog());
                         ReferencedEnvelope nativeBounds = cb.getNativeBounds(resource);
                         resource.setNativeBoundingBox(nativeBounds);
-                        resource.setLatLonBoundingBox(cb.getLatLonBounds(nativeBounds, resource.getCRS()));
+                        resource.setLatLonBoundingBox(cb.getLatLonBounds(nativeBounds,
+                                resource.getCRS()));
                         getCatalog().save(resource);
                     }
                 }
