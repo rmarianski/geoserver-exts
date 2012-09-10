@@ -1,12 +1,9 @@
 package org.opengeo.data.csv;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.io.FilenameUtils;
 import org.geotools.data.FeatureReader;
 import org.geotools.data.FeatureWriter;
 import org.geotools.data.FileDataStore;
@@ -17,54 +14,26 @@ import org.geotools.data.store.ContentDataStore;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.feature.NameImpl;
-import org.geotools.referencing.CRS;
 import org.opengeo.data.csv.parse.CSVStrategy;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.Name;
 import org.opengis.filter.Filter;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class CSVDataStore extends ContentDataStore implements FileDataStore {
 
-    private static final CoordinateReferenceSystem crs;
-
     private final CSVStrategy csvStrategy;
 
-    private final File file;
+    private final CSVFileState csvFileState;
 
-    private CSVFileState csvFileState;
+    public CSVDataStore(CSVFileState csvFileState, CSVStrategy csvStrategy) {
+        this.csvFileState = csvFileState;
+        this.csvStrategy = csvStrategy;
 
-    static {
-        try {
-            crs = CRS.decode("EPSG:4326");
-        } catch (Exception e) {
-            throw new RuntimeException("Could not decode EPSG:4326");
-        }
-    }
-
-    public CSVDataStore(File file) throws IOException {
-        this(file, null);
-    }
-
-    public CSVDataStore(File file, URI namespace) throws IOException {
-        this(file, namespace, null);
-    }
-
-    public CSVDataStore(File file, URI namespace, CSVStrategyFactory csvStrategyFactory)
-            throws IOException {
-        this.file = file;
-
-        if (csvStrategyFactory == null) {
-            String typeName = getTypeName().getLocalPart();
-            this.csvFileState = new CSVFileState(file, typeName, crs, namespace);
-            csvStrategyFactory = new CSVLatLonStrategyFactory(csvFileState);
-        }
-        this.csvStrategy = csvStrategyFactory.createCSVStrategy();
     }
 
     public Name getTypeName() {
-        return new NameImpl(FilenameUtils.getBaseName(file.getPath()));
+        return new NameImpl(csvFileState.getTypeName());
     }
 
     @Override

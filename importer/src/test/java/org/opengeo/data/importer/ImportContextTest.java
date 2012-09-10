@@ -7,6 +7,10 @@ public class ImportContextTest extends TestCase {
     public void testUpdateState() throws Exception {
         ImportContext context = new ImportContext(0);
 
+        // verify this works correctly with no tasks
+        context.updated();
+        assertEquals(ImportContext.State.PENDING, context.getState());
+
         ImportTask t1 = new ImportTask(null);
         ImportTask t2 = new ImportTask(null);
         ImportTask t3 = new ImportTask(null);

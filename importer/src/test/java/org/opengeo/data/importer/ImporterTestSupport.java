@@ -23,6 +23,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import net.sf.json.JSONArray;
 
 import net.sf.json.JSONObject;
 import net.sf.json.util.JSONBuilder;
@@ -131,6 +132,32 @@ public abstract class ImporterTestSupport extends GeoServerTestSupport {
         cat.add(ds);
         
         return ds;
+    }
+    
+    private String createSRSJSON(String srs) {
+        return "{" + 
+          "\"resource\": {" + 
+            "\"featureType\":   {" + 
+               "\"srs\": \"" + srs + "\"" +
+             "}" + 
+           "}" + 
+        "}";
+    }
+    
+    protected MockHttpServletResponse setSRSRequest(String url, String srs) throws Exception {
+        String srsRequest = createSRSJSON(srs);
+        return putAsServletResponse(url, srsRequest, "application/json");
+    }
+    
+    protected void assertErrorResponse(MockHttpServletResponse resp, String... errs) {
+        assertEquals(400, resp.getStatusCode());
+        JSONObject json = JSONObject.fromObject(resp.getOutputStreamContent());
+        JSONArray errors = json.getJSONArray("errors");
+        assertNotNull("Expected error array", errors);
+        assertEquals(errs.length, errors.size());
+        for (int i = 0; i < errs.length; i++) {
+            assertEquals(errors.get(i), errs[i]);
+        }
     }
 
     protected int lastId() {

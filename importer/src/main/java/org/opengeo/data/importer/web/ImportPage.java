@@ -238,9 +238,13 @@ public class ImportPage extends GeoServerSecuredPage {
 
                                     ImportTask task = item.getModelObject();
                                     if (task.getState() == State.COMPLETE) {
-                                        Component cancelLink = self.getParent().get("cancel");
-                                        cancelLink.setEnabled(true);
-                                        target.addComponent(cancelLink);
+                                        //enable cancel, which will not be "done"
+                                        setLinkEnabled(cancelLink(self), true, target);
+                                    }
+                                    else {
+                                        //disable cancel, import is not longer running, but also 
+                                        // not complete
+                                        setLinkEnabled(cancelLink(self), false, target);
                                     }
                                 }
 
@@ -251,8 +255,10 @@ public class ImportPage extends GeoServerSecuredPage {
                         });
                         target.addComponent(itemTable);
 
-                        //set this button disabled
-                        setImportLinkEnabled(this, false, target);
+                        //disable import button
+                        setLinkEnabled(this, false, target);
+                        //enable cancel button
+                        setLinkEnabled(cancelLink(this), true, target);
                     }
                 };
                 importLink.setOutputMarkupId(true);
@@ -291,8 +297,10 @@ public class ImportPage extends GeoServerSecuredPage {
                         catch(Exception e) {
                         }
 
-                        //set this button disabled
-                        setImportLinkEnabled(importLink, true, target);
+                        //enable import button
+                        setLinkEnabled(importLink, true, target);
+                        //disable cancel button
+                        setLinkEnabled(cancelLink(importLink), false, target);
                     }
                     
                 };
@@ -349,16 +357,16 @@ public class ImportPage extends GeoServerSecuredPage {
             enable = !allComplete;
         }
 
-        setImportLinkEnabled(link, enable, target);
+        setLinkEnabled(link, enable, target);
     }
 
-    void setImportLinkEnabled(AjaxLink link, boolean enabled, AjaxRequestTarget target) {
+    void setLinkEnabled(AjaxLink link, boolean enabled, AjaxRequestTarget target) {
         link.setEnabled(enabled);
         target.addComponent(link);
+    }
 
-        AjaxLink cancel = (AjaxLink) link.getParent().get("cancel");
-        cancel.setEnabled(!enabled);
-        target.addComponent(cancel);
+    AjaxLink cancelLink(AjaxLink importLink) {
+        return (AjaxLink) importLink.getParent().get("cancel");
     }
 
     boolean doSelectReady(ImportTask task, ImportItemTable table, AjaxRequestTarget target) {

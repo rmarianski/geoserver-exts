@@ -1,5 +1,6 @@
 package org.opengeo.data.importer.rest;
 
+import org.opengeo.data.importer.ValidationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -98,7 +99,13 @@ public class ItemResource extends AbstractResource {
     @Override
     public void handlePut() {
         ImportItem orig = (ImportItem) lookupItem(false);
-        ImportItem item = (ImportItem) getFormatPostOrPut().toObject(getRequest().getEntity());
+        ImportItem item;
+        try {
+            item = (ImportItem) getFormatPostOrPut().toObject(getRequest().getEntity());
+        } catch (ValidationException ve) {
+            getLogger().log(Level.WARNING, null, ve);
+            throw ImportJSONIO.badRequest(ve.getMessage());
+        }
 
         //update the original layer and resource from the new
         LayerInfo l = item.getLayer();
@@ -139,6 +146,11 @@ public class ItemResource extends AbstractResource {
                     throw ImportJSONIO.badRequest(msg);
                 } catch (FactoryException ex) {
                     throw new RestletException("Error with referencing",Status.SERVER_ERROR_INTERNAL,ex);
+                }
+                // make this the specified native if none exists
+                // useful for csv or other files
+                if (resource.getNativeCRS() == null) {
+                    resource.setNativeCRS(newRefSystem);
                 }
             }
         }

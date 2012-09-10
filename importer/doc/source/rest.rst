@@ -411,9 +411,12 @@ Imports
      - n/a
      - n/a
    * - PUT
-     - Modify import with id <importId>
-     - 200
-     - :ref:`Imports <import>`
+     - Create import with proposed id <importId>. If the proposed id is
+       ahead of the current (next) id, the current id will be advanced. If the
+       proposed id is less than or equal to the current id, the current will be
+       used. This allows an external system to dictate the id management.
+     - 201 with Location header
+     - n/a
      - :ref:`Imports <import>`
    * - DELETE
      - Remove import with id <importId>

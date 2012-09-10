@@ -2,19 +2,15 @@ package org.opengeo.data.importer.rest;
 
 import java.io.File;
 
-import javax.servlet.ServletResponse;
-
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import org.opengeo.data.importer.Directory;
 import org.opengeo.data.importer.ImportContext.State;
-import org.opengeo.data.importer.Importer;
 import org.opengeo.data.importer.ImporterTestSupport;
 import org.opengeo.data.importer.SpatialFile;
 
 import com.mockrunner.mock.web.MockHttpServletResponse;
-import java.io.InputStream;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.opengeo.data.importer.*;
 import org.restlet.data.Status;
@@ -53,16 +49,6 @@ public class ItemResourceTest extends ImporterTestSupport {
         assertTrue(item.getString("href").endsWith("/imports/0/tasks/0/items/0"));
     }
     
-    private String createSRSJSON(String srs) {
-        return "{" + 
-          "\"resource\": {" + 
-            "\"featureType\":   {" + 
-               "\"srs\": \"" + srs + "\"" +
-             "}" + 
-           "}" + 
-        "}";
-    }
-    
     private void verifyInvalidCRSErrorResponse(MockHttpServletResponse resp) {
         assertEquals(Status.CLIENT_ERROR_BAD_REQUEST.getCode(), resp.getStatusCode());
         JSONObject errorResponse = JSONObject.fromObject(resp.getOutputStreamContent());
@@ -80,19 +66,16 @@ public class ItemResourceTest extends ImporterTestSupport {
         assertFalse(item.getJSONObject("resource").getJSONObject("featureType").containsKey("srs"));
 
         // verify invalid SRS handling
-        String srsRequest = createSRSJSON("26713");
-        MockHttpServletResponse resp = putAsServletResponse("/rest/imports/1/tasks/0/items/0", srsRequest, "application/json");
+        MockHttpServletResponse resp = setSRSRequest("/rest/imports/1/tasks/0/items/0","26713");
         verifyInvalidCRSErrorResponse(resp);
-        srsRequest = createSRSJSON("EPSG:9838275");
-        resp = putAsServletResponse("/rest/imports/1/tasks/0/items/0", srsRequest, "application/json");
+        resp = setSRSRequest("/rest/imports/1/tasks/0/items/0","EPSG:9838275");
         verifyInvalidCRSErrorResponse(resp);
         
-        srsRequest = createSRSJSON("EPSG:26713");
-        put("/rest/imports/1/tasks/0/items/0", srsRequest, "application/json");
+        setSRSRequest("/rest/imports/1/tasks/0/items/0","EPSG:26713");
         
         ImportContext context = importer.getContext(1);
         ReferencedEnvelope latLonBoundingBox = context.getTasks().get(0).getItems().get(0).getLayer().getResource().getLatLonBoundingBox();
-        assertNotNull(latLonBoundingBox);
+        assertFalse("expected not empty bbox",latLonBoundingBox.isEmpty());
 
         json = (JSONObject) getAsJSON("/rest/imports/1/tasks/0/items/0");
         item = json.getJSONObject("item");
@@ -101,6 +84,36 @@ public class ItemResourceTest extends ImporterTestSupport {
             item.getJSONObject("resource").getJSONObject("featureType").getString("srs"));
         State state = context.getState();
         assertEquals("Invalid context state", State.READY, state);
+    }
+    
+    /**
+     * Ideally, many variations of error handling could be tested here.
+     * (For performance - otherwise too much tear-down/setup)
+     * @throws Exception
+     */
+    public void testErrorHandling() throws Exception {
+        JSONObject json = (JSONObject) getAsJSON("/rest/imports/0/tasks/0/items/0");
+        JSONObject item = json.getJSONObject("item");
+        
+        JSONObjectBuilder badDateFormatTransform = new JSONObjectBuilder();
+        badDateFormatTransform.
+            object().
+                key("item").object().
+                    key("transformChain").object().
+                        key("type").value("VectorTransformChain").
+                        key("transforms").array().
+                            object().
+                                key("field").value("datefield").
+                                key("type").value("DateFormatTransform").
+                                key("format").value("xxx").
+                            endObject().
+                        endArray().
+                    endObject().
+                endObject().
+            endObject();
+        
+        MockHttpServletResponse resp = putAsServletResponse("/rest/imports/0/tasks/0/items/0", badDateFormatTransform.buildObject().toString(), "application/json");
+        assertErrorResponse(resp, "Invalid date parsing format");
     }
 
     public void testDeleteItem() throws Exception {

@@ -164,16 +164,16 @@ public class BDBImportStore implements ImportStore {
         if (id.longValue() < current ) {
             id = new Long(current);
         }
+        
+        // reserve the spot now (the delta must have one added to it)
+        int delta = (int) (id.longValue() - current + 1);
+        current = importIdSeq.get(null, delta);
         // verify existing doesn't exists (shouldn't but just in case)
-        ImportContext existing = get(id);
-        if (existing != null) {
+        if (get(current) != null) {
             throw new IllegalStateException("proposed in exists!");
         }
-        // reserve the spot now (the delta must have one added to it)
-        int delta = (int) (id.longValue() -  current + 1);
-        importIdSeq.get(null, delta);
-        existing = new ImportContext(importIdSeq.getStats(StatsConfig.DEFAULT).getCurrent());
-        put(existing);
+        ImportContext reserved = new ImportContext(current);
+        put(reserved);
         return id;
     }
     

@@ -10,6 +10,7 @@ import java.util.logging.Level;
 
 import org.geotools.data.DataStore;
 import org.opengeo.data.importer.ImportItem;
+import org.opengeo.data.importer.ValidationException;
 import org.opengis.feature.simple.SimpleFeature;
 
 /**
@@ -41,7 +42,7 @@ public class DateFormatTransform extends AttributeRemapTransform {
     transient SimpleDateFormat lastFormat;
     transient SimpleDateFormat[] patterns;
 
-    public DateFormatTransform(String field, String datePattern) {
+    public DateFormatTransform(String field, String datePattern) throws ValidationException  {
         init(field,datePattern);
         init();
     }
@@ -50,12 +51,16 @@ public class DateFormatTransform extends AttributeRemapTransform {
         this(null,null);
     }
     
-    private void init(String field, String datePattern) {
+    private void init(String field, String datePattern) throws ValidationException {
         setType(Date.class);
         setField(field);
         if (datePattern != null) {
             // @todo allow timezone?
-            this.dateFormat = new SimpleDateFormat(datePattern);
+            try {
+                this.dateFormat = new SimpleDateFormat(datePattern);
+            } catch (IllegalArgumentException iae) {
+                throw new ValidationException("Invalid date parsing format",iae);
+            }
             this.dateFormat.setTimeZone(UTC_TZ);
         }
     }

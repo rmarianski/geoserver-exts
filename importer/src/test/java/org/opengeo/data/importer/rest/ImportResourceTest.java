@@ -188,6 +188,7 @@ public class ImportResourceTest extends ImporterTestSupport {
         JSONObject json = (JSONObject) json(resp);
         JSONObject imprt = json.getJSONObject("import");
 
+        assertEquals(ImportContext.State.PENDING.name(), imprt.get("state"));
         assertEquals(id, imprt.getInt("id"));
     }
     
@@ -203,16 +204,17 @@ public class ImportResourceTest extends ImporterTestSupport {
         
         assertEquals(8675309, imprt.getInt("id"));
         
-        // no propose a new one that is less than the earlier
+        // now propose a new one that is less than the earlier
         resp = putAsServletResponse("/rest/imports/8675000");
         assertEquals(201, resp.getStatusCode());
-        
         // it should be one more than the latest
+        assertTrue(resp.getHeader("Location").endsWith("/rest/imports/8675310"));
+        
+        // and just make sure the other parts work
         resp = getAsServletResponse("/rest/imports/8675310");
         assertEquals(200, resp.getStatusCode());
         json = (JSONObject) json(resp);
         imprt = json.getJSONObject("import");
-        
         assertEquals(8675310, imprt.getInt("id"));
     }
 
