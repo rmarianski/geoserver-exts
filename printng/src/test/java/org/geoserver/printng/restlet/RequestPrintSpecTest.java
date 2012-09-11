@@ -1,38 +1,72 @@
 package org.geoserver.printng.restlet;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import java.io.File;
+import static org.junit.Assert.*;
 
 import org.geoserver.printng.api.PrintSpec;
 import org.junit.Test;
-import org.restlet.data.Reference;
-import org.restlet.data.Request;
 
 public class RequestPrintSpecTest {
 
     @Test
-    public void testEmptyRequest() {
-        Request request = new Request();
-        request.setResourceRef(new Reference());
-        PrintSpec printSpec = new RequestPrintSpec(request);
-        assertNull(printSpec.getBaseURL());
-        assertNull(printSpec.getDotsPerPixel());
-        assertNull(printSpec.getWidth());
-        assertNull(printSpec.getHeight());
+    public void testNoDimensionsSpecified() {
+        PrintSpec spec = new PrintSpec(null);
+        assertFalse(spec.isOutputDimensionSet());
+        assertFalse(spec.isRenderDimensionSet());
+
+        spec.useDefaultRenderDimension();
+        assertTrue(spec.isRenderDimensionSet());
+        assertTrue(spec.isOutputDimensionSet());
+        
+        spec = new PrintSpec(null);
+        spec.setOutputHeight(50);
+        spec.setOutputWidth(100);
+        assertTrue(spec.isOutputDimensionSet());
+        assertFalse(spec.isRenderDimensionSet());
+        
+        spec.useDefaultRenderDimension();
+        assertTrue(spec.isRenderDimensionSet());
+        assertEquals(50, spec.getOutputHeight());
+        assertEquals(100, spec.getOutputWidth());
     }
 
     @Test
-    public void testRequestValuesSet() {
-        Request request = new Request();
-        Reference reference = new Reference();
-        reference.setPath("/unused");
-        reference.setQuery("baseURL=foo&dpp=5&width=500&height=80");
-        request.setResourceRef(reference);
-        PrintSpec printSpec = new RequestPrintSpec(request);
-        assertEquals("foo", printSpec.getBaseURL());
-        assertEquals(Integer.valueOf(5), printSpec.getDotsPerPixel());
-        assertEquals(Integer.valueOf(500), printSpec.getWidth());
-        assertEquals(Integer.valueOf(80), printSpec.getHeight());
+    public void testDefaultCacheDir() {
+        PrintSpec spec = new PrintSpec(null);
+        assertNotNull(spec.getCacheDir());
+
+        spec.setCacheDirRoot(new File("foobar"));
+        assertEquals(new File("foobar"), spec.getCacheDir().getParentFile());
     }
 
+    @Test
+    public void testCookies() {
+        PrintSpec spec = new PrintSpec(null);
+        spec.addCookie("foobar", "cookie1", "value");
+        spec.addCookie("barfoo", "cookie2", "value");
+        
+        assertEquals("cookie1", spec.getCookie("foobar").getName());
+        try {
+            spec.addCookie("foobar", "cookie1", "value");
+            fail("expected error on same host cookie");
+        } catch (Exception ex) {
+            
+        }
+    }
+    
+    @Test
+    public void testAuth() {
+        PrintSpec spec = new PrintSpec(null);
+        spec.addCredentials("foobar", "user1", "pass");
+        spec.addCredentials("barfoo", "user2", "pass");
+        
+        assertNotNull(spec.getCredentials("foobar"));
+        assertNotNull(spec.getCredentials("barfoo"));
+        try {
+            spec.addCredentials("foobar", "user1", "pass");
+            fail("expected error on same host credentials");
+        } catch (Exception ex) {
+            
+        }
+    }
 }

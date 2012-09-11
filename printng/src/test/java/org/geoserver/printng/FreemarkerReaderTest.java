@@ -7,32 +7,37 @@ import java.io.Reader;
 import java.io.StringReader;
 
 import org.apache.commons.io.IOUtils;
-import org.geoserver.config.GeoServerDataDirectory;
-import org.geoserver.platform.GeoServerExtensions;
 import org.geoserver.printng.spi.FreemarkerReader;
-import org.geoserver.test.GeoServerTestSupport;
 import org.junit.Test;
+import org.junit.AfterClass;
+import static org.junit.Assert.*;
 
 import freemarker.template.SimpleHash;
+import org.apache.commons.io.FileUtils;
 
-public class FreemarkerReaderTest extends GeoServerTestSupport {
-
-    @Test
-    public void testReaderNotFound() throws IOException {
-        FreemarkerReader templateReader = new FreemarkerReader("foo", null);
-        try {
-            templateReader.reader();
-        } catch (IOException e) {
-            assertTrue(true);
-            return;
-        }
-        fail("Expecting IOException to be thrown");
+public class FreemarkerReaderTest {
+    
+    @AfterClass
+    public static void cleanTempFiles() throws IOException {
+        File templateDir = FreemarkerSupport.getPrintngTemplateDirectory();
+        FileUtils.cleanDirectory(templateDir);
+        templateDir.delete();
     }
 
     @Test
-    public void testReaderFound() throws IOException {
-        FreemarkerReader freemarkerReader = new FreemarkerReader("foo", null);
+    public void testReaderNotFound() throws IOException {
+        try {        
+            new FreemarkerReader("doesnotexist", null);
+            fail("Expecting IOException to be thrown");
+        } catch (IOException e) {
+            // pass
+        }
+    }
+
+    @Test
+    public void testReaderFound() throws IOException {        
         createTemplate("foo", new StringReader("<div>foobar</div>"));
+        FreemarkerReader freemarkerReader = new FreemarkerReader("foo", null);
         Reader reader = freemarkerReader.reader();
         String result = IOUtils.toString(reader);
         assertEquals("Invalid template contents", "<div>foobar</div>", result);
@@ -42,9 +47,9 @@ public class FreemarkerReaderTest extends GeoServerTestSupport {
     public void testReaderFoundWithParams() throws IOException {
         SimpleHash simpleHash = new SimpleHash();
         simpleHash.put("quux", "morx");
+        createTemplate("foo", new StringReader("<div>${quux}</div>"));
         FreemarkerReader freemarkerTemplateReader = new FreemarkerReader("foo",
                 simpleHash);
-        createTemplate("foo", new StringReader("<div>${quux}</div>"));
         Reader reader = freemarkerTemplateReader.reader();
         String result = IOUtils.toString(reader);
         assertEquals("Invalid template interpoloation", "<div>morx</div>", result);
@@ -54,11 +59,10 @@ public class FreemarkerReaderTest extends GeoServerTestSupport {
     public void testReaderFoundMissingParams() throws IOException {
         SimpleHash simpleHash = new SimpleHash();
         simpleHash.put("quux", "morx");
-        FreemarkerReader freemarkerTemplateReader = new FreemarkerReader("foo",
-                simpleHash);
         createTemplate("foo", new StringReader("<div>${fleem}</div>"));
         try {
-            freemarkerTemplateReader.reader();
+            FreemarkerReader freemarkerTemplateReader = new FreemarkerReader("foo",
+                simpleHash);
         } catch (IOException e) {
             assertTrue(true);
             return;
@@ -66,10 +70,9 @@ public class FreemarkerReaderTest extends GeoServerTestSupport {
         fail("Expected IOException thrown for processing bad template params");
     }
 
-    private void createTemplate(String templateName, Reader inputReader) throws IOException {
-        GeoServerDataDirectory geoServerDataDirectory = GeoServerExtensions
-                .bean(GeoServerDataDirectory.class);
-        File templateDir = geoServerDataDirectory.findOrCreateDir("printng", "templates");
+    public static void createTemplate(String templateName, Reader inputReader) throws IOException {
+        File templateDir = FreemarkerSupport.getPrintngTemplateDirectory();
+        templateDir.mkdir();
         File template = new File(templateDir, templateName);
         FileWriter fileWriter = new FileWriter(template);
         IOUtils.copy(inputReader, fileWriter);

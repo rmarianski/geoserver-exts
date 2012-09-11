@@ -1,7 +1,10 @@
 package org.geoserver.printng.spi;
 
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.StringReader;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -20,21 +23,42 @@ import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-public class DocumentParser {
+public class ParsedDocument {
 
-    private final Reader reader;
-    private final boolean useTagSoup;
-    
-    public DocumentParser(Reader reader) {
-        this(reader, true);
+    private final Document dom;
+    private final String baseURL;
+
+    private ParsedDocument(Document dom, String baseURL) {
+        this.dom = dom;
+        this.baseURL = baseURL;
     }
 
-    public DocumentParser(Reader reader, boolean useTagSoup) {
-        this.reader = reader;
-        this.useTagSoup = useTagSoup;
+    public static ParsedDocument parse(String src) throws IOException {
+        return parse(new StringReader(src));
     }
 
-    public Document parse() throws IOException {
+    public static ParsedDocument parse(Reader src) throws IOException {
+        return parse(src, true);
+    }
+
+    public static ParsedDocument parse(Reader src, boolean useTagSoup) throws IOException {
+        return new ParsedDocument(parseDocument(src, useTagSoup), null);
+    }
+
+    public static ParsedDocument parse(File src, boolean useTagSoup) throws IOException {
+        return new ParsedDocument(parseDocument(new FileReader(src), useTagSoup), 
+            src.toURI().toURL().toString());
+    }
+
+    public String getBaseURL() {
+        return baseURL;
+    }
+
+    public Document getDocument() {
+        return dom;
+    }
+
+    public static Document parseDocument(Reader reader, boolean useTagSoup) throws IOException {
         DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
         docBuilderFactory.setValidating(false);
         docBuilderFactory.setNamespaceAware(true);

@@ -15,13 +15,10 @@ import org.apache.log4j.Logger;
 
 import org.geoserver.printng.api.PrintSpec;
 import org.geoserver.printng.api.PrintngWriter;
-import org.geoserver.printng.spi.DocumentParser;
+import org.geoserver.printng.spi.ParsedDocument;
 import org.geoserver.printng.spi.ImageWriter;
-import org.geoserver.printng.spi.MapPrintSpec;
 import org.geoserver.printng.spi.PDFWriter;
-import org.w3c.dom.Document;
-
-import com.google.common.collect.ImmutableMap;
+import org.geoserver.printng.spi.PrintSpecDocumentConfigurator;
 
 /**
  * Use this as an interactive test driver.
@@ -30,14 +27,36 @@ import com.google.common.collect.ImmutableMap;
  */
 public class HTMLToPDF {
 
-    public static void main(String[] args) throws Exception {
-        int dpp = 20;
+    public static void main(String[] args)
+            throws Exception {
+        Logger.getLogger("").addAppender(new ConsoleAppender());
+        int ppd = 20;
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         LinkedList<String> argList = new LinkedList<String>(Arrays.asList(args));
-        boolean img = argList.remove("-img");
-        boolean loop = argList.remove("-loop");
-        // no caching yet
-        // boolean cache = argList.remove("-cache");
+        boolean img = argList.removeFirstOccurrence("-img");
+        boolean loop = argList.removeFirstOccurrence("-loop");
+        boolean cache = argList.removeFirstOccurrence("-cache");
+        if (argList.removeFirstOccurrence("-loghttp")) {
+            System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
+            System.setProperty("org.apache.commons.logging.simplelog.showdatetime", "true");
+            System.setProperty("org.apache.commons.logging.simplelog.log.httpclient.wire.header", "debug");
+            System.setProperty("org.apache.commons.logging.simplelog.log.org.apache.commons.httpclient", "debug");
+        }
+        List<String> creds = null;
+        List<String> cookie = null;
+        int idx = argList.indexOf("-auth");
+        if (idx >= 0) {
+            argList.remove(idx);
+            creds = new ArrayList(argList.subList(idx, idx + 3));
+            argList.removeAll(creds);
+        }
+        idx = argList.indexOf("-cookie");
+        if (idx >= 0) {
+            argList.remove(idx);
+            cookie = new ArrayList(argList.subList(idx, idx + 3));
+            argList.removeAll(cookie);
+        }
+        
         File inputFile = new File(argList.pop());
         File outputFile;
         PrintngWriter writer;
@@ -48,14 +67,20 @@ public class HTMLToPDF {
             outputFile = new File(inputFile.getName().replace(".html", ext));
         }
         while (true) {
-            FileReader fileReader = new FileReader(inputFile);
-            DocumentParser printngDocumentParser = new DocumentParser(fileReader);
-            Document document = printngDocumentParser.parse();
-            ImmutableMap<String, ? extends Object> options = ImmutableMap.of("width", 1280,
-                    "height", 768, "dpp", dpp);
-            PrintSpec printSpec = new MapPrintSpec(options);
+            ParsedDocument document = ParsedDocument.parse(inputFile, true);
+            PrintSpec printSpec = new PrintSpec(document);
+            printSpec.setCacheDirRoot(new File("cache"));
+            printSpec.setOutputWidth(512);
+            printSpec.setOutputHeight(256);
+            printSpec.setDotsPerPixel(ppd);
+            if (creds != null) {
+                printSpec.addCredentials(creds.get(0), creds.get(1), creds.get(2));
+            }
+            if (cookie != null) {
+                printSpec.addCookie(cookie.get(0), cookie.get(1), cookie.get(2));
+            }
 
-            System.out.print("rendering...");
+            System.out.print("rendering... " + printSpec);
             if (img) {
                 writer = new ImageWriter("png");
             } else {
@@ -63,9 +88,9 @@ public class HTMLToPDF {
             }
 
             FileOutputStream fileOutputStream = new FileOutputStream(outputFile);
-            writer.write(document, printSpec, fileOutputStream);
+            writer.write(printSpec, fileOutputStream);
 
-            System.out.println("done");
+            System.out.println("done " + outputFile);
             if (loop) {
                 Desktop.getDesktop().open(outputFile);
                 System.out.println("press enter to run again: 'q' to quit");
@@ -74,7 +99,7 @@ public class HTMLToPDF {
                     break;
                 }
                 try {
-                    dpp = Integer.parseInt(line);
+                    ppd = Integer.parseInt(line);
                 } catch (NumberFormatException nfe) {
                 }
             } else {

@@ -59,31 +59,4 @@ public class PrintngFacadeTest {
         assertTrue("bytes not written", byteArray.length > 0);
     }
 
-    @Test
-    public void testWriteToInvalidPrintSpec() throws IOException {
-        Request request = new Request();
-        Map<String, Object> attributes = request.getAttributes();
-        attributes.put("ext", "png");
-        Reference reference = new Reference();
-        reference.setPath("/unused");
-        reference.setQuery("");
-        request.setResourceRef(reference);
-        String input = "<div>foo bar</div>";
-        ReaderSource readerSource = mock(ReaderSource.class);
-        PrintngReader printngReader = mock(PrintngReader.class);
-        when(printngReader.reader()).thenReturn(new StringReader(input));
-        when(readerSource.printngReader(request)).thenReturn(printngReader);
-        PrintngFacade printngFacade = new PrintngFacade(request, new Response(request),
-                readerSource);
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try {
-            printngFacade.writeTo(byteArrayOutputStream);
-            fail("RestletException should have been thrown");
-        } catch (RestletException e) {
-            int expCode = Status.CLIENT_ERROR_BAD_REQUEST.getCode();
-            int code = e.getStatus().getCode();
-            assertEquals("Invalid status code", expCode, code);
-        }
-    }
-
 }

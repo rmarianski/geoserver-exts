@@ -15,26 +15,25 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 
 public class FreemarkerReader implements PrintngReader {
+    
+    private final String result;
 
-    private final String templateName;
-
-    private final SimpleHash templateModel;
-
-    public FreemarkerReader(String templateName, SimpleHash templateModel) {
-        this.templateName = templateName;
-        this.templateModel = templateModel;
-    }
-
-    @Override
-    public Reader reader() throws IOException {
-        Template template = findTemplate(this.templateName);
+    public FreemarkerReader(String templateName, SimpleHash templateModel) throws IOException {
+        Template template = findTemplate(templateName);
+        if (template == null) {
+            throw new IOException("Template not found " + templateName);
+        }
         StringWriter writer = new StringWriter();
         try {
             template.process(templateModel, writer);
         } catch (TemplateException e) {
             throw new IOException("Error processing template: " + templateName, e);
         }
-        String result = writer.toString();
+        this.result = writer.toString();
+    }
+
+    @Override
+    public Reader reader() throws IOException {
         return new StringReader(result);
     }
 

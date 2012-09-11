@@ -1,6 +1,7 @@
 package org.geoserver.printng.restlet;
 
 import org.geoserver.printng.api.PrintngWriter;
+import org.geoserver.printng.spi.HtmlWriter;
 import org.geoserver.printng.spi.ImageWriter;
 import org.geoserver.printng.spi.PDFWriter;
 import org.geoserver.rest.RestletException;
@@ -27,6 +28,9 @@ public class OutputDescriptor {
         } else if ("gif".equals(extension)) {
             variant = new Variant(MediaType.IMAGE_GIF);
             writer = new ImageWriter("gif");
+        } else if ("html".equals(extension)) {
+            variant = new Variant(MediaType.TEXT_HTML);
+            writer = new HtmlWriter();
         } else {
             String error = String.format("Unknown rendering extension \"%s\"", extension);
             throw new RestletException(error, Status.CLIENT_ERROR_NOT_FOUND);

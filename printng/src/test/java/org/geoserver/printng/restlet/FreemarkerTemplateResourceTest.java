@@ -5,18 +5,16 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Map;
-
 import org.apache.commons.io.IOUtils;
 import org.geoserver.printng.FreemarkerSupport;
-import org.geoserver.printng.restlet.FreemarkerTemplateResource;
-import org.geoserver.test.GeoServerTestSupport;
+import static org.junit.Assert.*;
 import org.junit.Test;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
 import org.restlet.data.Status;
 
-public class FreemarkerTemplateResourceTest extends GeoServerTestSupport {
+public class FreemarkerTemplateResourceTest {
 
     @Test
     public void testHandlePost() throws FileNotFoundException, IOException {
@@ -28,7 +26,7 @@ public class FreemarkerTemplateResourceTest extends GeoServerTestSupport {
         FreemarkerTemplateResource freemarkerTemplateResource = new FreemarkerTemplateResource(
                 request, response);
         freemarkerTemplateResource.handlePost();
-        assertEquals("Invalid response", Status.SUCCESS_OK, response.getStatus());
+        assertEquals("Invalid response", Status.SUCCESS_CREATED, response.getStatus());
 
         File directory = FreemarkerSupport.getPrintngTemplateDirectory();
         File template = new File(directory, "foo.ftl");

@@ -7,7 +7,7 @@ import java.io.Writer;
 
 import org.apache.xml.serialize.XMLSerializer;
 import org.geoserver.printng.FreemarkerSupport;
-import org.geoserver.printng.spi.DocumentParser;
+import org.geoserver.printng.spi.ParsedDocument;
 import org.geoserver.rest.RestletException;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
@@ -53,10 +53,9 @@ public class FreemarkerTemplateResource extends Resource {
                         Status.SERVER_ERROR_INTERNAL, e);
             }
             reader = new InputStreamReader(input);
-            DocumentParser parser = new DocumentParser(reader);
-            Document document;
+            ParsedDocument parsed = null;
             try {
-                document = parser.parse();
+                parsed = ParsedDocument.parse(reader);
             } catch (IOException e) {
                 throw new RestletException("Error parsing invalid input",
                         Status.CLIENT_ERROR_BAD_REQUEST, e);
@@ -64,9 +63,11 @@ public class FreemarkerTemplateResource extends Resource {
             try {
                 writer = FreemarkerSupport.newTemplateWriter(templateName);
                 XMLSerializer xmlSerializer = new XMLSerializer(writer, null);
-                xmlSerializer.serialize(document);
+                xmlSerializer.serialize(parsed.getDocument());
+                writer.flush();
+                getResponse().setStatus(Status.SUCCESS_CREATED);
                 getResponse().setEntity(
-                        String.format("Template %s created succesffully%n", templateName),
+                        String.format("Template %s created succesfully%n", templateName),
                         MediaType.TEXT_PLAIN);
             } catch (IOException e) {
                 throw new RestletException("Error writing new template",
