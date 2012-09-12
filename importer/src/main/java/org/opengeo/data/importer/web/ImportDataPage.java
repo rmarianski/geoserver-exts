@@ -208,6 +208,8 @@ public class ImportDataPage extends GeoServerSecuredPage {
                     jobid = createContext();
                 } catch (Exception e) {
                     error(e);
+                    LOGGER.log(Level.WARNING, "Error creating import", e);
+                    resetButtons(form, target);
                     return;
                 }
 
