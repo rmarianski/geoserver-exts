@@ -17,6 +17,7 @@ import org.geotools.data.Query;
 import org.geotools.data.h2.H2DataStoreFactory;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
+import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.opengeo.data.importer.transform.AbstractInlineVectorTransform;
 import org.opengeo.data.importer.transform.AttributesToPointGeometryTransform;
 import org.opengeo.data.importer.transform.TransformChain;
@@ -582,8 +583,9 @@ public class ImporterDataTest extends ImporterTestSupport {
         LayerInfo layer = item.getLayer();
         ResourceInfo resource = layer.getResource();
         assertEquals("Invalid srs", "EPSG:4326", resource.getSRS());
-        assertEquals("Unexpected bounding box", "ReferencedEnvelope[0.0 : -1.0, 0.0 : -1.0]",
-                resource.getNativeBoundingBox().toString());
+        ReferencedEnvelope emptyBounds = new ReferencedEnvelope();
+        emptyBounds.setToNull();
+        assertTrue("Unexpected bounding box", emptyBounds.equals(resource.getNativeBoundingBox()));
         // transform chain to limit characters
         // otherwise we get a sql exception thrown
         TransformChain transformChain = item.getTransform();
@@ -594,13 +596,11 @@ public class ImporterDataTest extends ImporterTestSupport {
             error.printStackTrace();
             fail(error.getMessage());
         }
-        assertEquals(
-                "Bounding box not updated",
-                "ReferencedEnvelope[-122.0860162273783 : -77.0531553685479, 36.07954952145647 : 38.87291016281703]",
-                resource.getNativeBoundingBox().toString());
+        assertFalse("Bounding box not updated", emptyBounds.equals(resource.getNativeBoundingBox()));
         FeatureTypeInfo fti = (FeatureTypeInfo) resource;
         assertEquals("Invalid type name", "sample", fti.getName());
-        FeatureSource<? extends FeatureType, ? extends Feature> featureSource = fti.getFeatureSource(null, null);
+        FeatureSource<? extends FeatureType, ? extends Feature> featureSource = fti
+                .getFeatureSource(null, null);
         assertEquals("Unexpected feature count", 20, featureSource.getCount(Query.ALL));
     }
 }
