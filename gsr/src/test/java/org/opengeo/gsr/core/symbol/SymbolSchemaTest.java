@@ -14,6 +14,10 @@ import javax.imageio.ImageIO;
 
 import org.junit.Test;
 import org.opengeo.gsr.JsonSchemaTest;
+import org.opengeo.gsr.core.font.Font;
+import org.opengeo.gsr.core.font.FontDecorationEnum;
+import org.opengeo.gsr.core.font.FontStyleEnum;
+import org.opengeo.gsr.core.font.FontWeightEnum;
 
 public class SymbolSchemaTest extends JsonSchemaTest {
 
@@ -91,5 +95,18 @@ public class SymbolSchemaTest extends JsonSchemaTest {
                 63, 0, 0, 0, outline, 1, 1);
         String json = getJson(pfs);
         assertTrue(validateJSON(json, "gsr/1.0/pfs.json"));
+    }
+
+    @Test
+    public void testTextSymbolJsonSchema() throws Exception {
+        int[] color = { 78, 78, 78, 255 };
+        int[] backgroundColor = null;
+        int[] borderLineColor = null;
+        Font font = new Font("Arial", 12, FontStyleEnum.NORMAL, FontWeightEnum.BOLD,
+                FontDecorationEnum.NONE);
+        TextSymbol textSymbol = new TextSymbol(0, 0, 0, color, backgroundColor, borderLineColor,
+                VerticalAlignmentEnum.BOTTOM, HorizontalAlignmentEnum.LEFT, false, font);
+        String json = getJson(textSymbol);
+        assertTrue(validateJSON(json,"gsr/1.0/ts.json"));
     }
 }

@@ -12,14 +12,26 @@ import java.io.Writer;
 import org.geoserver.rest.format.ReflectiveJSONFormat;
 import org.opengeo.gsr.core.feature.AttributeListConverter;
 import org.opengeo.gsr.core.feature.FieldTypeConverter;
+import org.opengeo.gsr.core.font.FontDecorationEnumConverter;
+import org.opengeo.gsr.core.font.FontStyleEnumConverter;
+import org.opengeo.gsr.core.font.FontWeightEnumConverter;
 import org.opengeo.gsr.core.geometry.Geometry;
 import org.opengeo.gsr.core.geometry.GeometryTypeConverter;
 import org.opengeo.gsr.core.geometry.Point;
 import org.opengeo.gsr.core.geometry.SpatialReference;
 import org.opengeo.gsr.core.geometry.SpatialReferenceWKID;
+import org.opengeo.gsr.core.label.LineLabelPlacementEnumConverter;
+import org.opengeo.gsr.core.label.PointLabelPlacementEnumConverter;
+import org.opengeo.gsr.core.label.PolygonLabelPlacementEnumConverter;
+import org.opengeo.gsr.core.symbol.HorizontalAlignmentEnumConverter;
+import org.opengeo.gsr.core.symbol.SimpleFillSymbol;
 import org.opengeo.gsr.core.symbol.SimpleFillSymbolEnumConverter;
+import org.opengeo.gsr.core.symbol.SimpleLineSymbol;
 import org.opengeo.gsr.core.symbol.SimpleLineSymbolEnumConverter;
+import org.opengeo.gsr.core.symbol.SimpleMarkerSymbol;
 import org.opengeo.gsr.core.symbol.SimpleMarkerSymbolEnumConverter;
+import org.opengeo.gsr.core.symbol.Symbol;
+import org.opengeo.gsr.core.symbol.VerticalAlignmentEnumConverter;
 import org.opengeo.gsr.service.CatalogService;
 
 import com.thoughtworks.xstream.XStream;
@@ -61,6 +73,10 @@ public class GeoServicesJsonFormat extends ReflectiveJSONFormat {
         xstream.alias("", Point.class);
         xstream.alias("", SpatialReference.class);
         xstream.alias("", SpatialReferenceWKID.class);
+        xstream.alias("", SimpleFillSymbol.class);
+        xstream.alias("", SimpleLineSymbol.class);
+        xstream.alias("", SimpleMarkerSymbol.class);
+        xstream.alias("", Symbol.class);
 
         // omit fields
         xstream.omitField(CatalogService.class, "name");
@@ -79,6 +95,14 @@ public class GeoServicesJsonFormat extends ReflectiveJSONFormat {
         xstream.registerConverter(new SimpleMarkerSymbolEnumConverter());
         xstream.registerConverter(new SimpleLineSymbolEnumConverter());
         xstream.registerConverter(new SimpleFillSymbolEnumConverter());
+        xstream.registerConverter(new VerticalAlignmentEnumConverter());
+        xstream.registerConverter(new HorizontalAlignmentEnumConverter());
+        xstream.registerConverter(new FontWeightEnumConverter());
+        xstream.registerConverter(new FontDecorationEnumConverter());
+        xstream.registerConverter(new FontStyleEnumConverter());
+        xstream.registerConverter(new PointLabelPlacementEnumConverter());
+        xstream.registerConverter(new LineLabelPlacementEnumConverter());
+        xstream.registerConverter(new PolygonLabelPlacementEnumConverter());
 
         this.xStream = xstream;
     }
