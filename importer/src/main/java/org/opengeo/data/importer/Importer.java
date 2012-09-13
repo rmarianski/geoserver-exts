@@ -842,10 +842,13 @@ public class Importer implements InitializingBean, DisposableBean {
 
         DataStore dataStore = (DataStore) store.getDataStore(null);
         FeatureDataConverter featureDataConverter = FeatureDataConverter.DEFAULT;
-        if (dataStore instanceof ShapefileDataStore || dataStore instanceof DirectoryDataStore) {
+        if (isShapefileDataStore(dataStore)) {
             featureDataConverter = FeatureDataConverter.TO_SHAPEFILE;
         }
-
+        else if (isOracleDataStore(dataStore)) {
+            featureDataConverter = FeatureDataConverter.TO_ORACLE;
+        }
+        
         featureType = featureDataConverter.convertType(featureType, format, data, item);
         UpdateMode updateMode = item.updateMode();
         if (updateMode == null) {
@@ -1100,8 +1103,8 @@ public class Importer implements InitializingBean, DisposableBean {
         String name = featureType.getName().getLocalPart();
         
         //hack for oracle, all names must be upper case
-        if (dataStore instanceof JDBCDataStore &&
-            "org.geotools.data.oracle.OracleDialect".equals(((JDBCDataStore)dataStore).getSQLDialect().getClass().getName())) {
+        //TODO: abstract this into FeatureConverter
+        if (isOracleDataStore(dataStore)) {
             name = name.toUpperCase();
         }
 
@@ -1117,6 +1120,15 @@ public class Importer implements InitializingBean, DisposableBean {
         }
         
         return name;
+    }
+
+    boolean isShapefileDataStore(DataStore dataStore) {
+        return dataStore instanceof ShapefileDataStore || dataStore instanceof DirectoryDataStore;
+    }
+
+    boolean isOracleDataStore(DataStore dataStore) {
+        return "org.geotools.data.oracle.OracleDialect".equals(
+            ((JDBCDataStore)dataStore).getSQLDialect().getClass().getName());
     }
 
     /*

@@ -49,7 +49,7 @@ public class FeatureDataConverter {
         }
     }
 
-    private Set<String> attributeNames(SimpleFeature feature) {
+    protected Set<String> attributeNames(SimpleFeature feature) {
         List<AttributeDescriptor> attributeDescriptors = feature.getType().getAttributeDescriptors();
         Set<String> attrNames = new HashSet<String>(attributeDescriptors.size());
         for (AttributeDescriptor attr : attributeDescriptors) {
@@ -118,5 +118,19 @@ public class FeatureDataConverter {
         String attName(String name) {
             return name.length() > 10 ? name.substring(0,10) : name;
         }
+    };
+
+    public static final FeatureDataConverter TO_ORACLE = new FeatureDataConverter() {
+        public void convert(SimpleFeature from, SimpleFeature to) {
+            //for oracle the target names are always uppercase
+            Set<String> fromAttrNames = attributeNames(from);
+            Set<String> toAttrNames = attributeNames(to);
+            for (String name : fromAttrNames) {
+                String toName = name.toUpperCase();
+                if (toAttrNames.contains(toName)) {
+                    to.setAttribute(toName, from.getAttribute(name));
+                }
+            }
+        };
     };
 }

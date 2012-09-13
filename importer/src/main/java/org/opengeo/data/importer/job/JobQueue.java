@@ -48,7 +48,7 @@ public class JobQueue {
             public void run() {
                 List<Long> toremove = new ArrayList<Long>();
                 for (Map.Entry<Long, Task<?>> e : jobs.entrySet()) {
-                    if (e.getValue().isDone()) {
+                    if (e.getValue().isCancelled() || (e.getValue().isDone() && e.getValue().isRecieved())) {
                         toremove.add(e.getKey());
                     }
                 }
@@ -66,7 +66,9 @@ public class JobQueue {
     }
 
     public Task<?> getFuture(Long jobid) {
-        return jobs.get(jobid);
+        Task<?> t = jobs.get(jobid);
+        t.recieve();
+        return t;
     }
 
     public void shutdown() {

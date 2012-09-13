@@ -63,8 +63,7 @@ public class FileData extends ImportData {
 
         if (fp.startsWith(dp)) {
             String left = fp.substring(dp.length());
-            return ResponseUtils.appendPath(dir.getFile().getName(), left);
-            //return  + File.separator + left;
+            return new File(dir.getFile().getName(), left).toString();
         }
         return null;
     }
