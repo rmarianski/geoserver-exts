@@ -1,9 +1,13 @@
 package org.opengeo.data.importer.transform;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import junit.framework.TestCase;
 
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
+import org.geotools.kml.Folder;
 import org.geotools.styling.FeatureTypeStyle;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
@@ -47,6 +51,7 @@ public class KMLPlacemarkTransformTest extends TestCase {
         transformedBuilder.add("Style", String.class);
         transformedBuilder.add("Geometry", Geometry.class);
         transformedBuilder.setDefaultGeometry("Geometry");
+        transformedBuilder.add("Folder", String.class);
         transformedType = transformedBuilder.buildFeatureType();
     }
 
@@ -55,6 +60,7 @@ public class KMLPlacemarkTransformTest extends TestCase {
         assertBinding(result, "LookAt", Point.class);
         assertBinding(result, "Region", LinearRing.class);
         assertBinding(result, "Style", String.class);
+        assertBinding(result, "Folder", String.class);
     }
 
     private void assertBinding(SimpleFeatureType ft, String attr, Class<?> expectedBinding) {
@@ -90,5 +96,16 @@ public class KMLPlacemarkTransformTest extends TestCase {
         SimpleFeature result = kmlPlacemarkTransform.convertFeature(feature, transformedType);
         assertEquals("Invalid LookAt attribute class", Point.class, result.getAttribute("LookAt")
                 .getClass());
+    }
+
+    public void testFolders() throws Exception {
+        SimpleFeatureBuilder fb = new SimpleFeatureBuilder(origType);
+        List<Folder> folders = new ArrayList<Folder>(2);
+        folders.add(new Folder("foo"));
+        folders.add(new Folder("bar"));
+        fb.featureUserData("Folder", folders);
+        SimpleFeature feature = fb.buildFeature("testFolders");
+        SimpleFeature newFeature = kmlPlacemarkTransform.convertFeature(feature, transformedType);
+        assertEquals("foo -> bar", newFeature.getAttribute("Folder"));
     }
 }

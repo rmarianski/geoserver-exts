@@ -1,10 +1,15 @@
 package org.opengeo.data.importer.transform;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.geotools.data.DataStore;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
+import org.geotools.kml.Folder;
 import org.geotools.styling.FeatureTypeStyle;
 import org.opengeo.data.importer.FeatureDataConverter;
 import org.opengeo.data.importer.ImportItem;
@@ -36,6 +41,7 @@ public class KMLPlacemarkTransform extends AbstractVectorTransform implements In
         ftb.setCRS(KMLFileFormat.KML_CRS);
         ftb.setSRS(KMLFileFormat.KML_SRS);
         makeStringAttribute(ftb, "Style");
+        ftb.add("Folder", String.class);
         SimpleFeatureType ft = ftb.buildFeatureType();
         return ft;
     }
@@ -49,7 +55,27 @@ public class KMLPlacemarkTransform extends AbstractVectorTransform implements In
             FeatureTypeStyle style = (FeatureTypeStyle) styleObj;
             newFeature.setAttribute("Style", style.toString());
         }
+        Map<Object, Object> userData = old.getUserData();
+        Object folderObject = userData.get("Folder");
+        if (folderObject != null) {
+            String serializedFolders = serializeFolders(folderObject);
+            newFeature.setAttribute("Folder", serializedFolders);
+        }
         return newFeature;
+    }
+
+    private String serializeFolders(Object folderObject) {
+        @SuppressWarnings("unchecked")
+        List<Folder> folders = (List<Folder>) folderObject;
+        List<String> folderNames = new ArrayList<String>(folders.size());
+        for (Folder folder : folders) {
+            String name = folder.getName();
+            if (!StringUtils.isEmpty(name)) {
+                folderNames.add(name);
+            }
+        }
+        String serializedFolders = StringUtils.join(folderNames.toArray(), " -> ");
+        return serializedFolders;
     }
 
     @Override
