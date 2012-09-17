@@ -57,17 +57,13 @@ import org.opengeo.data.importer.ImportItem;
 import org.opengeo.data.importer.Importer;
 import org.opengeo.data.importer.ImportItem.State;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.FactoryException;
 
 public class ImportItemTable extends GeoServerTablePanel<ImportItem> {
 
     static Logger LOGGER = Logging.getLogger(Importer.class);
-    static CoordinateReferenceSystem EPSG_3857;
-    static {
-        try {
-            EPSG_3857 = CRS.decode("EPSG:3857");
-        } catch (Exception e) {
-            LOGGER.log(Level.FINER, e.getMessage(), e);
-        }
+    static CoordinateReferenceSystem EPSG_3857() throws FactoryException {
+        return CRS.decode("EPSG:3857");
     }
 
     ModalWindow popupWindow;
@@ -395,7 +391,7 @@ public class ImportItemTable extends GeoServerTablePanel<ImportItem> {
 
             //geoexplorer needs bbox in spherical mercator
             try {
-                ReferencedEnvelope e = layer.getResource().getLatLonBoundingBox().transform(EPSG_3857, true);
+                ReferencedEnvelope e = layer.getResource().getLatLonBoundingBox().transform(EPSG_3857(), true);
                 if (e != null) {
                     gxpLink += "&bbox=" + 
                             String.format("%f,%f,%f,%f", e.getMinX(), e.getMinY(), e.getMaxX(), e.getMaxY()); 
