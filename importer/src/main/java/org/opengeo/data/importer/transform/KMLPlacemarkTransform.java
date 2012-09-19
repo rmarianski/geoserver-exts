@@ -1,9 +1,9 @@
 package org.opengeo.data.importer.transform;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.lang.StringUtils;
 import org.geotools.data.DataStore;
@@ -60,6 +60,13 @@ public class KMLPlacemarkTransform extends AbstractVectorTransform implements In
         if (folderObject != null) {
             String serializedFolders = serializeFolders(folderObject);
             newFeature.setAttribute("Folder", serializedFolders);
+        }
+        @SuppressWarnings("unchecked")
+        Map<String, String> extendedData = (Map<String, String>) userData.get("ExtendedData");
+        if (extendedData != null) {
+            for (Entry<String, String> entry : extendedData.entrySet()) {
+                newFeature.setAttribute(entry.getKey(), entry.getValue());
+            }
         }
         return newFeature;
     }

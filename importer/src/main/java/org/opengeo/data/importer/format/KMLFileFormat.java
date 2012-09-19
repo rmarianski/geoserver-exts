@@ -3,8 +3,10 @@ package org.opengeo.data.importer.format;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.io.FilenameUtils;
 import org.geoserver.catalog.AttributeTypeInfo;
@@ -60,13 +62,18 @@ public class KMLFileFormat extends VectorFormat {
         return read(file);
     }
 
-    private FeatureReader<FeatureType, Feature> read(File file) {
+    public FeatureReader<FeatureType, Feature> read(File file) {
         try {
             SimpleFeatureType featureType = parseFeatureType(file);
             return new KMLTransformingFeatureReader(featureType, new FileInputStream(file));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public FeatureReader<FeatureType, Feature> read(SimpleFeatureType featureType,
+            InputStream inputStream) {
+        return new KMLTransformingFeatureReader(featureType, inputStream);
     }
 
     @Override
@@ -109,14 +116,24 @@ public class KMLFileFormat extends VectorFormat {
 
     public SimpleFeatureType parseFeatureType(File file) throws IOException {
         String baseName = FilenameUtils.getBaseName(file.getName());
-        FileInputStream fileInputStream = null;
+        InputStream inputStream = null;
+        try {
+            inputStream = new FileInputStream(file);
+            return parseFeatureType(baseName, inputStream);
+        } finally {
+            if (inputStream != null) {
+                inputStream.close();
+            }
+        }
+    }
+
+    public SimpleFeatureType parseFeatureType(String typeName, InputStream inputStream)
+            throws IOException {
         FeatureReader<FeatureType, Feature> featureReader = null;
         try {
-            fileInputStream = new FileInputStream(file);
-            featureReader = new KMLRawFeatureReader(fileInputStream);
+            featureReader = new KMLRawFeatureReader(inputStream);
             if (!featureReader.hasNext()) {
-                throw new IllegalArgumentException("KML file " + file.getName()
-                        + " has no features");
+                throw new IllegalArgumentException(typeName + " has no features");
             }
             SimpleFeature feature = (SimpleFeature) featureReader.next();
             SimpleFeatureType type = feature.getType();
@@ -124,19 +141,23 @@ public class KMLFileFormat extends VectorFormat {
             SimpleFeatureType transformedType = transform.convertFeatureType(type);
             SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
             tb.init(transformedType);
-            tb.setName(baseName);
+            tb.setName(typeName);
             tb.setCRS(KML_CRS);
             tb.setSRS(KML_SRS);
+            // add in the extended attributes from the feature
+            Map<Object, Object> userData = feature.getUserData();
+            @SuppressWarnings("unchecked")
+            Map<String, String> extendedData = (Map<String, String>) userData.get("ExtendedData");
+            if (extendedData != null) {
+                for (String attributeName : extendedData.keySet()) {
+                    tb.add(attributeName, String.class);
+                }
+            }
             SimpleFeatureType featureType = tb.buildFeatureType();
             return featureType;
         } finally {
             if (featureReader != null) {
                 featureReader.close();
-            }
-            if (fileInputStream != null) {
-                // closing the feature reader should close the stream as well
-                // but in case something went wrong
-                fileInputStream.close();
             }
         }
     }
