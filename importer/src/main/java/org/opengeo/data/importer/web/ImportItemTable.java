@@ -38,6 +38,7 @@ import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.model.StringResourceModel;
+import org.geoserver.catalog.FeatureTypeInfo;
 import org.geoserver.catalog.LayerInfo;
 import org.geoserver.web.GeoServerApplication;
 import org.geoserver.web.demo.PreviewLayer;
@@ -121,7 +122,12 @@ public class ImportItemTable extends GeoServerTablePanel<ImportItem> {
                     //return createFixCRSLink(id, itemModel);
                 case READY:
                     //return advanced option link
-                    return new AdvancedOptionPanel(id, itemModel);
+                    //for now disable if this is not a vector layer
+                    ImportItem item = (ImportItem) itemModel.getObject();
+                    if (item.getLayer() != null && item.getLayer().getResource() instanceof FeatureTypeInfo) {
+                        return new AdvancedOptionPanel(id, itemModel);    
+                    }
+                    return new WebMarkupContainer(id);
                 default:
                     return new WebMarkupContainer(id);
             }
