@@ -67,10 +67,27 @@ public class KMLFileFormatTest extends TestCase {
         assertEquals("Invalid description attribute", "bar", feature.getAttribute("description"));
     }
 
-    public void testReadFeatureWithExtendedData() throws Exception {
+    public void testReadFeatureWithUntypedExtendedData() throws Exception {
         String kmlInput = "<kml><Placemark>" + "<ExtendedData>"
                 + "<Data name=\"foo\"><value>bar</value></Data>"
                 + "<Data name=\"quux\"><value>morx</value></Data>" + "</ExtendedData>"
+                + "</Placemark></kml>";
+        SimpleFeatureType featureType = kmlFileFormat.parseFeatureType("foo",
+                IOUtils.toInputStream(kmlInput));
+        FeatureReader<FeatureType, Feature> reader = kmlFileFormat.read(featureType,
+                IOUtils.toInputStream(kmlInput));
+        assertTrue("No features found", reader.hasNext());
+        SimpleFeature feature = (SimpleFeature) reader.next();
+        assertNotNull("Expecting feature", feature);
+        assertEquals("Invalid ext attr foo", "bar", feature.getAttribute("foo"));
+        assertEquals("Invalid ext attr quux", "morx", feature.getAttribute("quux"));
+    }
+
+    public void testReadFeatureWithTypedExtendedData() throws Exception {
+        String kmlInput = "<kml>" + "<Schema name=\"myschema\">"
+                + "<SimpleField type=\"int\" name=\"foo\"></SimpleField>" + "</Schema>"
+                + "<Placemark>" + "<ExtendedData>" + "<SchemaData schemaUrl=\"#myschema\">"
+                + "<SimpleData name=\"foo\">42</SimpleData>" + "</SchemaData>" + "</ExtendedData>"
                 + "</Placemark></kml>";
         SimpleFeatureType featureType = kmlFileFormat.parseFeatureType("foo",
                 IOUtils.toInputStream(kmlInput));

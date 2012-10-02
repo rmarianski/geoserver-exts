@@ -62,9 +62,9 @@ public class KMLPlacemarkTransform extends AbstractVectorTransform implements In
             newFeature.setAttribute("Folder", serializedFolders);
         }
         @SuppressWarnings("unchecked")
-        Map<String, String> extendedData = (Map<String, String>) userData.get("ExtendedData");
-        if (extendedData != null) {
-            for (Entry<String, String> entry : extendedData.entrySet()) {
+        Map<String, String> untypedExtendedData = (Map<String, String>) userData.get("UntypedExtendedData");
+        if (untypedExtendedData != null) {
+            for (Entry<String, String> entry : untypedExtendedData.entrySet()) {
                 newFeature.setAttribute(entry.getKey(), entry.getValue());
             }
         }

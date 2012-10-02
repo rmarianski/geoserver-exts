@@ -147,9 +147,9 @@ public class KMLFileFormat extends VectorFormat {
             // add in the extended attributes from the feature
             Map<Object, Object> userData = feature.getUserData();
             @SuppressWarnings("unchecked")
-            Map<String, String> extendedData = (Map<String, String>) userData.get("ExtendedData");
-            if (extendedData != null) {
-                for (String attributeName : extendedData.keySet()) {
+            Map<String, String> untypedExtendedData = (Map<String, String>) userData.get("UntypedExtendedData");
+            if (untypedExtendedData != null) {
+                for (String attributeName : untypedExtendedData.keySet()) {
                     tb.add(attributeName, String.class);
                 }
             }
