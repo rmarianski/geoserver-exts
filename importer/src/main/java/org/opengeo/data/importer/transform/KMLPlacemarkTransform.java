@@ -10,7 +10,6 @@ import org.geotools.data.DataStore;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.kml.Folder;
-import org.geotools.styling.FeatureTypeStyle;
 import org.opengeo.data.importer.FeatureDataConverter;
 import org.opengeo.data.importer.ImportItem;
 import org.opengeo.data.importer.format.KMLFileFormat;
@@ -40,7 +39,8 @@ public class KMLPlacemarkTransform extends AbstractVectorTransform implements In
         ftb.setDescription(oldFeatureType.getDescription());
         ftb.setCRS(KMLFileFormat.KML_CRS);
         ftb.setSRS(KMLFileFormat.KML_SRS);
-        makeStringAttribute(ftb, "Style");
+        // remove style attribute for now
+        ftb.remove("Style");
         ftb.add("Folder", String.class);
         SimpleFeatureType ft = ftb.buildFeatureType();
         return ft;
@@ -50,11 +50,6 @@ public class KMLPlacemarkTransform extends AbstractVectorTransform implements In
         SimpleFeatureBuilder fb = new SimpleFeatureBuilder(targetFeatureType);
         SimpleFeature newFeature = fb.buildFeature(old.getID());
         FeatureDataConverter.DEFAULT.convert(old, newFeature);
-        Object styleObj = old.getAttribute("Style");
-        if (styleObj != null) {
-            FeatureTypeStyle style = (FeatureTypeStyle) styleObj;
-            newFeature.setAttribute("Style", style.toString());
-        }
         Map<Object, Object> userData = old.getUserData();
         Object folderObject = userData.get("Folder");
         if (folderObject != null) {
@@ -62,7 +57,8 @@ public class KMLPlacemarkTransform extends AbstractVectorTransform implements In
             newFeature.setAttribute("Folder", serializedFolders);
         }
         @SuppressWarnings("unchecked")
-        Map<String, String> untypedExtendedData = (Map<String, String>) userData.get("UntypedExtendedData");
+        Map<String, String> untypedExtendedData = (Map<String, String>) userData
+                .get("UntypedExtendedData");
         if (untypedExtendedData != null) {
             for (Entry<String, String> entry : untypedExtendedData.entrySet()) {
                 newFeature.setAttribute(entry.getKey(), entry.getValue());
@@ -89,11 +85,6 @@ public class KMLPlacemarkTransform extends AbstractVectorTransform implements In
     public SimpleFeatureType apply(ImportItem item, DataStore dataStore,
             SimpleFeatureType featureType) throws Exception {
         return convertFeatureType(featureType);
-    }
-
-    private void makeStringAttribute(SimpleFeatureTypeBuilder tb, String attributeName) {
-        tb.remove(attributeName);
-        tb.add(attributeName, String.class);
     }
 
     @Override

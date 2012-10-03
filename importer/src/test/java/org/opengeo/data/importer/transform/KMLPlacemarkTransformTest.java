@@ -59,7 +59,6 @@ public class KMLPlacemarkTransformTest extends TestCase {
         SimpleFeatureType result = kmlPlacemarkTransform.convertFeatureType(origType);
         assertBinding(result, "LookAt", Point.class);
         assertBinding(result, "Region", LinearRing.class);
-        assertBinding(result, "Style", String.class);
         assertBinding(result, "Folder", String.class);
     }
 
