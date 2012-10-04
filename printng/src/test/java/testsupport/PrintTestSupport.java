@@ -9,9 +9,12 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Handler;
+import java.util.logging.Level;
 import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import org.geoserver.printng.FreemarkerSupport;
+import org.geotools.util.logging.Logging;
 import static org.junit.Assert.*;
 import org.restlet.data.Form;
 
@@ -63,6 +66,30 @@ public final class PrintTestSupport {
     public static class LogCollector extends Handler {
         
         public List<LogRecord> records = new ArrayList<LogRecord>();
+        private final Logger logger;
+        private final Level returnLevel;
+        
+        private LogCollector(Logger logger) {
+            this.logger = logger;
+            this.returnLevel = logger.getLevel();
+        }
+        
+        public void detach() {
+            logger.removeHandler(this);
+            logger.setLevel(returnLevel == null ? Level.INFO : returnLevel);
+        }
+        
+        public static LogCollector attach(Logger logger, Level level) {
+            LogCollector lc = new LogCollector(logger);
+            lc.setLevel(level);
+            logger.addHandler(lc);
+            logger.setLevel(level);
+            return lc;
+        }
+        
+        public static LogCollector attach(Class logClass, Level level) {
+            return attach(Logging.getLogger(logClass), level);
+        }
 
         @Override
         public void publish(LogRecord record) {

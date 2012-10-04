@@ -36,6 +36,10 @@ public class ParsedDocument {
     public static ParsedDocument parse(String src) throws IOException {
         return parse(new StringReader(src));
     }
+    
+    public static ParsedDocument parse(String src, String baseURL) throws IOException {
+        return new ParsedDocument(parseDocument(new StringReader(src), true), baseURL);
+    }
 
     public static ParsedDocument parse(Reader src) throws IOException {
         return parse(src, true);

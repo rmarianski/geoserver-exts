@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.net.PasswordAuthentication;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -23,6 +25,7 @@ import java.util.logging.Logger;
 import org.apache.commons.httpclient.Cookie;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
@@ -59,6 +62,7 @@ public class PrintUserAgentCallback extends NaiveUserAgent {
                 cacheDir.mkdirs();
             }
         }
+        setBaseURL(spec.getBaseURL());
     }
     
     /**
@@ -181,49 +185,56 @@ public class PrintUserAgentCallback extends NaiveUserAgent {
             threadPool.shutdown();
         }
     }
-
-    protected InputStream resolveAndOpenStream(String uri) {
+    
+    protected InputStream resolveAndOpenStream(String uriSpec) {
+        InputStream is = null;
+        try {        
+            URI resolved = new URI(resolveURI(uriSpec));
+            if (resolved.getScheme().equals("file")) {
+                is = resolved.toURL().openStream();
+            } else {
+                is = resolveAndOpenRemoteStream(resolved.toString());
+            }
+        } catch (Exception ex) {
+            logger.log(Level.WARNING, "Error resolving : " + uriSpec, ex);
+        }            
+        return is;
+    }
+    
+    private InputStream resolveAndOpenRemoteStream(String uri) throws Exception {
         GetMethod get = new GetMethod(uri);
         InputStream is = null;
-        try {
-            String host = get.getURI().getHost();
-            Cookie cookie = spec.getCookie(host);
-            PasswordAuthentication creds = spec.getCredentials(host);
-            if (creds != null) {
-                httpClient.getState().setCredentials(new AuthScope(host, -1, AuthScope.ANY_REALM), 
-                    new UsernamePasswordCredentials(creds.getUserName(),new String(creds.getPassword())));
+        String host = get.getURI().getHost();
+        Cookie cookie = spec.getCookie(host);
+        PasswordAuthentication creds = spec.getCredentials(host);
+        if (creds != null) {
+            httpClient.getState().setCredentials(new AuthScope(host, -1, AuthScope.ANY_REALM),
+                    new UsernamePasswordCredentials(creds.getUserName(), new String(creds.getPassword())));
+        }
+        if (creds != null) {
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("setting credentials for " + host);
             }
-            if (creds != null) {
-                if (logger.isLoggable(Level.FINE)) {
-                    logger.fine("setting credentials for " + host);
-                }
-                // geoserver doesn't challenge - things are just hidden
-                // this makes things faster even if server challenges
-                get.getHostAuthState().setPreemptive();
+            // geoserver doesn't challenge - things are just hidden
+            // this makes things faster even if server challenges
+            get.getHostAuthState().setPreemptive();
+        }
+        // even if using basic auth, disable cookies
+        get.getParams().setCookiePolicy(CookiePolicy.IGNORE_COOKIES);
+        if (cookie != null) {
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("setting cookie for " + host + " to " + cookie);
             }
-            // even if using basic auth, disable cookies
-            get.getParams().setCookiePolicy(CookiePolicy.IGNORE_COOKIES);
-            if (cookie != null) {
-                if (logger.isLoggable(Level.FINE)) {
-                    logger.fine("setting cookie for " + host + " to " + cookie);
-                }
-                // this made things work - not sure what I was doing wrong with
-                // other cookie API
-                get.setRequestHeader("Cookie", cookie.getName() + "=" + cookie.getValue());
-            }
-            httpClient.executeMethod(get);
-            if (get.getStatusCode() == 200) {
-                is = get.getResponseBodyAsStream();
-            } else {
-                logger.warning("Error fetching : " + uri + ", status is : " + get.getStatusCode());
-                logger.log(Level.FINE, "Response : {0}", get.getResponseBodyAsString());
-            }
-        } catch (java.net.MalformedURLException e) {
-            logger.log(Level.WARNING, "bad URL given: " + uri, e);
-        } catch (java.io.FileNotFoundException e) {
-            logger.log(Level.WARNING, "item at URI " + uri + " not found");
-        } catch (java.io.IOException e) {
-            logger.log(Level.WARNING, "IO problem for " + uri, e);
+            // this made things work - not sure what I was doing wrong with
+            // other cookie API
+            get.setRequestHeader("Cookie", cookie.getName() + "=" + cookie.getValue());
+        }
+        httpClient.executeMethod(get);
+        if (get.getStatusCode() == 200) {
+            is = get.getResponseBodyAsStream();
+        } else {
+            logger.warning("Error fetching : " + uri + ", status is : " + get.getStatusCode());
+            logger.log(Level.FINE, "Response : {0}", get.getResponseBodyAsString());
         }
         return is;
     }

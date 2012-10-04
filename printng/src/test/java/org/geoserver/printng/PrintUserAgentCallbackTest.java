@@ -25,6 +25,7 @@ public class PrintUserAgentCallbackTest {
     @Before
     public void clear() {
         server.requestHeaders.clear();
+        server.uris.clear();
     }
 
     @BeforeClass
@@ -44,6 +45,27 @@ public class PrintUserAgentCallbackTest {
         PrintUserAgentCallback callback = new PrintUserAgentCallback(spec, new NaiveUserAgent());
         callback.preload();
         assertEquals(1, server.requestHeaders.size());
+    }
+    
+    @Test
+    public void testFileResource() throws IOException {
+        String baseURL = String.format("file:///drive/root/doc.html", server.getPort());
+        PrintSpec spec = new PrintSpec(ParsedDocument.parse(
+                "<img src='foobar.png'>", baseURL));
+        PrintUserAgentCallback callback = new PrintUserAgentCallback(spec, new NaiveUserAgent());
+        callback.preload();
+        assertEquals(0, server.requestHeaders.size());
+    }
+    
+    @Test
+    public void testRelativeResource() throws IOException {
+        String baseURL = String.format("http://localhost:%s/root/doc.html", server.getPort());
+        PrintSpec spec = new PrintSpec(ParsedDocument.parse(
+                "<img src='foobar.png'>", baseURL));
+        PrintUserAgentCallback callback = new PrintUserAgentCallback(spec, new NaiveUserAgent());
+        callback.preload();
+        assertEquals(1, server.requestHeaders.size());
+        assertEquals("/root/foobar.png", server.uris.get(0));
     }
     
     @Test
@@ -72,10 +94,12 @@ public class PrintUserAgentCallbackTest {
 
     static class Server extends HTTPD {
         
+        List<String> uris = new ArrayList<String>();
         List<Properties> requestHeaders = new ArrayList<Properties>();
         
         @Override
         protected void serve(String uri, String method, Properties header, Properties parms) {
+            uris.add(uri);
             requestHeaders.add(header);
             sendResponse("404", "text/plan", new Properties(), "ERROR");
         }
