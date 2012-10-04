@@ -61,7 +61,18 @@ public class KMLPlacemarkTransform extends AbstractVectorTransform implements In
                 .get("UntypedExtendedData");
         if (untypedExtendedData != null) {
             for (Entry<String, String> entry : untypedExtendedData.entrySet()) {
-                newFeature.setAttribute(entry.getKey(), entry.getValue());
+                if (targetFeatureType.getDescriptor(entry.getKey()) != null) {
+                    newFeature.setAttribute(entry.getKey(), entry.getValue());
+                }
+            }
+        }
+        @SuppressWarnings("unchecked")
+        Map<String, Object> typedExtendedData = (Map<String, Object>) userData.get("TypedExtendedData");
+        if (typedExtendedData != null) {
+            for (Entry<String, Object> entry : typedExtendedData.entrySet()) {
+                if (targetFeatureType.getDescriptor(entry.getKey()) != null) {
+                    newFeature.setAttribute(entry.getKey(), entry.getValue());
+                }
             }
         }
         return newFeature;

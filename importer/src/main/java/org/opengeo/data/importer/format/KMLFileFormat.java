@@ -4,9 +4,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.io.FilenameUtils;
 import org.geoserver.catalog.AttributeTypeInfo;
@@ -28,7 +32,6 @@ import org.opengeo.data.importer.ImportItem;
 import org.opengeo.data.importer.VectorFormat;
 import org.opengeo.data.importer.job.ProgressMonitor;
 import org.opengeo.data.importer.transform.KMLPlacemarkTransform;
-import org.opengis.feature.Feature;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
@@ -43,6 +46,8 @@ public class KMLFileFormat extends VectorFormat {
     public static String KML_SRS = "EPSG:4326";
 
     public static CoordinateReferenceSystem KML_CRS;
+
+    private static KMLPlacemarkTransform kmlTransform = new KMLPlacemarkTransform();
 
     private static ReferencedEnvelope EMPTY_BOUNDS = new ReferencedEnvelope();
 
@@ -59,19 +64,36 @@ public class KMLFileFormat extends VectorFormat {
     @Override
     public FeatureReader read(ImportData data, ImportItem item) throws IOException {
         File file = getFileFromData(data);
-        return read(file);
+
+        // we need to get the feature type, to use for the particular parse through the file
+        // since we put it on the metadata from the list method, we first check if that's still available
+        SimpleFeatureType ft = (SimpleFeatureType) item.getMetadata().get(FeatureType.class);
+        if (ft == null) {
+            // if the type is not available, we can generate one from the resource
+            // we aren't able to ask for the feature type from the resource directly,
+            // because we don't have a backing store
+            FeatureTypeInfo fti = (FeatureTypeInfo) item.getLayer().getResource();
+            SimpleFeatureTypeBuilder ftb = new SimpleFeatureTypeBuilder();
+            ftb.setName(fti.getName());
+            List<AttributeTypeInfo> attributes = fti.getAttributes();
+            for (AttributeTypeInfo attr : attributes) {
+                ftb.add(attr.getName(), attr.getBinding());
+            }
+            ft = ftb.buildFeatureType();
+        }
+        return read(ft, file);
     }
 
-    public FeatureReader<FeatureType, Feature> read(File file) {
+    public FeatureReader<SimpleFeatureType, SimpleFeature> read(SimpleFeatureType featureType,
+            File file) {
         try {
-            SimpleFeatureType featureType = parseFeatureType(file);
             return new KMLTransformingFeatureReader(featureType, new FileInputStream(file));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public FeatureReader<FeatureType, Feature> read(SimpleFeatureType featureType,
+    public FeatureReader<SimpleFeatureType, SimpleFeature> read(SimpleFeatureType featureType,
             InputStream inputStream) {
         return new KMLTransformingFeatureReader(featureType, inputStream);
     }
@@ -114,12 +136,12 @@ public class KMLFileFormat extends VectorFormat {
         return null;
     }
 
-    public SimpleFeatureType parseFeatureType(File file) throws IOException {
-        String baseName = FilenameUtils.getBaseName(file.getName());
+    public Collection<SimpleFeatureType> parseFeatureTypes(String typeName, File file)
+            throws IOException {
         InputStream inputStream = null;
         try {
             inputStream = new FileInputStream(file);
-            return parseFeatureType(baseName, inputStream);
+            return parseFeatureTypes(typeName, inputStream);
         } finally {
             if (inputStream != null) {
                 inputStream.close();
@@ -127,39 +149,83 @@ public class KMLFileFormat extends VectorFormat {
         }
     }
 
-    public SimpleFeatureType parseFeatureType(String typeName, InputStream inputStream)
-            throws IOException {
-        FeatureReader<FeatureType, Feature> featureReader = null;
-        try {
-            featureReader = new KMLRawFeatureReader(inputStream);
-            if (!featureReader.hasNext()) {
-                throw new IllegalArgumentException(typeName + " has no features");
-            }
-            SimpleFeature feature = (SimpleFeature) featureReader.next();
-            SimpleFeatureType type = feature.getType();
-            KMLPlacemarkTransform transform = new KMLPlacemarkTransform();
-            SimpleFeatureType transformedType = transform.convertFeatureType(type);
-            SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
-            tb.init(transformedType);
-            tb.setName(typeName);
-            tb.setCRS(KML_CRS);
-            tb.setSRS(KML_SRS);
-            // add in the extended attributes from the feature
-            Map<Object, Object> userData = feature.getUserData();
-            @SuppressWarnings("unchecked")
-            Map<String, String> untypedExtendedData = (Map<String, String>) userData.get("UntypedExtendedData");
-            if (untypedExtendedData != null) {
-                for (String attributeName : untypedExtendedData.keySet()) {
-                    tb.add(attributeName, String.class);
-                }
-            }
-            SimpleFeatureType featureType = tb.buildFeatureType();
-            return featureType;
-        } finally {
-            if (featureReader != null) {
-                featureReader.close();
+    private SimpleFeatureType unionFeatureTypes(SimpleFeatureType a, SimpleFeatureType b) {
+        if (a == null) {
+            return b;
+        }
+        SimpleFeatureTypeBuilder ftb = new SimpleFeatureTypeBuilder();
+        ftb.init(a);
+        List<AttributeDescriptor> attributeDescriptors = a.getAttributeDescriptors();
+        Set<String> attrNames = new HashSet<String>(attributeDescriptors.size());
+        for (AttributeDescriptor ad : attributeDescriptors) {
+            attrNames.add(ad.getLocalName());
+        }
+        for (AttributeDescriptor ad : b.getAttributeDescriptors()) {
+            if (!attrNames.contains(ad.getLocalName())) {
+                ftb.add(ad);
             }
         }
+        return ftb.buildFeatureType();
+    }
+
+    public SimpleFeatureType convertParsedFeatureType(SimpleFeatureType ft, String name,
+            Set<String> untypedAttributes) {
+        SimpleFeatureType transformedType = kmlTransform.convertFeatureType(ft);
+        SimpleFeatureTypeBuilder ftb = new SimpleFeatureTypeBuilder();
+        ftb.init(transformedType);
+        ftb.setName(name);
+        ftb.setCRS(KML_CRS);
+        ftb.setSRS(KML_SRS);
+        for (String attr : untypedAttributes) {
+            ftb.add(attr, String.class);
+        }
+        return ftb.buildFeatureType();
+    }
+
+    public List<SimpleFeatureType> parseFeatureTypes(String typeName, InputStream inputStream)
+            throws IOException {
+        // the idea here is to iterate through the file, and ask for all schema and features
+        // the features can have multiple associated schemas, as well as untyped attributes
+        // our strategy here is to keep track of the different schemas, and create a separate item for each unique one
+        // we also aggregate all the untyped attributes, and combine that with each schema
+        KMLRawReader reader = new KMLRawReader(inputStream,
+                KMLRawReader.ReadType.SCHEMA_AND_FEATURES);
+        Collection<SimpleFeatureType> schemas = new ArrayList<SimpleFeatureType>();
+        Set<String> untypedAttributes = new HashSet<String>();
+        SimpleFeatureType aggregateFeatureType = null;
+        for (Object object : reader) {
+            if (object instanceof SimpleFeature) {
+                SimpleFeature feature = (SimpleFeature) object;
+                SimpleFeatureType ft = feature.getFeatureType();
+                aggregateFeatureType = unionFeatureTypes(aggregateFeatureType, ft);
+                Map<Object, Object> userData = feature.getUserData();
+                @SuppressWarnings("unchecked")
+                Map<String, Object> untypedData = (Map<String, Object>) userData
+                        .get("UntypedExtendedData");
+                if (untypedData != null) {
+                    untypedAttributes.addAll(untypedData.keySet());
+                }
+            } else if (object instanceof SimpleFeatureType) {
+                schemas.add((SimpleFeatureType) object);
+            }
+        }
+        if (aggregateFeatureType == null) {
+            throw new IllegalArgumentException("No features found");
+        }
+        List<SimpleFeatureType> featureTypes = null;
+        if (schemas.isEmpty()) {
+            featureTypes = Collections.singletonList(convertParsedFeatureType(aggregateFeatureType,
+                    typeName, untypedAttributes));
+        } else {
+            featureTypes = new ArrayList<SimpleFeatureType>(schemas.size());
+            for (SimpleFeatureType schema : schemas) {
+                String newTypeName = typeName + "-" + schema.getName();
+                SimpleFeatureType cominbedType = unionFeatureTypes(schema, aggregateFeatureType);
+                featureTypes.add(convertParsedFeatureType(cominbedType, newTypeName,
+                        untypedAttributes));
+            }
+        }
+        return featureTypes;
     }
 
     @Override
@@ -167,28 +233,39 @@ public class KMLFileFormat extends VectorFormat {
             throws IOException {
         File file = getFileFromData(data);
         CatalogBuilder cb = new CatalogBuilder(catalog);
-        SimpleFeatureType featureType = parseFeatureType(file);
+        String baseName = typeNameFromFile(file);
         CatalogFactory factory = catalog.getFactory();
-        FeatureTypeInfo ftinfo = factory.createFeatureType();
-        ftinfo.setEnabled(true);
-        String name = featureType.getName().getLocalPart();
-        ftinfo.setNativeName(name);
-        ftinfo.setName(name);
-        ftinfo.setNamespace(catalog.getDefaultNamespace());
-        List<AttributeTypeInfo> attributes = ftinfo.getAttributes();
-        for (AttributeDescriptor ad : featureType.getAttributeDescriptors()) {
-            AttributeTypeInfo att = factory.createAttribute();
-            att.setName(ad.getLocalName());
-            att.setBinding(ad.getType().getBinding());
-            attributes.add(att);
+
+        Collection<SimpleFeatureType> featureTypes = parseFeatureTypes(baseName, file);
+        List<ImportItem> result = new ArrayList<ImportItem>(featureTypes.size());
+        for (SimpleFeatureType featureType : featureTypes) {
+            String name = featureType.getName().getLocalPart();
+            FeatureTypeInfo ftinfo = factory.createFeatureType();
+            ftinfo.setEnabled(true);
+            ftinfo.setNativeName(name);
+            ftinfo.setName(name);
+            ftinfo.setNamespace(catalog.getDefaultNamespace());
+            List<AttributeTypeInfo> attributes = ftinfo.getAttributes();
+            for (AttributeDescriptor ad : featureType.getAttributeDescriptors()) {
+                AttributeTypeInfo att = factory.createAttribute();
+                att.setName(ad.getLocalName());
+                att.setBinding(ad.getType().getBinding());
+                attributes.add(att);
+            }
+            LayerInfo layer = cb.buildLayer((ResourceInfo) ftinfo);
+            ResourceInfo resource = layer.getResource();
+            resource.setSRS(KML_SRS);
+            resource.setNativeCRS(KML_CRS);
+            resource.setNativeBoundingBox(EMPTY_BOUNDS);
+            resource.setLatLonBoundingBox(EMPTY_BOUNDS);
+            ImportItem item = new ImportItem(layer);
+            item.getMetadata().put(FeatureType.class, featureType);
+            result.add(item);
         }
-        LayerInfo layer = cb.buildLayer((ResourceInfo) ftinfo);
-        ResourceInfo resource = layer.getResource();
-        resource.setSRS(KML_SRS);
-        resource.setNativeCRS(KML_CRS);
-        resource.setNativeBoundingBox(EMPTY_BOUNDS);
-        ImportItem item = new ImportItem(layer);
-        item.getMetadata().put(FeatureType.class, featureType);
-        return Collections.singletonList(item);
+        return Collections.unmodifiableList(result);
+    }
+
+    private String typeNameFromFile(File file) {
+        return FilenameUtils.getBaseName(file.getName());
     }
 }

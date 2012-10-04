@@ -5,32 +5,30 @@ import java.io.InputStream;
 
 import org.geotools.data.FeatureReader;
 import org.opengeo.data.importer.transform.KMLPlacemarkTransform;
-import org.opengis.feature.Feature;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.FeatureType;
 
-public class KMLTransformingFeatureReader implements FeatureReader<FeatureType, Feature> {
+public class KMLTransformingFeatureReader implements
+        FeatureReader<SimpleFeatureType, SimpleFeature> {
 
     private final SimpleFeatureType featureType;
 
-    private final FeatureReader<FeatureType, Feature> reader;
+    private final FeatureReader<SimpleFeatureType, SimpleFeature> reader;
 
-    private final KMLPlacemarkTransform placemarkTransformer;
+    private static final KMLPlacemarkTransform placemarkTransformer = new KMLPlacemarkTransform();
 
     public KMLTransformingFeatureReader(SimpleFeatureType featureType, InputStream inputStream) {
-        this(featureType, new KMLRawFeatureReader(inputStream));
+        this(featureType, new KMLRawFeatureReader(inputStream, featureType));
     }
 
     public KMLTransformingFeatureReader(SimpleFeatureType featureType,
-            FeatureReader<FeatureType, Feature> reader) {
+            FeatureReader<SimpleFeatureType, SimpleFeature> reader) {
         this.featureType = featureType;
         this.reader = reader;
-        placemarkTransformer = new KMLPlacemarkTransform();
     }
 
     @Override
-    public FeatureType getFeatureType() {
+    public SimpleFeatureType getFeatureType() {
         return featureType;
     }
 
