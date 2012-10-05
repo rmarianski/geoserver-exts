@@ -7,6 +7,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 
 import org.apache.xml.serialize.XMLSerializer;
+import org.geoserver.printng.api.PrintSpec;
 import org.geoserver.printng.spi.ParsedDocument;
 import org.junit.Test;
 import org.w3c.dom.Document;
@@ -39,4 +40,15 @@ public class ParsedDocumentTest {
         assertEquals("Invalid document parse", exp, result);
     }
 
+    @Test
+    public void testCssOverride() throws Exception {
+        ParsedDocument d = ParsedDocument.parse("<div>foo</div>");
+        // none to start with
+        assertEquals(0, d.getDocument().getElementsByTagName("link").getLength());
+        d.addCssOverride("farby.css");
+        // should have a link now
+        assertEquals(1, d.getDocument().getElementsByTagName("link").getLength());
+        // should be idempotent
+        assertEquals(1, d.getDocument().getElementsByTagName("link").getLength());
+    }
 }

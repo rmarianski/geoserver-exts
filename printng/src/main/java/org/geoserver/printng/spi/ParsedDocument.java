@@ -16,9 +16,13 @@ import javax.xml.transform.dom.DOMResult;
 import javax.xml.transform.sax.SAXSource;
 
 import org.ccil.cowan.tagsoup.Parser;
+import org.geoserver.printng.PrintSupport;
 import org.geoserver.rest.RestletException;
 import org.restlet.data.Status;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -102,6 +106,39 @@ public class ParsedDocument {
         } catch (TransformerException e) {
             String err = "Error parsing input xml";
             throw new RestletException(err, Status.CLIENT_ERROR_BAD_REQUEST, e);
+        }
+    }
+    
+    public String toString() {
+        return PrintSupport.toString(dom);
+    }
+
+    public void addCssOverride(String cssOverride) {
+        if (cssOverride != null ) {
+            boolean inserted = false;
+            NodeList styles = dom.getElementsByTagName("link");
+            for (int i = 0; i < styles.getLength(); i++) {
+                Element el = (Element) styles.item(i);
+                if (cssOverride.equals(el.getAttribute("href"))) {
+                    inserted = true;
+                }
+            }
+            if (! inserted) {
+                Element style = dom.createElement("link");
+                style.setAttribute("rel", "stylesheet");
+                style.setAttribute("type", "text/css");
+                style.setAttribute("media", "print");
+                style.setAttribute("href", cssOverride);
+                NodeList heads = dom.getElementsByTagName("head");
+                Node head;
+                if (heads.getLength() == 0) {
+                    head = dom.createElement("head");
+                    dom.getDocumentElement().appendChild(head);
+                } else {
+                    head = heads.item(0);
+                }
+                head.appendChild(style);
+            }
         }
     }
 }

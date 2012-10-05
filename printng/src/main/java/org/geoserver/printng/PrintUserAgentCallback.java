@@ -36,6 +36,7 @@ import org.geotools.util.logging.Logging;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xhtmlrenderer.extend.UserAgentCallback;
+import org.xhtmlrenderer.resource.CSSResource;
 import org.xhtmlrenderer.resource.ImageResource;
 import org.xhtmlrenderer.swing.ImageResourceLoader;
 import org.xhtmlrenderer.swing.NaiveUserAgent;
@@ -197,7 +198,7 @@ public class PrintUserAgentCallback extends NaiveUserAgent {
             }
         } catch (Exception ex) {
             logger.log(Level.WARNING, "Error resolving : " + uriSpec, ex);
-        }            
+        }
         return is;
     }
     

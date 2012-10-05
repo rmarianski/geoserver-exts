@@ -44,6 +44,7 @@ public class HTMLToPDF {
         }
         List<String> creds = null;
         List<String> cookie = null;
+        String css = null;
         int idx = argList.indexOf("-auth");
         if (idx >= 0) {
             argList.remove(idx);
@@ -55,6 +56,15 @@ public class HTMLToPDF {
             argList.remove(idx);
             cookie = new ArrayList(argList.subList(idx, idx + 3));
             argList.removeAll(cookie);
+        }
+        idx = argList.indexOf("-css");
+        if (idx >= 0) {
+            argList.remove(idx);
+            css = argList.remove(idx);
+            File cssFile = new File(css);
+            if (cssFile.exists()) {
+                css = cssFile.getAbsolutePath();
+            }
         }
         
         File inputFile = new File(argList.pop());
@@ -73,6 +83,7 @@ public class HTMLToPDF {
             printSpec.setOutputWidth(512);
             printSpec.setOutputHeight(256);
             printSpec.setDotsPerPixel(ppd);
+            printSpec.setCssOverride(css);
             if (creds != null) {
                 printSpec.addCredentials(creds.get(0), creds.get(1), creds.get(2));
             }
@@ -92,7 +103,9 @@ public class HTMLToPDF {
 
             System.out.println("done " + outputFile);
             if (loop) {
-                Desktop.getDesktop().open(outputFile);
+                if (Desktop.isDesktopSupported()) {
+                    Desktop.getDesktop().open(outputFile);
+                }
                 System.out.println("press enter to run again: 'q' to quit");
                 String line = br.readLine();
                 if ("q".equals(line)) {

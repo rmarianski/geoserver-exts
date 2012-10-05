@@ -4,6 +4,16 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import org.w3c.dom.Document;
 
 /**
  * Home of otherwise homeless static methods.
@@ -54,5 +64,29 @@ public final class PrintSupport {
 
         g2.drawRenderedImage(im, trans);
         return scaled;
+    }
+    
+    public static void write(Document dom, OutputStream out, boolean indent) {
+        Transformer trans;
+        try {
+            trans = TransformerFactory.newInstance().newTransformer();
+        } catch (TransformerConfigurationException ex) {
+            throw new RuntimeException();
+        }
+        try {
+            trans.setOutputProperty(OutputKeys.METHOD, "html");
+            if (indent) {
+                trans.setOutputProperty(OutputKeys.INDENT, "4");
+            }
+            trans.transform(new DOMSource(dom), new StreamResult(out));
+        } catch (TransformerException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+    
+    public static String toString(Document dom) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        write(dom, baos, true);
+        return baos.toString();
     }
 }

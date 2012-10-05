@@ -1,13 +1,15 @@
 package org.geoserver.printng.api;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.PasswordAuthentication;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.httpclient.Cookie;
 import org.geoserver.printng.spi.ParsedDocument;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 public class PrintSpec {
     
@@ -20,8 +22,8 @@ public class PrintSpec {
     private Map<String, PasswordAuthentication> credentials;
     private Map<String, Cookie> cookies;
     private final ParsedDocument parser;
-    private Document document;
-    
+    private String cssOverride = null;
+
     public PrintSpec(ParsedDocument parser) {
         dpp = 20;
         width = -1;
@@ -32,7 +34,15 @@ public class PrintSpec {
         cookies = new HashMap<String, Cookie>();
         this.parser = parser;
     }
-    
+
+    public String getCssOverride() {
+        return cssOverride;
+    }
+
+    public void setCssOverride(String cssOverride) {
+        this.cssOverride = cssOverride;
+    }
+
     /**
      * Get the base URL for resolving resources for the document.
      * @return null if none specified
@@ -42,6 +52,9 @@ public class PrintSpec {
     }
     
     public Document getDocument() {
+        if (cssOverride != null) {
+            parser.addCssOverride(cssOverride);
+        }
         return parser.getDocument();
     }
     
