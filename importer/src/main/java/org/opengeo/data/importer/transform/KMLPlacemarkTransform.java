@@ -40,7 +40,9 @@ public class KMLPlacemarkTransform extends AbstractVectorTransform implements In
         ftb.setCRS(KMLFileFormat.KML_CRS);
         ftb.setSRS(KMLFileFormat.KML_SRS);
         // remove style attribute for now
-        ftb.remove("Style");
+        if (oldFeatureType.getDescriptor("Style") != null) {
+            ftb.remove("Style");
+        }
         ftb.add("Folder", String.class);
         SimpleFeatureType ft = ftb.buildFeatureType();
         return ft;
