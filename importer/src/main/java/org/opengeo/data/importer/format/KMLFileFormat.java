@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -19,6 +20,7 @@ import org.geoserver.catalog.CatalogBuilder;
 import org.geoserver.catalog.CatalogFactory;
 import org.geoserver.catalog.FeatureTypeInfo;
 import org.geoserver.catalog.LayerInfo;
+import org.geoserver.catalog.MetadataMap;
 import org.geoserver.catalog.ResourceInfo;
 import org.geoserver.catalog.StoreInfo;
 import org.geoserver.catalog.WorkspaceInfo;
@@ -80,6 +82,11 @@ public class KMLFileFormat extends VectorFormat {
                 ftb.add(attr.getName(), attr.getBinding());
             }
             ft = ftb.buildFeatureType();
+            MetadataMap metadata = fti.getMetadata();
+            if (metadata.containsKey("importschemaname")) {
+                Map<Object, Object> userData = ft.getUserData();
+                userData.put("schemaname", metadata.get("importschemaname"));
+            }
         }
         return read(ft, file);
     }
@@ -209,7 +216,7 @@ public class KMLFileFormat extends VectorFormat {
                 schemas.add((SimpleFeatureType) object);
             }
         }
-        if (aggregateFeatureType == null) {
+        if (aggregateFeatureType == null && schemas.isEmpty()) {
             throw new IllegalArgumentException("No features found");
         }
         List<SimpleFeatureType> featureTypes = null;
@@ -219,10 +226,18 @@ public class KMLFileFormat extends VectorFormat {
         } else {
             featureTypes = new ArrayList<SimpleFeatureType>(schemas.size());
             for (SimpleFeatureType schema : schemas) {
-                String newTypeName = typeName + "-" + schema.getName();
-                SimpleFeatureType cominbedType = unionFeatureTypes(schema, aggregateFeatureType);
-                featureTypes.add(convertParsedFeatureType(cominbedType, newTypeName,
-                        untypedAttributes));
+                String newTypeName = typeName + "-" + schema.getName().getLocalPart();
+                SimpleFeatureType combinedType = null;
+                if (aggregateFeatureType == null) {
+                    combinedType = schema;
+                } else {
+                    combinedType = unionFeatureTypes(schema, aggregateFeatureType);
+                }
+                SimpleFeatureType ft = convertParsedFeatureType(combinedType, newTypeName,
+                        untypedAttributes);
+                Map<Object, Object> userData = ft.getUserData();
+                userData.put("schemaname", schema.getName().getLocalPart());
+                featureTypes.add(ft);
             }
         }
         return featureTypes;
@@ -252,12 +267,20 @@ public class KMLFileFormat extends VectorFormat {
                 att.setBinding(ad.getType().getBinding());
                 attributes.add(att);
             }
+
             LayerInfo layer = cb.buildLayer((ResourceInfo) ftinfo);
             ResourceInfo resource = layer.getResource();
             resource.setSRS(KML_SRS);
             resource.setNativeCRS(KML_CRS);
             resource.setNativeBoundingBox(EMPTY_BOUNDS);
             resource.setLatLonBoundingBox(EMPTY_BOUNDS);
+
+            Map<Object, Object> userData = featureType.getUserData();
+            if (userData.containsKey("schemaname")) {
+                MetadataMap metadata = resource.getMetadata();
+                metadata.put("importschemaname", (Serializable) userData.get("schemaname"));
+            }
+
             ImportItem item = new ImportItem(layer);
             item.getMetadata().put(FeatureType.class, featureType);
             result.add(item);

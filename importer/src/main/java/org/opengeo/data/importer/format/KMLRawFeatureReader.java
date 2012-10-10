@@ -19,7 +19,8 @@ public class KMLRawFeatureReader implements FeatureReader<SimpleFeatureType, Sim
     public KMLRawFeatureReader(InputStream inputStream, SimpleFeatureType featureType) {
         this.inputStream = inputStream;
         this.featureType = featureType;
-        reader = new KMLRawReader(inputStream);
+        reader = new KMLRawReader(inputStream, KMLRawReader.ReadType.FEATURES,
+                featureType);
     }
 
     @Override
