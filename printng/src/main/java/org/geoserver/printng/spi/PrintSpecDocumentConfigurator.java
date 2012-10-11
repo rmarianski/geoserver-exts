@@ -57,7 +57,7 @@ public class PrintSpecDocumentConfigurator extends PrintSpecConfigurator<Documen
         Integer parsed = null;
         try {
             parsed = new Integer(spec.replace("px", "").trim());
-        } catch (Exception ex) {
+        } catch (NumberFormatException ex) {
             messages.log(Level.FINE, "Unable to parse document dimension from {0}", spec);
         }
         return parsed;

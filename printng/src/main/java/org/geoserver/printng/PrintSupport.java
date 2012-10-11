@@ -71,7 +71,7 @@ public final class PrintSupport {
         try {
             trans = TransformerFactory.newInstance().newTransformer();
         } catch (TransformerConfigurationException ex) {
-            throw new RuntimeException();
+            throw new RuntimeException(ex);
         }
         try {
             trans.setOutputProperty(OutputKeys.METHOD, "html");

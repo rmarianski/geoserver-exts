@@ -279,7 +279,7 @@ public class PrintUserAgentCallback extends NaiveUserAgent {
     public void cleanup() {
         for (File f : tempFiles) {
             if (!f.delete()) {
-                throw new RuntimeException("Error removing temporary file: " + f.getPath());
+                logger.warning("Error removing temporary file: " + f.getPath());
             }
         }
         // @TODO - if/when caching is more robust, don't worry about this

@@ -7,7 +7,7 @@ import org.xhtmlrenderer.layout.SharedContext;
 
 public abstract class PrintngWriter {
     
-    protected PrintUserAgentCallback callback;
+    private PrintUserAgentCallback callback;
 
     public final void write(PrintSpec spec, OutputStream out) throws IOException {
         writeInternal(spec, out);
@@ -17,7 +17,7 @@ public abstract class PrintngWriter {
         }
     }
     
-    protected void configure(SharedContext context, PrintSpec spec) throws IOException {
+    protected final void configure(SharedContext context, PrintSpec spec) throws IOException {
         String baseURL = spec.getBaseURL();
         if (baseURL != null && !baseURL.isEmpty()) {
             context.setBaseURL(baseURL);
@@ -26,11 +26,16 @@ public abstract class PrintngWriter {
         if (dotsPerPixel > 0) {
             context.setDotsPerPixel(dotsPerPixel);
         }
-        PrintUserAgentCallback callback = new PrintUserAgentCallback(spec, context.getUserAgentCallback());
+        callback = new PrintUserAgentCallback(spec, context.getUserAgentCallback());
         callback.preload();
         context.setUserAgentCallback(callback);
+        configureInternal(context, callback);
     }
 
     protected abstract void writeInternal(PrintSpec spec, OutputStream out) throws IOException;
+
+    protected void configureInternal(SharedContext context, PrintUserAgentCallback callback) {
+        
+    }
 
 }

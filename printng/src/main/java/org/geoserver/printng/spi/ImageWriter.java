@@ -43,15 +43,6 @@ public class ImageWriter extends PrintngWriter {
         spec.setDotsPerPixel(-1); // don't take any values here
         configure(context, spec);
 
-        /**
-         * The renderer internally uses a separate path to resolve image
-         * resources, so this makes it use any images loaded by the
-         * PrintUserAgentCallback
-         */
-        PrintUserAgentCallback callback = (PrintUserAgentCallback) context.getUserAgentCallback();
-        context.setReplacedElementFactory(new SwingReplacedElementFactory(
-                ImageResourceLoader.NO_OP_REPAINT_LISTENER, callback.createImageResourceLoader()));
-        
         FSImageWriter writer = new FSImageWriter(format);
         BufferedImage image = renderer.getImage();
         if (spec.isOutputDimensionSet()
@@ -61,4 +52,17 @@ public class ImageWriter extends PrintngWriter {
         }
         writer.write(image, out);
     }
+
+    @Override
+    protected void configureInternal(SharedContext context, PrintUserAgentCallback callback) {
+        /**
+         * The renderer internally uses a separate path to resolve image
+         * resources, so this makes it use any images loaded by the
+         * PrintUserAgentCallback
+         */
+        context.setReplacedElementFactory(new SwingReplacedElementFactory(
+                ImageResourceLoader.NO_OP_REPAINT_LISTENER, callback.createImageResourceLoader()));
+    }
+    
+    
 }
