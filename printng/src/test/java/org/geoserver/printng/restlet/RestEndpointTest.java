@@ -4,6 +4,7 @@ import static testsupport.PrintTestSupport.assertPDF;
 import static testsupport.PrintTestSupport.assertPNG;
 import static testsupport.PrintTestSupport.assertTemplateExists;
 import static testsupport.PrintTestSupport.form;
+import junit.framework.Test;
 
 import org.geoserver.printng.api.PrintSpec;
 import org.geoserver.test.GeoServerTestSupport;
@@ -23,7 +24,7 @@ public class RestEndpointTest extends GeoServerTestSupport {
     String requestContentType = "text/xml";
 
     // make sure we don't recreate the data dir constantly
-    public static OneTimeTestSetup suite() {
+    public static Test suite() {
         return new OneTimeTestSetup(new RestEndpointTest());
     }
 

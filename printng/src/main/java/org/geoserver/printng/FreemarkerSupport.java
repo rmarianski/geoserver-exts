@@ -9,13 +9,15 @@ import org.geoserver.config.GeoServerDataDirectory;
 import org.geoserver.platform.GeoServerExtensions;
 
 public class FreemarkerSupport {
-    
+
     public static File getPrintngTemplateDirectory() throws IOException {
         GeoServerDataDirectory dataDir = GeoServerExtensions.bean(GeoServerDataDirectory.class);
         File templateDir;
         if (dataDir == null) {
-            templateDir = new File(System.getProperty("java.io.tmpdir"),"printng");
-            templateDir.mkdirs();
+            templateDir = new File(System.getProperty("java.io.tmpdir"), "printng");
+            if (!templateDir.exists() && !templateDir.mkdirs()) {
+                throw new IOException("Error creating template dir: " + templateDir.getPath());
+            }
         } else {
             templateDir = dataDir.findOrCreateDir("printng", "templates");
         }

@@ -21,7 +21,9 @@ public class FreemarkerReaderTest {
     public static void cleanTempFiles() throws IOException {
         File templateDir = FreemarkerSupport.getPrintngTemplateDirectory();
         FileUtils.cleanDirectory(templateDir);
-        templateDir.delete();
+        if (!templateDir.delete()) {
+            throw new IOException("Failure removing template dir: " + templateDir.getPath());
+        }
     }
 
     @Test
@@ -69,7 +71,9 @@ public class FreemarkerReaderTest {
 
     public static void createTemplate(String templateName, Reader inputReader) throws IOException {
         File templateDir = FreemarkerSupport.getPrintngTemplateDirectory();
-        templateDir.mkdir();
+        if (!templateDir.exists() && !templateDir.mkdir()) {
+            throw new IOException("Error creating template dir: " + templateDir.getPath());
+        }
         File template = new File(templateDir, templateName);
         FileWriter fileWriter = new FileWriter(template);
         IOUtils.copy(inputReader, fileWriter);

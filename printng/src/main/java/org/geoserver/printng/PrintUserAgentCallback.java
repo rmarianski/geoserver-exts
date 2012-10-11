@@ -56,10 +56,8 @@ public class PrintUserAgentCallback extends NaiveUserAgent {
         this.spec = spec;
         this.callback = callback;
         this.cacheDir = spec.getCacheDir();
-        if (cacheDir != null) {
-            if (!cacheDir.exists()) {
-                cacheDir.mkdirs();
-            }
+        if (cacheDir != null && !cacheDir.exists() && !cacheDir.mkdirs()) {
+            throw new RuntimeException("Error creating cache dirs: " + cacheDir.getPath());
         }
         setBaseURL(spec.getBaseURL());
     }
@@ -280,7 +278,9 @@ public class PrintUserAgentCallback extends NaiveUserAgent {
 
     public void cleanup() {
         for (File f : tempFiles) {
-            f.delete();
+            if (!f.delete()) {
+                throw new RuntimeException("Error removing temporary file: " + f.getPath());
+            }
         }
         // @TODO - if/when caching is more robust, don't worry about this
         boolean deleted = cacheDir.delete();

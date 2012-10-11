@@ -119,7 +119,7 @@ public abstract class HTTPD {
                 Properties header = new Properties();
                 if (st.hasMoreTokens()) {
                     String line = in.readLine();
-                    while (line.trim().length() > 0) {
+                    while (line != null && line.trim().length() > 0) {
                         int p = line.indexOf(':');
                         header.put(line.substring(0, p).trim().toLowerCase(), line.substring(p + 1).trim());
                         line = in.readLine();

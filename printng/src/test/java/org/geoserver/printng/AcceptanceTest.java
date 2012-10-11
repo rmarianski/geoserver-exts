@@ -31,7 +31,9 @@ public class AcceptanceTest {
             JOptionPane.showMessageDialog(null, "When done reviewing, press OK to cleanup", "Done", JOptionPane.PLAIN_MESSAGE);
         }
         for (File f: output) {
-            f.delete();
+            if (!f.delete()) {
+                throw new RuntimeException("Error deleting file: " + f.getPath());
+            }
         }
     }
 
@@ -50,9 +52,15 @@ public class AcceptanceTest {
         ParsedDocument doc = ParsedDocument.parse(map);
         File tmp = File.createTempFile("render", ".png");
         output.add(tmp);
-        FileOutputStream fout = new FileOutputStream(tmp);
-        writer.write(new PrintSpec(doc), fout);
-        fout.close();
+        FileOutputStream fout = null;
+        try {
+            fout = new FileOutputStream(tmp);
+            writer.write(new PrintSpec(doc), fout);
+        } finally {
+            if (fout != null) {
+                fout.close();
+            }
+        }
         return tmp;
     }
 

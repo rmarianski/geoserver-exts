@@ -49,7 +49,7 @@ public class PrintUserAgentCallbackTest {
     
     @Test
     public void testFileResource() throws IOException {
-        String baseURL = String.format("file:///drive/root/doc.html", server.getPort());
+        String baseURL = String.format("file:///drive/root/doc.html");
         PrintSpec spec = new PrintSpec(ParsedDocument.parse(
                 "<img src='foobar.png'>", baseURL));
         PrintUserAgentCallback callback = new PrintUserAgentCallback(spec, new NaiveUserAgent());

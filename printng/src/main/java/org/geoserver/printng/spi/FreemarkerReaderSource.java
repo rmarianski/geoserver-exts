@@ -1,18 +1,20 @@
 package org.geoserver.printng.spi;
 
+import java.io.IOException;
+import java.util.Map.Entry;
 import java.util.Set;
+
+import net.sf.json.JSONObject;
 
 import org.geoserver.printng.api.PrintngReader;
 import org.geoserver.printng.api.ReaderSource;
 import org.geoserver.rest.RestletException;
 import org.restlet.data.Form;
+import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Status;
 
 import freemarker.template.SimpleHash;
-import java.io.IOException;
-import net.sf.json.JSONObject;
-import org.restlet.data.MediaType;
 
 public class FreemarkerReaderSource implements ReaderSource {
 
@@ -45,8 +47,11 @@ public class FreemarkerReaderSource implements ReaderSource {
     }
 
     private void addFromJSON(SimpleHash parent, JSONObject json) {
-        for (Object key : json.keySet()) {
-            Object obj = json.get(key);
+        @SuppressWarnings("unchecked")
+        Set<Entry<Object, Object>> entries = json.entrySet();
+        for (Entry<Object, Object> entry : entries) {
+            Object key = entry.getKey();
+            Object obj = entry.getValue();
             if (obj instanceof JSONObject) {
                 SimpleHash child = new SimpleHash();
                 parent.put(obj.toString(), child);

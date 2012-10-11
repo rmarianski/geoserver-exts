@@ -34,7 +34,7 @@ public final class PrintSupport {
      */
     public static BufferedImage niceImage(BufferedImage im, int width, int height, boolean exact) {
         int ts = Math.max(width, height);
-        double aspect = im.getWidth() / im.getHeight();
+        double aspect = (double) im.getWidth() / (double) im.getHeight();
         int sw = ts;
         int sh = ts;
 
