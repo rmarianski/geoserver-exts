@@ -4,12 +4,10 @@ import java.io.File;
 import java.net.PasswordAuthentication;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.apache.commons.httpclient.Cookie;
 import org.geoserver.printng.spi.ParsedDocument;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 public class PrintSpec {
     

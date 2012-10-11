@@ -1,17 +1,15 @@
 package org.geoserver.printng.restlet;
 
-import java.io.StringReader;
-import java.io.Writer;
+import static testsupport.PrintTestSupport.assertPDF;
+import static testsupport.PrintTestSupport.assertPNG;
+import static testsupport.PrintTestSupport.assertTemplateExists;
+import static testsupport.PrintTestSupport.form;
 
-import org.apache.commons.io.IOUtils;
-import static testsupport.PrintTestSupport.*;
-import org.geoserver.printng.FreemarkerSupport;
+import org.geoserver.printng.api.PrintSpec;
 import org.geoserver.test.GeoServerTestSupport;
+import org.restlet.data.MediaType;
 
 import com.mockrunner.mock.web.MockHttpServletResponse;
-import org.geoserver.printng.api.PrintSpec;
-import org.restlet.data.Form;
-import org.restlet.data.MediaType;
 
 public class RestEndpointTest extends GeoServerTestSupport {
 

@@ -4,21 +4,19 @@ import java.awt.Desktop;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
-
 import org.geoserver.printng.api.PrintSpec;
 import org.geoserver.printng.api.PrintngWriter;
-import org.geoserver.printng.spi.ParsedDocument;
 import org.geoserver.printng.spi.ImageWriter;
 import org.geoserver.printng.spi.PDFWriter;
-import org.geoserver.printng.spi.PrintSpecDocumentConfigurator;
+import org.geoserver.printng.spi.ParsedDocument;
 
 /**
  * Use this as an interactive test driver.
@@ -35,7 +33,7 @@ public class HTMLToPDF {
         LinkedList<String> argList = new LinkedList<String>(Arrays.asList(args));
         boolean img = argList.removeFirstOccurrence("-img");
         boolean loop = argList.removeFirstOccurrence("-loop");
-        boolean cache = argList.removeFirstOccurrence("-cache");
+//        boolean cache = argList.removeFirstOccurrence("-cache");
         if (argList.removeFirstOccurrence("-loghttp")) {
             System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
             System.setProperty("org.apache.commons.logging.simplelog.showdatetime", "true");
@@ -48,13 +46,13 @@ public class HTMLToPDF {
         int idx = argList.indexOf("-auth");
         if (idx >= 0) {
             argList.remove(idx);
-            creds = new ArrayList(argList.subList(idx, idx + 3));
+            creds = new ArrayList<String>(argList.subList(idx, idx + 3));
             argList.removeAll(creds);
         }
         idx = argList.indexOf("-cookie");
         if (idx >= 0) {
             argList.remove(idx);
-            cookie = new ArrayList(argList.subList(idx, idx + 3));
+            cookie = new ArrayList<String>(argList.subList(idx, idx + 3));
             argList.removeAll(cookie);
         }
         idx = argList.indexOf("-css");

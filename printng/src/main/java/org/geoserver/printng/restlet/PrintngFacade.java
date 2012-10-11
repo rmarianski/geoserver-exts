@@ -3,7 +3,6 @@ package org.geoserver.printng.restlet;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
-import java.util.logging.Logger;
 
 import org.geoserver.printng.api.PrintSpec;
 import org.geoserver.printng.api.PrintngReader;

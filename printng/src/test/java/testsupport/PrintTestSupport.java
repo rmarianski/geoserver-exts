@@ -87,7 +87,7 @@ public final class PrintTestSupport {
             return lc;
         }
         
-        public static LogCollector attach(Class logClass, Level level) {
+        public static LogCollector attach(Class<?> logClass, Level level) {
             return attach(Logging.getLogger(logClass), level);
         }
 

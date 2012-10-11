@@ -61,13 +61,10 @@ public class FreemarkerReaderTest {
         simpleHash.put("quux", "morx");
         createTemplate("foo", new StringReader("<div>${fleem}</div>"));
         try {
-            FreemarkerReader freemarkerTemplateReader = new FreemarkerReader("foo",
-                simpleHash);
+            new FreemarkerReader("foo", simpleHash);
+            fail("Expected IOException thrown for processing bad template params");
         } catch (IOException e) {
-            assertTrue(true);
-            return;
         }
-        fail("Expected IOException thrown for processing bad template params");
     }
 
     public static void createTemplate(String templateName, Reader inputReader) throws IOException {

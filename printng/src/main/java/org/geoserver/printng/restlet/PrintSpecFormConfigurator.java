@@ -1,11 +1,10 @@
 package org.geoserver.printng.restlet;
 
 import java.util.logging.Level;
-import org.geoserver.printng.MessageCollector;
+
 import org.geoserver.printng.api.PrintSpec;
 import org.geoserver.printng.api.PrintSpecConfigurator;
 import org.geoserver.printng.spi.PrintSpecException;
-import org.geotools.util.logging.Logging;
 import org.restlet.data.Form;
 import org.restlet.data.Parameter;
 

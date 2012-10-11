@@ -7,10 +7,8 @@ import java.io.StringReader;
 import java.io.StringWriter;
 
 import org.apache.xml.serialize.XMLSerializer;
-import org.geoserver.printng.api.PrintSpec;
 import org.geoserver.printng.spi.ParsedDocument;
 import org.junit.Test;
-import org.w3c.dom.Document;
 
 public class ParsedDocumentTest {
 

@@ -7,15 +7,14 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.StringReader;
 
 import javax.imageio.ImageIO;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.geoserver.printng.api.PrintSpec;
-import org.geoserver.printng.spi.ParsedDocument;
 import org.geoserver.printng.spi.ImageWriter;
+import org.geoserver.printng.spi.ParsedDocument;
 import org.junit.Test;
 
 public class ImageWriterTest {

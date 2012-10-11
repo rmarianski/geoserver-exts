@@ -15,7 +15,6 @@ import org.restlet.data.Response;
 import org.restlet.data.Status;
 import org.restlet.resource.Resource;
 import org.restlet.resource.Variant;
-import org.w3c.dom.Document;
 
 public class FreemarkerTemplateResource extends Resource {
 
