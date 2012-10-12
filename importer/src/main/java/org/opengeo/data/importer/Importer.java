@@ -45,6 +45,7 @@ import org.geotools.data.FeatureStore;
 import org.geotools.data.FeatureWriter;
 import org.geotools.data.Transaction;
 import org.geotools.data.directory.DirectoryDataStore;
+import org.geotools.data.postgis.PostGISDialect;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.GeneralEnvelope;
@@ -849,8 +850,18 @@ public class Importer implements InitializingBean, DisposableBean {
         featureType = featureDataConverter.convertType(featureType, format, data, item);
         UpdateMode updateMode = item.updateMode();
         if (updateMode == null) {
+            if (dataStore instanceof JDBCDataStore
+                    && ((JDBCDataStore) dataStore).getSQLDialect() instanceof PostGISDialect) {
+                // trim the length of the name
+                // by default, postgis table/index names need to fit in 64 characters
+                // with the "spatial_" prefix and "_geometry" suffix, that leaves 47 chars
+                // and we should leave room to append integers to make the name unique too
+                if (featureTypeName.length() > 45) {
+                    featureTypeName = featureTypeName.substring(0, 45);
+                }
+            }
             //find a unique type name in the target store
-            featureTypeName = findUniqueNativeFeatureTypeName(featureType, store);
+            featureTypeName = findUniqueNativeFeatureTypeName(featureTypeName, store);
             item.setOriginalName(featureType.getTypeName());
 
             if (!featureTypeName.equals(featureType.getTypeName())) {
@@ -1096,12 +1107,15 @@ public class Importer implements InitializingBean, DisposableBean {
     }
 
     String findUniqueNativeFeatureTypeName(FeatureType featureType, DataStoreInfo store) throws IOException {
+        return findUniqueNativeFeatureTypeName(featureType.getName().getLocalPart(), store);
+    }
+
+    private String findUniqueNativeFeatureTypeName(String name, DataStoreInfo store) throws IOException {
         DataStore dataStore = (DataStore) store.getDataStore(null);
-        String name = featureType.getName().getLocalPart();
-        
+
         //hack for oracle, all names must be upper case
         if (dataStore instanceof JDBCDataStore &&
-            "org.geotools.data.oracle.OracleDialect".equals(((JDBCDataStore)dataStore).getSQLDialect().getClass().getName())) {
+                "org.geotools.data.oracle.OracleDialect".equals(((JDBCDataStore)dataStore).getSQLDialect().getClass().getName())) {
             name = name.toUpperCase();
         }
 
@@ -1115,7 +1129,7 @@ public class Importer implements InitializingBean, DisposableBean {
                 i++;
             }
         }
-        
+
         return name;
     }
 
