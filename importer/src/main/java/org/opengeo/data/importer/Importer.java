@@ -840,7 +840,7 @@ public class Importer implements InitializingBean, DisposableBean {
         ImportData data = item.getTask().getData();
         FeatureReader reader = format.read(data, item);
         SimpleFeatureType featureType = (SimpleFeatureType) reader.getFeatureType();
-        String featureTypeName = featureType.getName().getLocalPart();
+        String featureTypeName = item.getLayer().getName();
 
         DataStore dataStore = (DataStore) store.getDataStore(null);
         FeatureDataConverter featureDataConverter = FeatureDataConverter.DEFAULT;
