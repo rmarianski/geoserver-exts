@@ -274,6 +274,7 @@ public class KMLFileFormat extends VectorFormat {
             resource.setNativeCRS(KML_CRS);
             resource.setNativeBoundingBox(EMPTY_BOUNDS);
             resource.setLatLonBoundingBox(EMPTY_BOUNDS);
+            resource.getMetadata().put("recalculate-bounds", Boolean.TRUE);
 
             Map<Object, Object> userData = featureType.getUserData();
             if (userData.containsKey("schemaname")) {

@@ -776,7 +776,8 @@ public class Importer implements InitializingBean, DisposableBean {
                     // the result of a transform. there may be another way...
                     FeatureTypeInfo resource = getCatalog().getResourceByName(
                             featureType.getQualifiedName(), FeatureTypeInfo.class);
-                    if (resource.getNativeBoundingBox().isEmpty()) {
+                    if (resource.getNativeBoundingBox().isEmpty()
+                            || resource.getMetadata().get("recalculate-bounds") != null) {
                         // force computation
                         CatalogBuilder cb = new CatalogBuilder(getCatalog());
                         ReferencedEnvelope nativeBounds = cb.getNativeBounds(resource);
