@@ -13,7 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
-import org.geoserver.printng.FreemarkerSupport;
+import org.geoserver.printng.GeoserverSupport;
 import org.geotools.util.logging.Logging;
 import static org.junit.Assert.*;
 import org.restlet.data.Form;
@@ -35,7 +35,7 @@ public final class PrintTestSupport {
     }
     
     public static void assertTemplateExists(String path) throws IOException {
-        File f = new File(FreemarkerSupport.getPrintngTemplateDirectory(), path);
+        File f = new File(GeoserverSupport.getPrintngTemplateDirectory(), path);
         assertTrue("expected template : " + f.getPath(), f.exists());
     } 
     
