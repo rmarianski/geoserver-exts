@@ -6,7 +6,7 @@ import java.io.InputStreamReader;
 import java.io.Writer;
 
 import org.apache.xml.serialize.XMLSerializer;
-import org.geoserver.printng.FreemarkerSupport;
+import org.geoserver.printng.GeoserverSupport;
 import org.geoserver.printng.spi.ParsedDocument;
 import org.geoserver.rest.RestletException;
 import org.restlet.data.MediaType;
@@ -60,7 +60,7 @@ public class FreemarkerTemplateResource extends Resource {
                         Status.CLIENT_ERROR_BAD_REQUEST, e);
             }
             try {
-                writer = FreemarkerSupport.newTemplateWriter(templateName);
+                writer = GeoserverSupport.newTemplateWriter(templateName);
                 XMLSerializer xmlSerializer = new XMLSerializer(writer, null);
                 xmlSerializer.serialize(parsed.getDocument());
                 writer.flush();
