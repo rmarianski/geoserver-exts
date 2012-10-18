@@ -24,13 +24,15 @@ public final class GeoserverSupport {
     }
     
     /**
-     * Compute the relative URI for the provided absolute file path.
+     * Compute the relative URI for the provided absolute file path. This
+     * does not include any context information (i.e. /geoserver/)
      * @param path Absolute path to output file
      * @return relative URI string
      * @throws IOException
      */
     public static String getOutputFileURI(String path) throws IOException {
-        return path.replace(getDirectory("").getParentFile().getAbsolutePath(), "");
+        String uri = path.replace(getDirectory("").getParentFile().getAbsolutePath(), "");
+        return uri.replace('\\', '/');
     }
     
     /**

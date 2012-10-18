@@ -155,6 +155,12 @@ public class RestEndpointTest extends GeoServerTestSupport {
         JSONObject obj = JSONObject.fromObject(resp.getOutputStreamContent());
         String getURL = obj.getString("getURL");
         assertNotNull(getURL);
+        assertFalse("invalid path separators", getURL.indexOf('\\') >= 0);
+        // geoserver is the hard-coded context prefix
+        String context = "/geoserver";
+        assertTrue("expected getURL to be prefixed by servlet context", getURL.startsWith(context));
+        // adjust the getURL - the test code will add the prefix again
+        getURL = getURL.replace(context, "");
         allowEmptyContentType = true; // see mockrunner note above
         assertPostResponse(getAsServletResponse(getURL));
         allowEmptyContentType = false;

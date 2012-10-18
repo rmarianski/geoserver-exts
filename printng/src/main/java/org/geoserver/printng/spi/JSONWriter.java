@@ -23,9 +23,11 @@ import org.restlet.data.Status;
 public class JSONWriter extends PrintngWriter {
     
     private final OutputDescriptor outputFormat;
+    private final String baseURL;
 
-    public JSONWriter(OutputDescriptor outputDescriptor) {
+    public JSONWriter(OutputDescriptor outputDescriptor, String baseURL) {
         this.outputFormat = outputDescriptor;
+        this.baseURL = baseURL;
     }
 
     @Override
@@ -35,7 +37,8 @@ public class JSONWriter extends PrintngWriter {
         IOException error = null;
         try {
             outputFormat.getWriter().write(spec, bout);
-            String response = render(GeoserverSupport.getOutputFileURI(output.getAbsolutePath()));
+            String uri = baseURL + GeoserverSupport.getOutputFileURI(output.getAbsolutePath());
+            String response = render(uri);
             out.write(response.getBytes());
         } catch (IOException ioe) {
             error = ioe;

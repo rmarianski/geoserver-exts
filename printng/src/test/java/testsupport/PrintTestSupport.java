@@ -45,7 +45,10 @@ public final class PrintTestSupport {
             read = ImageIO.read(bytes);
         } catch (IOException ex) {
             ex.printStackTrace();
-            fail("Expected image to be read");
+            fail("Error reading image");
+        }
+        if (read == null) {
+            fail("Expected image to be read - must not be image content");
         }
         assertEquals(width, read.getWidth());
         assertEquals(height, read.getHeight());
@@ -58,7 +61,7 @@ public final class PrintTestSupport {
     public static void assertPDF(InputStream bytes) throws IOException {
         byte[] magicBytes = new byte[4];
         int read = bytes.read(magicBytes);
-        assertEquals(4, read);
+        assertEquals("expected at least 4 bytes for PDF response", 4, read);
         String magic = new String(magicBytes);
         assertEquals("invalid pdf bytes", "%PDF", magic);
     }

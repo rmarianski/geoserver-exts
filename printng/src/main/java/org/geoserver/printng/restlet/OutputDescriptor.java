@@ -6,6 +6,7 @@ import org.geoserver.printng.spi.ImageWriter;
 import org.geoserver.printng.spi.JSONWriter;
 import org.geoserver.printng.spi.PDFWriter;
 import org.geoserver.rest.RestletException;
+import org.geoserver.rest.util.RESTUtils;
 import org.restlet.data.Form;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
@@ -20,23 +21,24 @@ public final class OutputDescriptor {
     
     private final String extension;
 
-    private OutputDescriptor(String extension, Form form) throws RestletException {
-        if ("pdf".equalsIgnoreCase(extension)) {
+    private OutputDescriptor(String extension, Request req) throws RestletException {
+        if ("pdf".equals(extension)) {
             variant = new Variant(MediaType.APPLICATION_PDF);
             writer = new PDFWriter();
-        } else if ("jpg".equalsIgnoreCase(extension)) {
+        } else if ("jpg".equals(extension)) {
             variant = new Variant(MediaType.IMAGE_JPEG);
             writer = new ImageWriter("jpg");
-        } else if ("png".equalsIgnoreCase(extension)) {
+        } else if ("png".equals(extension)) {
             variant = new Variant(MediaType.IMAGE_PNG);
             writer = new ImageWriter("png");
-        } else if ("gif".equalsIgnoreCase(extension)) {
+        } else if ("gif".equals(extension)) {
             variant = new Variant(MediaType.IMAGE_GIF);
             writer = new ImageWriter("gif");
-        } else if ("html".equalsIgnoreCase(extension)) {
+        } else if ("html".equals(extension)) {
             variant = new Variant(MediaType.TEXT_HTML);
             writer = new HtmlWriter();
-        } else if ("json".equalsIgnoreCase(extension)) {
+        } else if ("json".equals(extension)) {
+            Form form = req.getResourceRef().getQueryAsForm();
             // the json response type requires a format parameter that will
             // drive the actual output format
             String format = form.getFirstValue("format", true);
@@ -46,7 +48,8 @@ public final class OutputDescriptor {
                         Status.CLIENT_ERROR_BAD_REQUEST);
             }
             variant = new Variant(MediaType.APPLICATION_JSON);
-            writer = new JSONWriter(new OutputDescriptor(format, form));
+            String baseURL = RESTUtils.getServletRequest(req).getContextPath();
+            writer = new JSONWriter(new OutputDescriptor(format, req), baseURL);
         } else {
             String error = String.format("invalid format \"%s\"", extension);
             throw new RestletException(error, Status.CLIENT_ERROR_BAD_REQUEST);
@@ -56,7 +59,7 @@ public final class OutputDescriptor {
     
     public static OutputDescriptor fromRequest(Request req) {
         String extension = req.getAttributes().get("ext").toString().toLowerCase();
-        return new OutputDescriptor(extension, req.getResourceRef().getQueryAsForm());
+        return new OutputDescriptor(extension, req);
     }
 
     public String getExtension() {
