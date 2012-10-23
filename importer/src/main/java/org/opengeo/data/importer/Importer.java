@@ -836,7 +836,7 @@ public class Importer implements InitializingBean, DisposableBean {
         ImportData data = item.getTask().getData();
         FeatureReader reader = format.read(data, item);
         SimpleFeatureType featureType = (SimpleFeatureType) reader.getFeatureType();
-        String featureTypeName = featureType.getName().getLocalPart();
+        final String featureTypeName = featureType.getName().getLocalPart();
 
         DataStore dataStore = (DataStore) store.getDataStore(null);
         FeatureDataConverter featureDataConverter = FeatureDataConverter.DEFAULT;
@@ -849,19 +849,20 @@ public class Importer implements InitializingBean, DisposableBean {
         
         featureType = featureDataConverter.convertType(featureType, format, data, item);
         UpdateMode updateMode = item.updateMode();
+        final String uniquifiedFeatureTypeName;
         if (updateMode == null) {
             //find a unique type name in the target store
-            featureTypeName = findUniqueNativeFeatureTypeName(featureType, store);
-            item.setOriginalName(featureType.getTypeName());
+            uniquifiedFeatureTypeName = findUniqueNativeFeatureTypeName(featureType, store);
+            item.setOriginalName(featureTypeName);
 
-            if (!featureTypeName.equals(featureType.getTypeName())) {
+            if (!uniquifiedFeatureTypeName.equals(featureTypeName)) {
                 //update the metadata
-                item.getLayer().getResource().setName(featureTypeName);
-                item.getLayer().getResource().setNativeName(featureTypeName);
+                item.getLayer().getResource().setName(uniquifiedFeatureTypeName);
+                item.getLayer().getResource().setNativeName(uniquifiedFeatureTypeName);
                 
                 //retype
                 SimpleFeatureTypeBuilder typeBuilder = new SimpleFeatureTypeBuilder();
-                typeBuilder.setName(featureTypeName);
+                typeBuilder.setName(uniquifiedFeatureTypeName);
                 typeBuilder.addAll(featureType.getAttributeDescriptors());
                 featureType = typeBuilder.buildFeatureType();
             }
@@ -887,6 +888,7 @@ public class Importer implements InitializingBean, DisposableBean {
             if (updateMode == UpdateMode.UPDATE) {
                 throw new UnsupportedOperationException("updateMode UPDATE is not supported yet");
             }
+            uniquifiedFeatureTypeName = featureTypeName;
         }
             
         Transaction transaction = new DefaultTransaction();
@@ -918,7 +920,7 @@ public class Importer implements InitializingBean, DisposableBean {
         
         LOGGER.info("begining import");
         try {
-            writer = dataStore.getFeatureWriterAppend(featureTypeName, transaction);
+            writer = dataStore.getFeatureWriterAppend(uniquifiedFeatureTypeName, transaction);
             
             while(reader.hasNext()) {
                 if (monitor.isCanceled()){
@@ -1100,12 +1102,6 @@ public class Importer implements InitializingBean, DisposableBean {
         DataStore dataStore = (DataStore) store.getDataStore(null);
         String name = featureType.getName().getLocalPart();
         
-        //hack for oracle, all names must be upper case
-        //TODO: abstract this into FeatureConverter
-        if (isOracleDataStore(dataStore)) {
-            name = name.toUpperCase();
-        }
-
         //TODO: put an upper limit on how many times to try
         List<String> names = Arrays.asList(dataStore.getTypeNames());
         if (names.contains(name)) {
