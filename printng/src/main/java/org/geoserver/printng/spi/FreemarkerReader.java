@@ -6,7 +6,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 
-import org.geoserver.printng.FreemarkerSupport;
+import org.geoserver.printng.GeoserverSupport;
 import org.geoserver.printng.api.PrintngReader;
 
 import freemarker.template.Configuration;
@@ -38,7 +38,7 @@ public class FreemarkerReader implements PrintngReader {
     }
 
     private Template findTemplate(String templateName) throws IOException {
-        File templateDirectory = FreemarkerSupport.getPrintngTemplateDirectory();
+        File templateDirectory = GeoserverSupport.getPrintngTemplateDirectory();
         Configuration configuration = new Configuration();
         configuration.setDirectoryForTemplateLoading(templateDirectory);
         Template template;

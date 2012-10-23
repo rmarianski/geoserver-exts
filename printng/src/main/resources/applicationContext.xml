@@ -26,6 +26,23 @@
       </map>
     </property>
   </bean>
+  
+  <!--
+  Provide a public endpoint to serve printing output from. Output files are
+  generated using a random UUID and cleaned out periodically.
+  
+  Ideally this mapping (which must correspond to the actual file paths in the
+  datadir would not have to be hard-coded in both places (GeoserverSupport, too)
+  -->
+  <bean id="printngFilePublisherMapping"
+    class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+     <property name="alwaysUseFullPath" value="true"/>
+     <property name="mappings">
+       <props>
+        <prop key="/printng/output/**">filePublisher</prop>
+       </props>
+     </property>
+  </bean>
 
   <bean id="printFinderFromRequestBody" class="org.geoserver.printng.restlet.PrintFinder">
     <constructor-arg index="0">

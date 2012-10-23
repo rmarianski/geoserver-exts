@@ -25,6 +25,7 @@ public class PrintngFacadeTest {
     @Test
     public void testUnknownExtension() {
         Request request = new Request();
+        request.setResourceRef("/foo/bar"); // doesn't matter
         Map<String, Object> attributes = request.getAttributes();
         attributes.put("ext", "foo");
         try {
@@ -32,7 +33,7 @@ public class PrintngFacadeTest {
             fail("restlet exception should have been thrown");
         } catch (RestletException e) {
             int code = e.getStatus().getCode();
-            int expCode = Status.CLIENT_ERROR_NOT_FOUND.getCode();
+            int expCode = Status.CLIENT_ERROR_BAD_REQUEST.getCode();
             assertEquals("Invalid reslet status code", expCode, code);
         }
     }

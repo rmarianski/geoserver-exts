@@ -32,9 +32,7 @@ public class PrintngFacade {
         this.request = request;
         this.response = response;
         this.readerSource = readerSource;
-
-        String extension = request.getAttributes().get("ext").toString().toLowerCase();
-        outputDescriptor = new OutputDescriptor(extension);
+        this.outputDescriptor = OutputDescriptor.fromRequest(request);
     }
 
     public PrintResource getResource() {
@@ -65,7 +63,7 @@ public class PrintngFacade {
         return outputDescriptor.getWriter();
     }
 
-    public PrintSpec getPrintSpec() throws IOException {
+    private PrintSpec getPrintSpec() throws IOException {
         PrintngReader printngReader = readerSource.printngReader(request);
         Reader reader = printngReader.reader();
         PrintSpec spec =  new PrintSpec(ParsedDocument.parse(reader));

@@ -13,7 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
-import org.geoserver.printng.FreemarkerSupport;
+import org.geoserver.printng.GeoserverSupport;
 import org.geotools.util.logging.Logging;
 import static org.junit.Assert.*;
 import org.restlet.data.Form;
@@ -35,7 +35,7 @@ public final class PrintTestSupport {
     }
     
     public static void assertTemplateExists(String path) throws IOException {
-        File f = new File(FreemarkerSupport.getPrintngTemplateDirectory(), path);
+        File f = new File(GeoserverSupport.getPrintngTemplateDirectory(), path);
         assertTrue("expected template : " + f.getPath(), f.exists());
     } 
     
@@ -45,7 +45,10 @@ public final class PrintTestSupport {
             read = ImageIO.read(bytes);
         } catch (IOException ex) {
             ex.printStackTrace();
-            fail("Expected image to be read");
+            fail("Error reading image");
+        }
+        if (read == null) {
+            fail("Expected image to be read - must not be image content");
         }
         assertEquals(width, read.getWidth());
         assertEquals(height, read.getHeight());
@@ -58,7 +61,7 @@ public final class PrintTestSupport {
     public static void assertPDF(InputStream bytes) throws IOException {
         byte[] magicBytes = new byte[4];
         int read = bytes.read(magicBytes);
-        assertEquals(4, read);
+        assertEquals("expected at least 4 bytes for PDF response", 4, read);
         String magic = new String(magicBytes);
         assertEquals("invalid pdf bytes", "%PDF", magic);
     }

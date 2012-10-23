@@ -19,7 +19,7 @@ public class FreemarkerReaderTest {
     
     @AfterClass
     public static void cleanTempFiles() throws IOException {
-        File templateDir = FreemarkerSupport.getPrintngTemplateDirectory();
+        File templateDir = GeoserverSupport.getPrintngTemplateDirectory();
         FileUtils.cleanDirectory(templateDir);
         if (!templateDir.delete()) {
             throw new IOException("Failure removing template dir: " + templateDir.getPath());
@@ -70,7 +70,7 @@ public class FreemarkerReaderTest {
     }
 
     public static void createTemplate(String templateName, Reader inputReader) throws IOException {
-        File templateDir = FreemarkerSupport.getPrintngTemplateDirectory();
+        File templateDir = GeoserverSupport.getPrintngTemplateDirectory();
         if (!templateDir.exists() && !templateDir.mkdir()) {
             throw new IOException("Error creating template dir: " + templateDir.getPath());
         }
