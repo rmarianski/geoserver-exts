@@ -2,7 +2,10 @@ package org.opengeo.data.importer.format;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -38,15 +41,15 @@ public class KMLRawReader implements Iterable<Object>, Iterator<Object> {
                 parser = new PullParser(new KMLConfiguration(), inputStream, KML.Placemark,
                         KML.Schema);
             } else {
-                parser = new PullParser(new KMLConfiguration(), inputStream, KML.Placemark,
-                        KML.Schema, featureTypeSchemaName(featureType));
+                parser = new PullParser(new KMLConfiguration(), inputStream, pullParserArgs(
+                        featureTypeSchemaNames(featureType), KML.Placemark, KML.Schema));
             }
         } else if (KMLRawReader.ReadType.FEATURES.equals(readType)) {
             if (featureType == null) {
                 parser = new PullParser(new KMLConfiguration(), inputStream, KML.Placemark);
             } else {
-                parser = new PullParser(new KMLConfiguration(), inputStream, KML.Placemark,
-                        featureTypeSchemaName(featureType));
+                parser = new PullParser(new KMLConfiguration(), inputStream, pullParserArgs(
+                        featureTypeSchemaNames(featureType), KML.Placemark));
             }
         } else {
             throw new IllegalArgumentException("Unknown parse read type: " + readType.toString());
@@ -54,15 +57,26 @@ public class KMLRawReader implements Iterable<Object>, Iterator<Object> {
         next = null;
     }
 
-    private QName featureTypeSchemaName(SimpleFeatureType featureType) {
+    private Object[] pullParserArgs(List<QName> featureTypeSchemaNames, Object... args) {
+        Object[] parserArgs = new Object[featureTypeSchemaNames.size() + args.length];
+        System.arraycopy(args, 0, parserArgs, 0, args.length);
+        System.arraycopy(featureTypeSchemaNames.toArray(), 0, parserArgs, args.length,
+                featureTypeSchemaNames.size());
+        return parserArgs;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<QName> featureTypeSchemaNames(SimpleFeatureType featureType) {
         Map<Object, Object> userData = featureType.getUserData();
-        String name = null;
-        if (userData.containsKey("schemaname")) {
-            name = (String) userData.get("schemaname");
-        } else {
-            name = featureType.getName().getLocalPart();
+        if (userData.containsKey("schemanames")) {
+            List<String> names = (List<String>) userData.get("schemanames");
+            List<QName> qnames = new ArrayList<QName>(names.size());
+            for (String name : names) {
+                qnames.add(new QName(name));
+            }
+            return qnames;
         }
-        return new QName(name);
+        return Collections.emptyList();
     }
 
     private Object read() throws IOException {

@@ -83,9 +83,9 @@ public class KMLFileFormat extends VectorFormat {
             }
             ft = ftb.buildFeatureType();
             MetadataMap metadata = fti.getMetadata();
-            if (metadata.containsKey("importschemaname")) {
+            if (metadata.containsKey("importschemanames")) {
                 Map<Object, Object> userData = ft.getUserData();
-                userData.put("schemaname", metadata.get("importschemaname"));
+                userData.put("schemanames", metadata.get("importschemanames"));
             }
         }
         return read(ft, file);
@@ -180,25 +180,28 @@ public class KMLFileFormat extends VectorFormat {
         SimpleFeatureType transformedType = kmlTransform.convertFeatureType(ft);
         SimpleFeatureTypeBuilder ftb = new SimpleFeatureTypeBuilder();
         ftb.init(transformedType);
+        Set<String> existringAttrNames = new HashSet<String>();
+        for (AttributeDescriptor ad : ft.getAttributeDescriptors()) {
+            existringAttrNames.add(ad.getLocalName());
+        }
+        for (String attr : untypedAttributes) {
+            if (!existringAttrNames.contains(attr)) {
+                ftb.add(attr, String.class);
+            }
+        }
         ftb.setName(name);
         ftb.setCRS(KML_CRS);
         ftb.setSRS(KML_SRS);
-        for (String attr : untypedAttributes) {
-            ftb.add(attr, String.class);
-        }
         return ftb.buildFeatureType();
     }
 
     public List<SimpleFeatureType> parseFeatureTypes(String typeName, InputStream inputStream)
             throws IOException {
-        // the idea here is to iterate through the file, and ask for all schema and features
-        // the features can have multiple associated schemas, as well as untyped attributes
-        // our strategy here is to keep track of the different schemas, and create a separate item for each unique one
-        // we also aggregate all the untyped attributes, and combine that with each schema
         KMLRawReader reader = new KMLRawReader(inputStream,
                 KMLRawReader.ReadType.SCHEMA_AND_FEATURES);
-        Collection<SimpleFeatureType> schemas = new ArrayList<SimpleFeatureType>();
         Set<String> untypedAttributes = new HashSet<String>();
+        List<String> schemaNames = new ArrayList<String>();
+        List<SimpleFeatureType> schemas = new ArrayList<SimpleFeatureType>();
         SimpleFeatureType aggregateFeatureType = null;
         for (Object object : reader) {
             if (object instanceof SimpleFeature) {
@@ -213,34 +216,24 @@ public class KMLFileFormat extends VectorFormat {
                     untypedAttributes.addAll(untypedData.keySet());
                 }
             } else if (object instanceof SimpleFeatureType) {
-                schemas.add((SimpleFeatureType) object);
+                SimpleFeatureType schema = (SimpleFeatureType) object;
+                schemas.add(schema);
+                schemaNames.add(schema.getName().getLocalPart());
             }
         }
         if (aggregateFeatureType == null && schemas.isEmpty()) {
             throw new IllegalArgumentException("No features found");
         }
-        List<SimpleFeatureType> featureTypes = null;
-        if (schemas.isEmpty()) {
-            featureTypes = Collections.singletonList(convertParsedFeatureType(aggregateFeatureType,
-                    typeName, untypedAttributes));
-        } else {
-            featureTypes = new ArrayList<SimpleFeatureType>(schemas.size());
-            for (SimpleFeatureType schema : schemas) {
-                String newTypeName = typeName + "-" + schema.getName().getLocalPart();
-                SimpleFeatureType combinedType = null;
-                if (aggregateFeatureType == null) {
-                    combinedType = schema;
-                } else {
-                    combinedType = unionFeatureTypes(schema, aggregateFeatureType);
-                }
-                SimpleFeatureType ft = convertParsedFeatureType(combinedType, newTypeName,
-                        untypedAttributes);
-                Map<Object, Object> userData = ft.getUserData();
-                userData.put("schemaname", schema.getName().getLocalPart());
-                featureTypes.add(ft);
-            }
+        SimpleFeatureType featureType = aggregateFeatureType;
+        for (SimpleFeatureType schema : schemas) {
+            featureType = unionFeatureTypes(featureType, schema);
         }
-        return featureTypes;
+        featureType = convertParsedFeatureType(featureType, typeName, untypedAttributes);
+        if (!schemaNames.isEmpty()) {
+            Map<Object, Object> userData = featureType.getUserData();
+            userData.put("schemanames", schemaNames);
+        }
+        return Collections.singletonList(featureType);
     }
 
     @Override
@@ -277,9 +270,9 @@ public class KMLFileFormat extends VectorFormat {
             resource.getMetadata().put("recalculate-bounds", Boolean.TRUE);
 
             Map<Object, Object> userData = featureType.getUserData();
-            if (userData.containsKey("schemaname")) {
+            if (userData.containsKey("schemanames")) {
                 MetadataMap metadata = resource.getMetadata();
-                metadata.put("importschemaname", (Serializable) userData.get("schemaname"));
+                metadata.put("importschemanames", (Serializable) userData.get("schemanames"));
             }
 
             ImportItem item = new ImportItem(layer);

@@ -115,23 +115,15 @@ public class KMLFileFormatTest extends TestCase {
                 + "</Placemark></kml>";
         List<SimpleFeatureType> featureTypes = kmlFileFormat.parseFeatureTypes("multiple",
                 IOUtils.toInputStream(kmlInput));
-        assertEquals("Unexpected number of feature types", 2, featureTypes.size());
-        SimpleFeatureType ft1 = featureTypes.get(0);
-        SimpleFeatureType ft2 = featureTypes.get(1);
+        assertEquals("Unexpected number of feature types", 1, featureTypes.size());
+        SimpleFeatureType ft = featureTypes.get(0);
 
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader1 = kmlFileFormat.read(ft1,
+        FeatureReader<SimpleFeatureType, SimpleFeature> reader = kmlFileFormat.read(ft,
                 IOUtils.toInputStream(kmlInput));
-        SimpleFeature feature1 = reader1.next();
+        SimpleFeature feature1 = reader.next();
         assertNotNull("Expecting feature", feature1);
         assertEquals("Invalid ext attr foo", 42, feature1.getAttribute("foo"));
-        assertNull("Invalid attribute for first schema", feature1.getAttribute("bar"));
-
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader2 = kmlFileFormat.read(ft2,
-                IOUtils.toInputStream(kmlInput));
-        SimpleFeature feature2 = reader2.next();
-        assertNotNull("Expecting feature", feature2);
-        assertNull("Invalid attribute for second schema", feature2.getAttribute("foo"));
-        assertEquals("Invalid ext attr bar", 4.2f, (Float) feature2.getAttribute("bar"), 0.01);
+        assertEquals("Invalid ext attr bar", 4.2f, (Float) feature1.getAttribute("bar"), 0.01);
     }
 
     public void testTypedAndUntyped() throws Exception {
@@ -164,8 +156,9 @@ public class KMLFileFormatTest extends TestCase {
         assertEquals("Unexpected number of feature types", 1, featureTypes.size());
         SimpleFeatureType featureType = featureTypes.get(0);
         Map<Object, Object> userData = featureType.getUserData();
-        String schemaName = (String) userData.get("schemaname");
-        assertEquals("Did not find expected schema name metadata", "myschema", schemaName);
+        List<String> schemaNames = (List<String>) userData.get("schemanames");
+        assertEquals(1, schemaNames.size());
+        assertEquals("Did not find expected schema name metadata", "myschema", schemaNames.get(0));
         FeatureReader<SimpleFeatureType, SimpleFeature> reader = kmlFileFormat.read(featureType,
                 IOUtils.toInputStream(kmlInput));
         SimpleFeature feature = reader.next();
