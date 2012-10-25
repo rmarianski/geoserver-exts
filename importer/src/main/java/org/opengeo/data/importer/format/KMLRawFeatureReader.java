@@ -5,83 +5,43 @@ import java.io.InputStream;
 import java.util.NoSuchElementException;
 
 import org.geotools.data.FeatureReader;
-import org.geotools.kml.v22.KML;
-import org.geotools.kml.v22.KMLConfiguration;
-import org.geotools.xml.PullParser;
-import org.opengis.feature.Feature;
 import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.FeatureType;
+import org.opengis.feature.simple.SimpleFeatureType;
 
-public class KMLRawFeatureReader implements FeatureReader<FeatureType, Feature> {
+public class KMLRawFeatureReader implements FeatureReader<SimpleFeatureType, SimpleFeature> {
 
     private final InputStream inputStream;
 
-    private final PullParser parser;
+    private final KMLRawReader reader;
 
-    private SimpleFeature next;
+    private final SimpleFeatureType featureType;
 
-    public KMLRawFeatureReader(InputStream inputStream) {
+    public KMLRawFeatureReader(InputStream inputStream, SimpleFeatureType featureType) {
         this.inputStream = inputStream;
-        parser = new PullParser(new KMLConfiguration(), inputStream, KML.Placemark);
-        next = null;
-    }
-
-    private SimpleFeature readFeature() throws IOException {
-        Object parsedObject;
-        try {
-            parsedObject = parser.parse();
-        } catch (Exception e) {
-            throw new IOException(e);
-        }
-        if (parsedObject == null) {
-            return null;
-        }
-        SimpleFeature feature = (SimpleFeature) parsedObject;
-        return feature;
+        this.featureType = featureType;
+        reader = new KMLRawReader(inputStream, KMLRawReader.ReadType.FEATURES,
+                featureType);
     }
 
     @Override
-    public boolean hasNext() {
-        if (next != null) {
-            return true;
-        }
-        try {
-            next = readFeature();
-        } catch (IOException e) {
-            next = null;
-        }
-        return next != null;
+    public SimpleFeatureType getFeatureType() {
+        return featureType;
     }
 
     @Override
-    public SimpleFeature next() {
-        if (next != null) {
-            SimpleFeature result = next;
-            next = null;
-            return result;
-        }
-        SimpleFeature feature;
-        try {
-            feature = readFeature();
-        } catch (IOException e) {
-            feature = null;
-        }
-        if (feature == null) {
-            throw new NoSuchElementException();
-        }
-        return feature;
+    public SimpleFeature next() throws IOException, IllegalArgumentException,
+            NoSuchElementException {
+        return (SimpleFeature) reader.next();
+    }
+
+    @Override
+    public boolean hasNext() throws IOException {
+        return reader.hasNext();
     }
 
     @Override
     public void close() throws IOException {
         inputStream.close();
-        next = null;
     }
 
-    @Override
-    public FeatureType getFeatureType() {
-        // We don't know what the feature type is here, because that will come from the first feature.
-        // The transforming feature reader knows what the type is.
-        return null;
-    }
 }

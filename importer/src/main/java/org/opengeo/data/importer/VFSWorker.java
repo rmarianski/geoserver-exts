@@ -33,7 +33,7 @@ public class VFSWorker {
     private static final Logger LOGGER = Logging.getLogger(VFSWorker.class);
 
     private static final List<String> extensions = Arrays.asList(".zip", ".tar", ".tar.gz", ".tgz",
-            ".tar.bz2", ".tbz2", ".gz", ".bz2", ".jar");
+            ".tar.bz2", ".tbz2", ".gz", ".bz2", ".jar", ".kmz");
 
     public VFSWorker() {
 
@@ -130,7 +130,7 @@ public class VFSWorker {
             return "file://";
         }
         String name = file.getName().toLowerCase();
-        if (name.endsWith(".zip")) {
+        if (name.endsWith(".zip") || name.endsWith(".kmz")) {
             return "zip://";
         }
         if (name.endsWith(".tar")) {

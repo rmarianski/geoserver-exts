@@ -1,11 +1,15 @@
 package org.opengeo.data.importer.transform;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
+import org.apache.commons.lang.StringUtils;
 import org.geotools.data.DataStore;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
-import org.geotools.styling.FeatureTypeStyle;
+import org.geotools.kml.Folder;
 import org.opengeo.data.importer.FeatureDataConverter;
 import org.opengeo.data.importer.ImportItem;
 import org.opengeo.data.importer.format.KMLFileFormat;
@@ -35,7 +39,11 @@ public class KMLPlacemarkTransform extends AbstractVectorTransform implements In
         ftb.setDescription(oldFeatureType.getDescription());
         ftb.setCRS(KMLFileFormat.KML_CRS);
         ftb.setSRS(KMLFileFormat.KML_SRS);
-        makeStringAttribute(ftb, "Style");
+        // remove style attribute for now
+        if (oldFeatureType.getDescriptor("Style") != null) {
+            ftb.remove("Style");
+        }
+        ftb.add("Folder", String.class);
         SimpleFeatureType ft = ftb.buildFeatureType();
         return ft;
     }
@@ -44,23 +52,43 @@ public class KMLPlacemarkTransform extends AbstractVectorTransform implements In
         SimpleFeatureBuilder fb = new SimpleFeatureBuilder(targetFeatureType);
         SimpleFeature newFeature = fb.buildFeature(old.getID());
         FeatureDataConverter.DEFAULT.convert(old, newFeature);
-        Object styleObj = old.getAttribute("Style");
-        if (styleObj != null) {
-            FeatureTypeStyle style = (FeatureTypeStyle) styleObj;
-            newFeature.setAttribute("Style", style.toString());
+        Map<Object, Object> userData = old.getUserData();
+        Object folderObject = userData.get("Folder");
+        if (folderObject != null) {
+            String serializedFolders = serializeFolders(folderObject);
+            newFeature.setAttribute("Folder", serializedFolders);
+        }
+        @SuppressWarnings("unchecked")
+        Map<String, String> untypedExtendedData = (Map<String, String>) userData
+                .get("UntypedExtendedData");
+        if (untypedExtendedData != null) {
+            for (Entry<String, String> entry : untypedExtendedData.entrySet()) {
+                if (targetFeatureType.getDescriptor(entry.getKey()) != null) {
+                    newFeature.setAttribute(entry.getKey(), entry.getValue());
+                }
+            }
         }
         return newFeature;
+    }
+
+    private String serializeFolders(Object folderObject) {
+        @SuppressWarnings("unchecked")
+        List<Folder> folders = (List<Folder>) folderObject;
+        List<String> folderNames = new ArrayList<String>(folders.size());
+        for (Folder folder : folders) {
+            String name = folder.getName();
+            if (!StringUtils.isEmpty(name)) {
+                folderNames.add(name);
+            }
+        }
+        String serializedFolders = StringUtils.join(folderNames.toArray(), " -> ");
+        return serializedFolders;
     }
 
     @Override
     public SimpleFeatureType apply(ImportItem item, DataStore dataStore,
             SimpleFeatureType featureType) throws Exception {
         return convertFeatureType(featureType);
-    }
-
-    private void makeStringAttribute(SimpleFeatureTypeBuilder tb, String attributeName) {
-        tb.remove(attributeName);
-        tb.add(attributeName, String.class);
     }
 
     @Override
