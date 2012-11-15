@@ -364,6 +364,11 @@
         <version>11.0.1</version>
       </dependency>
       <dependency>
+        <groupId>postgresql</groupId>
+        <artifactId>postgresql</artifactId>
+        <version>${postgresql.jdbc.version}</version>
+      </dependency>
+      <dependency>
         <groupId>com.mockrunner</groupId>
         <artifactId>mockrunner</artifactId>
         <version>0.3.1</version>
@@ -432,6 +437,7 @@
     <jetty.version>6.1.8</jetty.version>
     <ant.version>1.6.5</ant.version>
     <dashboard.version>1.0.0</dashboard.version>
+    <postgresql.jdbc.version>9.1-903.jdbc3</postgresql.jdbc.version>
     <build.profile></build.profile>
     <build.revision>${project.version}</build.revision>
     <test.maxHeapSize>512M</test.maxHeapSize>
