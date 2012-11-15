@@ -277,14 +277,17 @@ public class RequestPage extends MonitorBasePage {
         @Override
         protected void onInitialize() {
             super.onInitialize();
+            
+            String url =  "/geoserver" + data.getPath();  // TODO: proxy path?
             if ("get".equalsIgnoreCase(data.getHttpMethod())) {
-                String url = "/geoserver" + // @todo proxy path?
-                        data.getPath() + 
-                        (data.getQueryString() == null ? "" : "?" + data.getQueryString());
-                String linkText = getLocalizer().getString("requestLink", getPage());
-                ExternalLink link = new ExternalLink("requestLink",url,linkText);
-                add(link);
+                 url += (data.getQueryString() == null ? "" : "?" + data.getQueryString());
             }
+
+            //TODO: handle post, create a link that re-posts the request
+            
+            String linkText = getLocalizer().getString("requestLink", getPage());
+            ExternalLink link = new ExternalLink("requestLink",url,linkText);
+            add(link);
         }
         
         @Override
