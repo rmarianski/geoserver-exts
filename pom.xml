@@ -480,6 +480,7 @@
   </distributionManagement>
 
   <modules>
+    <module>cluster</module>
     <module>importer</module>
     <module>monitor-console</module>
     <module>printng</module>
