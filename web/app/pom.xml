@@ -60,6 +60,11 @@
    <artifactId>cluster</artifactId>
    <version>${gs.version}</version>
   </dependency>
+  <dependency>
+   <groupId>org.opengeo.geoserver</groupId>
+   <artifactId>metrics</artifactId>
+   <version>${gs.version}</version>
+  </dependency>
 
   <dependency>
    <groupId>org.mortbay.jetty</groupId>
@@ -102,5 +107,17 @@
    </plugin>
   </plugins>
  </build>
+
+ <profiles>
+   <profile>
+     <id>control-flow</id>
+     <dependencies>
+       <dependency>
+         <groupId>org.geoserver.extension</groupId>
+         <artifactId>control-flow</artifactId>
+       </dependency>
+     </dependencies>
+   </profile>
+ </profiles>
 
 </project>

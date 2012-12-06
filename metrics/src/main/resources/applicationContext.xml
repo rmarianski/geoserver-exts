@@ -1,0 +1,29 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xmlns:metrics="http://www.yammer.com/schema/metrics"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans 
+     http://www.springframework.org/schema/beans/spring-beans-2.5.xsd 
+     http://www.yammer.com/schema/metrics http://www.yammer.com/schema/metrics/metrics.xsd">
+
+    <!--metrics:metrics-registry id="metrics"/>
+    <metrics:health-check-registry id="health"/-->
+
+    <bean id="metricsServlet" class="org.springframework.web.servlet.mvc.ServletWrappingController">
+      <property name="servletClass" value="com.yammer.metrics.reporting.MetricsServlet"/>
+      <property name="servletName" value="metrics"/>
+    </bean>
+    
+    <bean id="metricsUrlHandlerMapping"
+      class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+     <property name="alwaysUseFullPath" value="true"/>
+     <property name="mappings">
+       <props>
+        <prop key="/metrics">metricsServlet</prop>
+       </props>
+     </property>
+    </bean>
+  
+    <bean id="metricsInitializer" class="org.geoserver.metrics.MetricsInitializer"/>
+    <bean id="metricsWmsCallback" class="org.geoserver.metrics.wms.WMSCallback"/>
+   
+</beans>
