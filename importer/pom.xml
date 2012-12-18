@@ -147,6 +147,11 @@
       <artifactId>mockrunner</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.geotools.xsd</groupId>
+      <artifactId>gt-xsd-kml</artifactId>
+      <version>8-SNAPSHOT</version>
+    </dependency>
 
   </dependencies>
 

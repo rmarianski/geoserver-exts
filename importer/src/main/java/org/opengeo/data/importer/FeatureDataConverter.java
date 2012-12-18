@@ -153,6 +153,28 @@ public class FeatureDataConverter {
         }
     };
 
+    public static final FeatureDataConverter TO_POSTGIS = new FeatureDataConverter() {
+
+        @Override
+        public SimpleFeatureType convertType(SimpleFeatureType featureType, VectorFormat format,
+                ImportData data, ImportItem item) {
+            SimpleFeatureType converted = featureType;
+            String featureTypeName = featureType.getTypeName();
+            // trim the length of the name
+            // by default, postgis table/index names need to fit in 64 characters
+            // with the "spatial_" prefix and "_geometry" suffix, that leaves 47 chars
+            // and we should leave room to append integers to make the name unique too
+            if (featureTypeName.length() > 45) {
+                SimpleFeatureTypeBuilder typeBuilder = new SimpleFeatureTypeBuilder();
+                featureTypeName = featureTypeName.substring(0, 45);
+                typeBuilder.setName(featureTypeName);
+                typeBuilder.addAll(featureType.getAttributeDescriptors());
+                converted = typeBuilder.buildFeatureType();
+            }
+            return converted;
+        }
+    };
+
     public static final FeatureDataConverter TO_ORACLE = new FeatureDataConverter() {
         public void convert(SimpleFeature from, SimpleFeature to) {
             //for oracle the target names are always uppercase

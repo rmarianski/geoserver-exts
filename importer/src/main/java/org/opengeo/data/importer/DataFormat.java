@@ -17,6 +17,7 @@ import org.geotools.coverage.grid.io.UnknownFormat;
 import org.geotools.data.DataStoreFactorySpi;
 import org.geotools.data.FileDataStoreFactorySpi;
 import org.geotools.data.FileDataStoreFinder;
+import org.opengeo.data.importer.format.KMLFileFormat;
 import org.opengeo.data.importer.job.ProgressMonitor;
 import org.vfny.geoserver.util.DataStoreUtils;
 
@@ -39,6 +40,7 @@ public abstract class DataFormat implements Serializable {
         new HashMap<String, Class<? extends DataFormat>>();
     static {
         //extToFormat.put("shp", ShapefileFormat.class);
+        extToFormat.put("kml", KMLFileFormat.class);
     }
 
     /**

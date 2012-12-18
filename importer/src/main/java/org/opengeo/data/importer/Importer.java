@@ -45,6 +45,7 @@ import org.geotools.data.FeatureStore;
 import org.geotools.data.FeatureWriter;
 import org.geotools.data.Transaction;
 import org.geotools.data.directory.DirectoryDataStore;
+import org.geotools.data.postgis.PostGISDialect;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.GeneralEnvelope;
@@ -768,18 +769,21 @@ public class Importer implements InitializingBean, DisposableBean {
                     if (!canceled && item.updateMode() == null) {
                         addToCatalog(item, task);
                     }
-                    
+
                     // verify that the newly created featuretype's resource
                     // has bounding boxes computed - this might be required
                     // for csv or other uploads that have a geometry that is
                     // the result of a transform. there may be another way...
-                    FeatureTypeInfo resource = getCatalog().getResourceByName(featureType.getQualifiedName(), FeatureTypeInfo.class);
-                    if (resource.getNativeBoundingBox().isEmpty()) {
+                    FeatureTypeInfo resource = getCatalog().getResourceByName(
+                            featureType.getQualifiedName(), FeatureTypeInfo.class);
+                    if (resource.getNativeBoundingBox().isEmpty()
+                            || resource.getMetadata().get("recalculate-bounds") != null) {
                         // force computation
                         CatalogBuilder cb = new CatalogBuilder(getCatalog());
                         ReferencedEnvelope nativeBounds = cb.getNativeBounds(resource);
                         resource.setNativeBoundingBox(nativeBounds);
-                        resource.setLatLonBoundingBox(cb.getLatLonBounds(nativeBounds, resource.getCRS()));
+                        resource.setLatLonBoundingBox(cb.getLatLonBounds(nativeBounds,
+                                resource.getCRS()));
                         getCatalog().save(resource);
                     }
                 }
@@ -845,6 +849,9 @@ public class Importer implements InitializingBean, DisposableBean {
         }
         else if (isOracleDataStore(dataStore)) {
             featureDataConverter = FeatureDataConverter.TO_ORACLE;
+        }
+        else if (isPostGISDataStore(dataStore)) {
+            featureDataConverter = FeatureDataConverter.TO_POSTGIS;
         }
         
         featureType = featureDataConverter.convertType(featureType, format, data, item);
@@ -1099,8 +1106,11 @@ public class Importer implements InitializingBean, DisposableBean {
     }
 
     String findUniqueNativeFeatureTypeName(FeatureType featureType, DataStoreInfo store) throws IOException {
+        return findUniqueNativeFeatureTypeName(featureType.getName().getLocalPart(), store);
+    }
+
+    private String findUniqueNativeFeatureTypeName(String name, DataStoreInfo store) throws IOException {
         DataStore dataStore = (DataStore) store.getDataStore(null);
-        String name = featureType.getName().getLocalPart();
         
         //TODO: put an upper limit on how many times to try
         List<String> names = Arrays.asList(dataStore.getTypeNames());
@@ -1112,7 +1122,7 @@ public class Importer implements InitializingBean, DisposableBean {
                 i++;
             }
         }
-        
+
         return name;
     }
 
@@ -1123,6 +1133,11 @@ public class Importer implements InitializingBean, DisposableBean {
     boolean isOracleDataStore(DataStore dataStore) {
         return "org.geotools.data.oracle.OracleDialect".equals(
             ((JDBCDataStore)dataStore).getSQLDialect().getClass().getName());
+    }
+
+    boolean isPostGISDataStore(DataStore dataStore) {
+        return ((JDBCDataStore) dataStore).getSQLDialect().getClass().getName()
+                .startsWith("org.geotools.data.postgis");
     }
 
     /*
