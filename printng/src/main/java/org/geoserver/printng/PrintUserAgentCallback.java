@@ -153,6 +153,7 @@ public class PrintUserAgentCallback extends NaiveUserAgent {
             for (int i = 0; i < imagesToResolve.size(); i++) {
                 final String href = imagesToResolve.get(i);
                 final File dest = cacheDestination.isEmpty() ? getTempFile() : cacheDestination.get(i);
+                tempFiles.add(dest);
                 futures.add(executor.submit(new Callable<File>() {
                     public File call() throws Exception {
                         return resolve(href, dest);
@@ -244,8 +245,16 @@ public class PrintUserAgentCallback extends NaiveUserAgent {
         InputStream in = resolveAndOpenStream(href);
         File retval = null;
         if (in != null) {
-            IOUtils.copy(in, new FileOutputStream(dest));
-            in.close();
+            FileOutputStream fout = null;
+            try {
+                fout = new FileOutputStream(dest);
+                IOUtils.copy(in, fout);
+            } finally {
+                if (fout != null) {
+                    fout.close();
+                }
+                in.close();
+            }
             retval = dest;
         }
         return retval;
