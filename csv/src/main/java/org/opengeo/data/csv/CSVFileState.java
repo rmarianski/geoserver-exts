@@ -11,12 +11,15 @@ import java.net.URI;
 import org.apache.commons.io.FilenameUtils;
 import org.geotools.referencing.CRS;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.FactoryException;
 
 import com.csvreader.CsvReader;
 
 public class CSVFileState {
 
-    private static CoordinateReferenceSystem DEFAULT_CRS;
+    private static CoordinateReferenceSystem DEFAULT_CRS() throws FactoryException {
+        return CRS.decode("EPSG:4326");
+    };
 
     private final File file;
 
@@ -29,14 +32,6 @@ public class CSVFileState {
     private final String dataInput;
 
     private volatile String[] headers = null;
-
-    static {
-        try {
-            DEFAULT_CRS = CRS.decode("EPSG:4326");
-        } catch (Exception e) {
-            throw new RuntimeException("Could not decode EPSG:4326");
-        }
-    }
 
     public CSVFileState(File file) {
         this(file, null, null, null);
@@ -80,7 +75,15 @@ public class CSVFileState {
     }
 
     public CoordinateReferenceSystem getCrs() {
-        return crs != null ? crs : CSVFileState.DEFAULT_CRS;
+        if (crs != null) {
+            return crs;
+        }
+
+        try {
+            return CSVFileState.DEFAULT_CRS();
+        } catch (FactoryException e) {
+            return null;
+        }
     }
 
     public CsvReader openCSVReader() throws IOException {

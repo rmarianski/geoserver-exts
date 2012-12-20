@@ -5,16 +5,20 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.DataStoreInfo;
 import org.geoserver.catalog.FeatureTypeInfo;
 import org.geoserver.catalog.LayerInfo;
 import org.geoserver.catalog.ResourceInfo;
+import org.geotools.data.DataStore;
 import org.geotools.data.FeatureSource;
 import org.geotools.data.Query;
 import org.geotools.data.h2.H2DataStoreFactory;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
+import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.opengeo.data.importer.transform.AbstractInlineVectorTransform;
 import org.opengeo.data.importer.transform.AttributesToPointGeometryTransform;
 import org.opengeo.data.importer.transform.TransformChain;
 import org.opengis.feature.Feature;
@@ -28,6 +32,23 @@ import com.vividsolutions.jts.geom.Point;
 
 
 public class ImporterDataTest extends ImporterTestSupport {
+
+    private static final class DescriptionLimitingTransform extends AbstractInlineVectorTransform {
+        /** serialVersionUID */
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public SimpleFeature apply(ImportItem item, DataStore dataStore, SimpleFeature oldFeature,
+                SimpleFeature feature) throws Exception {
+            Object origDesc = feature.getAttribute("description");
+            if (origDesc == null) {
+                return feature;
+            }
+            String newDesc = StringUtils.abbreviate(origDesc.toString(), 255);
+            feature.setAttribute("description", newDesc);
+            return feature;
+        }
+    }
 
     public void testImportShapefile() throws Exception {
         File dir = unpack("shape/archsites_epsg_prj.zip");
@@ -548,5 +569,38 @@ public class ImporterDataTest extends ImporterTestSupport {
         assertEquals("Invalid x coordinate", 11.12, coordinate.x, 0.1);
         assertEquals("Invalid y coordinate", 46.07, coordinate.y, 0.1);
         featureIterator.close();
+    }
+
+    public void testImportKMLIndirect() throws Exception {
+        File dir = unpack("shape/samplekml.zip");
+        String wsName = getCatalog().getDefaultWorkspace().getName();
+        DataStoreInfo h2DataStore = createH2DataStore(wsName, "kmltest");
+        SpatialFile importData = new SpatialFile(new File(dir, "sample.kml"));
+        ImportContext context = importer.createContext(importData, h2DataStore);
+        assertEquals(1, context.getTasks().size());
+        ImportTask task = context.getTasks().get(0);
+        ImportItem item = task.getItems().get(0);
+        LayerInfo layer = item.getLayer();
+        ResourceInfo resource = layer.getResource();
+        assertEquals("Invalid srs", "EPSG:4326", resource.getSRS());
+        ReferencedEnvelope emptyBounds = new ReferencedEnvelope();
+        emptyBounds.setToNull();
+        assertTrue("Unexpected bounding box", emptyBounds.equals(resource.getNativeBoundingBox()));
+        // transform chain to limit characters
+        // otherwise we get a sql exception thrown
+        TransformChain transformChain = item.getTransform();
+        transformChain.add(new DescriptionLimitingTransform());
+        importer.run(context);
+        Exception error = item.getError();
+        if (error != null) {
+            error.printStackTrace();
+            fail(error.getMessage());
+        }
+        assertFalse("Bounding box not updated", emptyBounds.equals(resource.getNativeBoundingBox()));
+        FeatureTypeInfo fti = (FeatureTypeInfo) resource;
+        assertEquals("Invalid type name", "sample", fti.getName());
+        FeatureSource<? extends FeatureType, ? extends Feature> featureSource = fti
+                .getFeatureSource(null, null);
+        assertEquals("Unexpected feature count", 20, featureSource.getCount(Query.ALL));
     }
 }

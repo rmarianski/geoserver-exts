@@ -47,4 +47,9 @@ div.button-group a.disabled {
   font-style: italic;
   cursor: default;
 }
+
+legend span.no-border {
+  border-bottom-style: none;
+}
+
   

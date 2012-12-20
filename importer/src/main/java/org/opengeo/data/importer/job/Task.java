@@ -6,6 +6,7 @@ public class Task<V> extends FutureTask<V> {
 
     ProgressMonitor monitor;
     Throwable error;
+    boolean recieved = false;
 
     public Task(Job<V> job) {
         super(job);
@@ -23,5 +24,13 @@ public class Task<V> extends FutureTask<V> {
 
     public void setError(Throwable error) {
         this.error = error;
+    }
+
+    public void recieve() {
+        recieved = true;
+    }
+
+    public boolean isRecieved() {
+        return recieved;
     }
 }

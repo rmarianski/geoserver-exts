@@ -45,6 +45,7 @@ import org.geotools.data.FeatureStore;
 import org.geotools.data.FeatureWriter;
 import org.geotools.data.Transaction;
 import org.geotools.data.directory.DirectoryDataStore;
+import org.geotools.data.postgis.PostGISDialect;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.GeneralEnvelope;
@@ -768,18 +769,21 @@ public class Importer implements InitializingBean, DisposableBean {
                     if (!canceled && item.updateMode() == null) {
                         addToCatalog(item, task);
                     }
-                    
+
                     // verify that the newly created featuretype's resource
                     // has bounding boxes computed - this might be required
                     // for csv or other uploads that have a geometry that is
                     // the result of a transform. there may be another way...
-                    FeatureTypeInfo resource = getCatalog().getResourceByName(featureType.getQualifiedName(), FeatureTypeInfo.class);
-                    if (resource.getNativeBoundingBox().isEmpty()) {
+                    FeatureTypeInfo resource = getCatalog().getResourceByName(
+                            featureType.getQualifiedName(), FeatureTypeInfo.class);
+                    if (resource.getNativeBoundingBox().isEmpty()
+                            || resource.getMetadata().get("recalculate-bounds") != null) {
                         // force computation
                         CatalogBuilder cb = new CatalogBuilder(getCatalog());
                         ReferencedEnvelope nativeBounds = cb.getNativeBounds(resource);
                         resource.setNativeBoundingBox(nativeBounds);
-                        resource.setLatLonBoundingBox(cb.getLatLonBounds(nativeBounds, resource.getCRS()));
+                        resource.setLatLonBoundingBox(cb.getLatLonBounds(nativeBounds,
+                                resource.getCRS()));
                         getCatalog().save(resource);
                     }
                 }
@@ -836,29 +840,36 @@ public class Importer implements InitializingBean, DisposableBean {
         ImportData data = item.getTask().getData();
         FeatureReader reader = format.read(data, item);
         SimpleFeatureType featureType = (SimpleFeatureType) reader.getFeatureType();
-        String featureTypeName = featureType.getName().getLocalPart();
+        final String featureTypeName = featureType.getName().getLocalPart();
 
         DataStore dataStore = (DataStore) store.getDataStore(null);
         FeatureDataConverter featureDataConverter = FeatureDataConverter.DEFAULT;
-        if (dataStore instanceof ShapefileDataStore || dataStore instanceof DirectoryDataStore) {
+        if (isShapefileDataStore(dataStore)) {
             featureDataConverter = FeatureDataConverter.TO_SHAPEFILE;
         }
-
+        else if (isOracleDataStore(dataStore)) {
+            featureDataConverter = FeatureDataConverter.TO_ORACLE;
+        }
+        else if (isPostGISDataStore(dataStore)) {
+            featureDataConverter = FeatureDataConverter.TO_POSTGIS;
+        }
+        
         featureType = featureDataConverter.convertType(featureType, format, data, item);
         UpdateMode updateMode = item.updateMode();
+        final String uniquifiedFeatureTypeName;
         if (updateMode == null) {
             //find a unique type name in the target store
-            featureTypeName = findUniqueNativeFeatureTypeName(featureType, store);
-            item.setOriginalName(featureType.getTypeName());
+            uniquifiedFeatureTypeName = findUniqueNativeFeatureTypeName(featureType, store);
+            item.setOriginalName(featureTypeName);
 
-            if (!featureTypeName.equals(featureType.getTypeName())) {
+            if (!uniquifiedFeatureTypeName.equals(featureTypeName)) {
                 //update the metadata
-                item.getLayer().getResource().setName(featureTypeName);
-                item.getLayer().getResource().setNativeName(featureTypeName);
+                item.getLayer().getResource().setName(uniquifiedFeatureTypeName);
+                item.getLayer().getResource().setNativeName(uniquifiedFeatureTypeName);
                 
                 //retype
                 SimpleFeatureTypeBuilder typeBuilder = new SimpleFeatureTypeBuilder();
-                typeBuilder.setName(featureTypeName);
+                typeBuilder.setName(uniquifiedFeatureTypeName);
                 typeBuilder.addAll(featureType.getAttributeDescriptors());
                 featureType = typeBuilder.buildFeatureType();
             }
@@ -884,6 +895,7 @@ public class Importer implements InitializingBean, DisposableBean {
             if (updateMode == UpdateMode.UPDATE) {
                 throw new UnsupportedOperationException("updateMode UPDATE is not supported yet");
             }
+            uniquifiedFeatureTypeName = featureTypeName;
         }
             
         Transaction transaction = new DefaultTransaction();
@@ -915,7 +927,7 @@ public class Importer implements InitializingBean, DisposableBean {
         
         LOGGER.info("begining import");
         try {
-            writer = dataStore.getFeatureWriterAppend(featureTypeName, transaction);
+            writer = dataStore.getFeatureWriterAppend(uniquifiedFeatureTypeName, transaction);
             
             while(reader.hasNext()) {
                 if (monitor.isCanceled()){
@@ -1094,15 +1106,12 @@ public class Importer implements InitializingBean, DisposableBean {
     }
 
     String findUniqueNativeFeatureTypeName(FeatureType featureType, DataStoreInfo store) throws IOException {
-        DataStore dataStore = (DataStore) store.getDataStore(null);
-        String name = featureType.getName().getLocalPart();
-        
-        //hack for oracle, all names must be upper case
-        if (dataStore instanceof JDBCDataStore &&
-            "org.geotools.data.oracle.OracleDialect".equals(((JDBCDataStore)dataStore).getSQLDialect().getClass().getName())) {
-            name = name.toUpperCase();
-        }
+        return findUniqueNativeFeatureTypeName(featureType.getName().getLocalPart(), store);
+    }
 
+    private String findUniqueNativeFeatureTypeName(String name, DataStoreInfo store) throws IOException {
+        DataStore dataStore = (DataStore) store.getDataStore(null);
+        
         //TODO: put an upper limit on how many times to try
         List<String> names = Arrays.asList(dataStore.getTypeNames());
         if (names.contains(name)) {
@@ -1113,8 +1122,22 @@ public class Importer implements InitializingBean, DisposableBean {
                 i++;
             }
         }
-        
+
         return name;
+    }
+
+    boolean isShapefileDataStore(DataStore dataStore) {
+        return dataStore instanceof ShapefileDataStore || dataStore instanceof DirectoryDataStore;
+    }
+
+    boolean isOracleDataStore(DataStore dataStore) {
+        return "org.geotools.data.oracle.OracleDialect".equals(
+            ((JDBCDataStore)dataStore).getSQLDialect().getClass().getName());
+    }
+
+    boolean isPostGISDataStore(DataStore dataStore) {
+        return ((JDBCDataStore) dataStore).getSQLDialect().getClass().getName()
+                .startsWith("org.geotools.data.postgis");
     }
 
     /*

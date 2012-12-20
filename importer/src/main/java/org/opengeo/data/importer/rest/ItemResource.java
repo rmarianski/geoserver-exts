@@ -166,7 +166,10 @@ public class ItemResource extends AbstractResource {
         }
         
         // have to do this after updating the original
-        if (newRefSystem != null) {
+        //JD: not actually sure this should be here... it doesn't work in the indirect case since
+        // we don't have the physical feature type yet... i think it might be better to just to 
+        // null and let the importer recalculate on the fly
+        if (newRefSystem != null && orig.getTask().isDirect()) {
             try {
                 ReferencedEnvelope nativeBounds = cb.getNativeBounds(resource);
                 resource.setLatLonBoundingBox(cb.getLatLonBounds(nativeBounds, newRefSystem));

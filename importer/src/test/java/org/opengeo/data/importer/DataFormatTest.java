@@ -27,4 +27,10 @@ public class DataFormatTest extends ImporterTestSupport {
         assertEquals("CSV format not found", "CSV", name);
     }
 
+    public void testLookupKML() throws Exception {
+        DataFormat format = DataFormat.lookup(new File("foo.kml"));
+        assertNotNull("No format found for kml files", format);
+        String name = format.getName();
+        assertEquals("KML format not found", "KML", name);
+    }
 }
