@@ -84,6 +84,7 @@ public class KMLRawReader implements Iterable<Object>, Iterator<Object> {
         try {
             parsedObject = parser.parse();
         } catch (Exception e) {
+            e.printStackTrace();
             throw new IOException(e);
         }
         return parsedObject;

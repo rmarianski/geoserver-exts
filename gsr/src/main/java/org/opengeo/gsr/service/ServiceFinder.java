@@ -4,6 +4,9 @@
  */
 package org.opengeo.gsr.service;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -12,6 +15,9 @@ import org.geoserver.catalog.rest.AbstractCatalogFinder;
 import org.geoserver.config.GeoServer;
 import org.geoserver.ows.Dispatcher;
 import org.geoserver.wms.WMS;
+import org.opengeo.gsr.ms.resource.LayerListResource;
+import org.opengeo.gsr.ms.resource.MapResource;
+import org.opengeo.gsr.ms.resource.QueryResource;
 import org.opengeo.gsr.resource.CatalogResource;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
@@ -27,8 +33,10 @@ public class ServiceFinder extends AbstractCatalogFinder {
 
     private GeoServer geoServer;
 
+    @SuppressWarnings("unused")
     private WMS wms;
 
+    @SuppressWarnings("unused")
     private Dispatcher dispatcher;
 
     protected ServiceFinder(GeoServer geoServer, WMS wms, Dispatcher dispatcher) {
@@ -46,19 +54,28 @@ public class ServiceFinder extends AbstractCatalogFinder {
             if (attributes.get("serviceType") != null) {
                 serviceType = attributes.get("serviceType").toString();
             }
-            String operation = "";
             String params = attributes.get("params").toString();
             Map<String, String> paramsMap = getParamsMap(params);
             String format = paramsMap.get("f");
+            
+            String operation = "";
             if (attributes.get("operation") != null) {
                 operation = attributes.get("operation").toString();
             }
+            
             switch (ServiceType.valueOf(serviceType)) {
             case CatalogServer:
                 resource = new CatalogResource(null, request, response, CatalogService.class,
                         geoServer);
                 break;
             case MapServer:
+                if ("".equals(operation)) {
+                    resource = new MapResource(null, request, response, geoServer, format);
+                } else if ("layers".equals(operation)) {
+                    resource = new LayerListResource(null, request, response, catalog, format);
+                } else if ("query".equals(operation)) {
+                    resource = new QueryResource(null, request, response, catalog, format);
+                }
                 break;
             case FeatureServer:
                 break;
@@ -71,9 +88,13 @@ public class ServiceFinder extends AbstractCatalogFinder {
             case ImageServer:
                 break;
             }
-
         } catch (Exception e) {
-            response.setEntity("NOT IMPLEMENTED", MediaType.TEXT_HTML);
+            Writer w = new StringWriter();
+            PrintWriter pw = new PrintWriter(w);
+            pw.println("Unsupported request: " + request.getResourceRef());
+            e.printStackTrace(pw);
+            pw.close();
+            response.setEntity(w.toString(), MediaType.TEXT_HTML);
             resource = new Resource(getContext(), request, response);
         }
         return resource;

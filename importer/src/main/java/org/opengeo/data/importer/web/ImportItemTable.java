@@ -38,6 +38,7 @@ import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.apache.wicket.model.PropertyModel;
 import org.apache.wicket.model.StringResourceModel;
+import org.geoserver.catalog.FeatureTypeInfo;
 import org.geoserver.catalog.LayerInfo;
 import org.geoserver.web.GeoServerApplication;
 import org.geoserver.web.demo.PreviewLayer;
@@ -57,17 +58,13 @@ import org.opengeo.data.importer.ImportItem;
 import org.opengeo.data.importer.Importer;
 import org.opengeo.data.importer.ImportItem.State;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.FactoryException;
 
 public class ImportItemTable extends GeoServerTablePanel<ImportItem> {
 
     static Logger LOGGER = Logging.getLogger(Importer.class);
-    static CoordinateReferenceSystem EPSG_3857;
-    static {
-        try {
-            EPSG_3857 = CRS.decode("EPSG:3857");
-        } catch (Exception e) {
-            LOGGER.log(Level.FINER, e.getMessage(), e);
-        }
+    static CoordinateReferenceSystem EPSG_3857() throws FactoryException {
+        return CRS.decode("EPSG:3857");
     }
 
     ModalWindow popupWindow;
@@ -125,7 +122,12 @@ public class ImportItemTable extends GeoServerTablePanel<ImportItem> {
                     //return createFixCRSLink(id, itemModel);
                 case READY:
                     //return advanced option link
-                    return new AdvancedOptionPanel(id, itemModel);
+                    //for now disable if this is not a vector layer
+                    ImportItem item = (ImportItem) itemModel.getObject();
+                    if (item.getLayer() != null && item.getLayer().getResource() instanceof FeatureTypeInfo) {
+                        return new AdvancedOptionPanel(id, itemModel);    
+                    }
+                    return new WebMarkupContainer(id);
                 default:
                     return new WebMarkupContainer(id);
             }
@@ -395,7 +397,7 @@ public class ImportItemTable extends GeoServerTablePanel<ImportItem> {
 
             //geoexplorer needs bbox in spherical mercator
             try {
-                ReferencedEnvelope e = layer.getResource().getLatLonBoundingBox().transform(EPSG_3857, true);
+                ReferencedEnvelope e = layer.getResource().getLatLonBoundingBox().transform(EPSG_3857(), true);
                 if (e != null) {
                     gxpLink += "&bbox=" + 
                             String.format("%f,%f,%f,%f", e.getMinX(), e.getMinY(), e.getMaxX(), e.getMaxY()); 

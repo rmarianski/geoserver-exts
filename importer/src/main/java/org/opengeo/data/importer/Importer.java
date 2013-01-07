@@ -840,7 +840,7 @@ public class Importer implements InitializingBean, DisposableBean {
         ImportData data = item.getTask().getData();
         FeatureReader reader = format.read(data, item);
         SimpleFeatureType featureType = (SimpleFeatureType) reader.getFeatureType();
-        String featureTypeName = item.getLayer().getName();
+        final String featureTypeName = featureType.getName().getLocalPart();
 
         DataStore dataStore = (DataStore) store.getDataStore(null);
         FeatureDataConverter featureDataConverter = FeatureDataConverter.DEFAULT;
@@ -850,32 +850,26 @@ public class Importer implements InitializingBean, DisposableBean {
         else if (isOracleDataStore(dataStore)) {
             featureDataConverter = FeatureDataConverter.TO_ORACLE;
         }
+        else if (isPostGISDataStore(dataStore)) {
+            featureDataConverter = FeatureDataConverter.TO_POSTGIS;
+        }
         
         featureType = featureDataConverter.convertType(featureType, format, data, item);
         UpdateMode updateMode = item.updateMode();
+        final String uniquifiedFeatureTypeName;
         if (updateMode == null) {
-            if (dataStore instanceof JDBCDataStore
-                    && ((JDBCDataStore) dataStore).getSQLDialect() instanceof PostGISDialect) {
-                // trim the length of the name
-                // by default, postgis table/index names need to fit in 64 characters
-                // with the "spatial_" prefix and "_geometry" suffix, that leaves 47 chars
-                // and we should leave room to append integers to make the name unique too
-                if (featureTypeName.length() > 45) {
-                    featureTypeName = featureTypeName.substring(0, 45);
-                }
-            }
             //find a unique type name in the target store
-            featureTypeName = findUniqueNativeFeatureTypeName(featureTypeName, store);
-            item.setOriginalName(featureType.getTypeName());
+            uniquifiedFeatureTypeName = findUniqueNativeFeatureTypeName(featureType, store);
+            item.setOriginalName(featureTypeName);
 
-            if (!featureTypeName.equals(featureType.getTypeName())) {
+            if (!uniquifiedFeatureTypeName.equals(featureTypeName)) {
                 //update the metadata
-                item.getLayer().getResource().setName(featureTypeName);
-                item.getLayer().getResource().setNativeName(featureTypeName);
+                item.getLayer().getResource().setName(uniquifiedFeatureTypeName);
+                item.getLayer().getResource().setNativeName(uniquifiedFeatureTypeName);
                 
                 //retype
                 SimpleFeatureTypeBuilder typeBuilder = new SimpleFeatureTypeBuilder();
-                typeBuilder.setName(featureTypeName);
+                typeBuilder.setName(uniquifiedFeatureTypeName);
                 typeBuilder.addAll(featureType.getAttributeDescriptors());
                 featureType = typeBuilder.buildFeatureType();
             }
@@ -901,6 +895,7 @@ public class Importer implements InitializingBean, DisposableBean {
             if (updateMode == UpdateMode.UPDATE) {
                 throw new UnsupportedOperationException("updateMode UPDATE is not supported yet");
             }
+            uniquifiedFeatureTypeName = featureTypeName;
         }
             
         Transaction transaction = new DefaultTransaction();
@@ -932,7 +927,7 @@ public class Importer implements InitializingBean, DisposableBean {
         
         LOGGER.info("begining import");
         try {
-            writer = dataStore.getFeatureWriterAppend(featureTypeName, transaction);
+            writer = dataStore.getFeatureWriterAppend(uniquifiedFeatureTypeName, transaction);
             
             while(reader.hasNext()) {
                 if (monitor.isCanceled()){
@@ -1144,6 +1139,11 @@ public class Importer implements InitializingBean, DisposableBean {
     boolean isOracleDataStore(DataStore dataStore) {
         return "org.geotools.data.oracle.OracleDialect".equals(
             ((JDBCDataStore)dataStore).getSQLDialect().getClass().getName());
+    }
+
+    boolean isPostGISDataStore(DataStore dataStore) {
+        return ((JDBCDataStore) dataStore).getSQLDialect().getClass().getName()
+                .startsWith("org.geotools.data.postgis");
     }
 
     /*

@@ -1,12 +1,20 @@
 package org.opengeo.data.importer;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.geotools.data.FeatureReader;
+import org.geotools.feature.AttributeTypeBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.util.logging.Logging;
 import org.opengis.feature.simple.SimpleFeature;
@@ -26,6 +34,31 @@ import com.vividsolutions.jts.geom.Geometry;
 public class FeatureDataConverter {
 
     static Logger LOGGER = Logging.getLogger(Importer.class);
+
+    private static final Set<String> ORACLE_RESERVED_WORDS;
+
+    static {
+        final HashSet<String> words = new HashSet<String>();
+        final InputStream wordStream = FeatureDataConverter.class.getResourceAsStream("oracle_reserved_words.txt");
+        final Reader wordReader = new InputStreamReader(wordStream, Charset.forName("UTF-8"));
+        final BufferedReader bufferedWordReader = new BufferedReader(wordReader);
+
+        String word;
+        try {
+            while ((word = bufferedWordReader.readLine()) != null) {
+                words.add(word);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to load Oracle reserved words", e);
+        } finally {
+            try {
+                bufferedWordReader.close();
+            } catch (IOException e) {
+                LOGGER.log(Level.WARNING, "Error while closing Oracle reserved words file", e);
+            }
+        }
+        ORACLE_RESERVED_WORDS = Collections.unmodifiableSet(words);
+    }
 
     private FeatureDataConverter() {
     }
@@ -120,6 +153,28 @@ public class FeatureDataConverter {
         }
     };
 
+    public static final FeatureDataConverter TO_POSTGIS = new FeatureDataConverter() {
+
+        @Override
+        public SimpleFeatureType convertType(SimpleFeatureType featureType, VectorFormat format,
+                ImportData data, ImportItem item) {
+            SimpleFeatureType converted = featureType;
+            String featureTypeName = featureType.getTypeName();
+            // trim the length of the name
+            // by default, postgis table/index names need to fit in 64 characters
+            // with the "spatial_" prefix and "_geometry" suffix, that leaves 47 chars
+            // and we should leave room to append integers to make the name unique too
+            if (featureTypeName.length() > 45) {
+                SimpleFeatureTypeBuilder typeBuilder = new SimpleFeatureTypeBuilder();
+                featureTypeName = featureTypeName.substring(0, 45);
+                typeBuilder.setName(featureTypeName);
+                typeBuilder.addAll(featureType.getAttributeDescriptors());
+                converted = typeBuilder.buildFeatureType();
+            }
+            return converted;
+        }
+    };
+
     public static final FeatureDataConverter TO_ORACLE = new FeatureDataConverter() {
         public void convert(SimpleFeature from, SimpleFeature to) {
             //for oracle the target names are always uppercase
@@ -132,5 +187,28 @@ public class FeatureDataConverter {
                 }
             }
         };
+
+        public SimpleFeatureType convertType(SimpleFeatureType featureType, VectorFormat format, ImportData data, ImportItem item) {
+            SimpleFeatureTypeBuilder typeBuilder = new SimpleFeatureTypeBuilder();
+            AttributeTypeBuilder attributeBuilder = new AttributeTypeBuilder();
+            typeBuilder.setName(ensureOracleSafe(featureType.getTypeName()));
+            for (AttributeDescriptor att : featureType.getAttributeDescriptors()) {
+                attributeBuilder.init(att);
+                final String name = (ensureOracleSafe(att.getName().getLocalPart()));
+                typeBuilder.add(attributeBuilder.buildDescriptor(name));
+            }
+            return typeBuilder.buildFeatureType();
+        }
+
+        private final String ensureOracleSafe(final String identifier) {
+            final String capitalized = identifier.toUpperCase();
+            final String notReserved;
+            if (ORACLE_RESERVED_WORDS.contains(capitalized)) {
+                notReserved = capitalized + "_";
+            } else {
+                notReserved = capitalized;
+            }
+            return notReserved;
+        }
     };
 }

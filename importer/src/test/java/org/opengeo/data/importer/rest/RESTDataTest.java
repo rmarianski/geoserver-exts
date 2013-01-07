@@ -12,6 +12,8 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.multipart.FilePart;
 import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
 import org.apache.commons.httpclient.methods.multipart.Part;
+import org.opengeo.data.importer.Directory;
+import org.opengeo.data.importer.ImportContext;
 import org.opengeo.data.importer.ImporterTestSupport;
 
 import com.mockrunner.mock.web.MockHttpServletRequest;
@@ -26,6 +28,7 @@ import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.DataStoreInfo;
 import org.geoserver.data.test.MockData;
 import org.geoserver.platform.GeoServerExtensions;
+import org.geotools.data.DataStore;
 import org.restlet.data.MediaType;
 
 public class RESTDataTest extends ImporterTestSupport {
@@ -182,6 +185,32 @@ public class RESTDataTest extends ImporterTestSupport {
         assertEquals(1, cat.getFeatureTypesByDataStore(acme).size());
         assertNotNull(cat.getFeatureTypeByStore(acme, "archsites"));
         runChecks("sf:archsites");
+    }
+
+    public void testIndirectUpdateSRS() throws Exception {
+        Catalog cat = getCatalog();
+        DataStoreInfo ds = createH2DataStore(cat.getDefaultWorkspace().getName(), "spearfish");
+
+        File dir = tmpDir();
+        unpack("shape/archsites_no_crs.zip", dir);
+
+        ImportContext context = importer.createContext(new Directory(dir), ds);
+        
+        JSONObject item = getItem(0, 0, 0);
+        assertEquals("NO_CRS", item.get("state"));
+
+        String json = "{\"id\":0,\"resource\":{\"featureType\":{\"srs\":\"EPSG:26713\"}}}";
+        putItem(0, 0, 0, json);
+
+        item = getItem(0, 0, 0);
+        assertEquals("READY", item.get("state"));
+
+        DataStore store = (DataStore) ds.getDataStore(null);
+        assertEquals(store.getTypeNames().length, 0);
+
+        postImport(0);
+        assertEquals(store.getTypeNames().length, 1);
+        assertEquals("archsites", store.getTypeNames()[0]);
     }
 
     JSONObject getTask(int imp, int task) throws Exception {

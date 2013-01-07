@@ -252,6 +252,7 @@ public class KMLFileFormat extends VectorFormat {
             ftinfo.setEnabled(true);
             ftinfo.setNativeName(name);
             ftinfo.setName(name);
+            ftinfo.setTitle(name);
             ftinfo.setNamespace(catalog.getDefaultNamespace());
             List<AttributeTypeInfo> attributes = ftinfo.getAttributes();
             for (AttributeDescriptor ad : featureType.getAttributeDescriptors()) {

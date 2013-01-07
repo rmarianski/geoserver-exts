@@ -14,6 +14,7 @@ import org.opengis.feature.simple.SimpleFeatureType;
 public class KMLFileFormatTest extends TestCase {
 
     private KMLFileFormat kmlFileFormat;
+    static final String DOC_EL = "<kml xmlns=\"http://www.opengis.net/kml/2.2\">";
 
     @Override
     protected void setUp() throws Exception {
@@ -21,7 +22,7 @@ public class KMLFileFormatTest extends TestCase {
     }
 
     public void testParseFeatureTypeNoPlacemarks() throws IOException {
-        String kmlInput = "<kml></kml>";
+        String kmlInput = DOC_EL + "</kml>";
         try {
             kmlFileFormat.parseFeatureTypes("foo", IOUtils.toInputStream(kmlInput));
         } catch (IllegalArgumentException e) {
@@ -32,7 +33,7 @@ public class KMLFileFormatTest extends TestCase {
     }
 
     public void testParseFeatureTypeMinimal() throws Exception {
-        String kmlInput = "<kml><Placemark></Placemark></kml>";
+        String kmlInput = DOC_EL + "<Placemark></Placemark></kml>";
         List<SimpleFeatureType> featureTypes = kmlFileFormat.parseFeatureTypes("foo",
                 IOUtils.toInputStream(kmlInput));
         assertEquals("Unexpected number of feature types", 1, featureTypes.size());
@@ -42,7 +43,7 @@ public class KMLFileFormatTest extends TestCase {
     }
 
     public void testExtendedUserData() throws Exception {
-        String kmlInput = "<kml><Placemark>" + "<ExtendedData>"
+        String kmlInput = DOC_EL + "<Placemark>" + "<ExtendedData>"
                 + "<Data name=\"foo\"><value>bar</value></Data>"
                 + "<Data name=\"quux\"><value>morx</value></Data>" + "</ExtendedData>"
                 + "</Placemark></kml>";
@@ -59,7 +60,7 @@ public class KMLFileFormatTest extends TestCase {
     }
 
     public void testReadFeatureWithNameAndDescription() throws Exception {
-        String kmlInput = "<kml><Placemark><name>foo</name><description>bar</description></Placemark></kml>";
+        String kmlInput = DOC_EL + "<Placemark><name>foo</name><description>bar</description></Placemark></kml>";
         SimpleFeatureType featureType = kmlFileFormat.parseFeatureTypes("foo",
                 IOUtils.toInputStream(kmlInput)).get(0);
         FeatureReader<SimpleFeatureType, SimpleFeature> reader = kmlFileFormat.read(featureType,
@@ -72,7 +73,7 @@ public class KMLFileFormatTest extends TestCase {
     }
 
     public void testReadFeatureWithUntypedExtendedData() throws Exception {
-        String kmlInput = "<kml><Placemark>" + "<ExtendedData>"
+        String kmlInput = DOC_EL + "<Placemark>" + "<ExtendedData>"
                 + "<Data name=\"foo\"><value>bar</value></Data>"
                 + "<Data name=\"quux\"><value>morx</value></Data>" + "</ExtendedData>"
                 + "</Placemark></kml>";
@@ -88,7 +89,7 @@ public class KMLFileFormatTest extends TestCase {
     }
 
     public void testReadFeatureWithTypedExtendedData() throws Exception {
-        String kmlInput = "<kml>" + "<Schema name=\"myschema\">"
+        String kmlInput = DOC_EL + "<Schema name=\"myschema\">"
                 + "<SimpleField type=\"int\" name=\"foo\"></SimpleField>" + "</Schema>"
                 + "<Placemark>" + "<ExtendedData>" + "<SchemaData schemaUrl=\"#myschema\">"
                 + "<SimpleData name=\"foo\">42</SimpleData>" + "</SchemaData>" + "</ExtendedData>"
@@ -104,7 +105,7 @@ public class KMLFileFormatTest extends TestCase {
     }
 
     public void testMultipleSchemas() throws Exception {
-        String kmlInput = "<kml>" + "<Schema name=\"schema1\">"
+        String kmlInput = DOC_EL + "<Schema name=\"schema1\">"
                 + "<SimpleField type=\"int\" name=\"foo\"></SimpleField>" + "</Schema>"
                 + "<Schema name=\"schema2\">"
                 + "<SimpleField type=\"float\" name=\"bar\"></SimpleField>" + "</Schema>"
@@ -127,7 +128,7 @@ public class KMLFileFormatTest extends TestCase {
     }
 
     public void testTypedAndUntyped() throws Exception {
-        String kmlInput = "<kml>" + "<Schema name=\"myschema\">"
+        String kmlInput = DOC_EL + "<Schema name=\"myschema\">"
                 + "<SimpleField type=\"int\" name=\"foo\"></SimpleField>" + "</Schema>"
                 + "<Placemark>" + "<ExtendedData>" + "<SchemaData schemaUrl=\"#myschema\">"
                 + "<SimpleData name=\"foo\">42</SimpleData>" + "</SchemaData>"
@@ -148,7 +149,7 @@ public class KMLFileFormatTest extends TestCase {
     }
 
     public void testReadCustomSchema() throws Exception {
-        String kmlInput = "<kml>" + "<Schema name=\"myschema\">"
+        String kmlInput = DOC_EL + "<Schema name=\"myschema\">"
                 + "<SimpleField type=\"int\" name=\"foo\"></SimpleField>" + "</Schema>"
                 + "<myschema><foo>7</foo></myschema>" + "</kml>";
         List<SimpleFeatureType> featureTypes = kmlFileFormat.parseFeatureTypes("custom-schema",

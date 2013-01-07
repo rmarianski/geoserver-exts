@@ -26,8 +26,9 @@ public class JSONValidator {
     public static boolean isValidSchema(String json, File schemaFile) {
         boolean isValid = false;
         ValidationReport report = null;
+        final String baseURI = "file:///" + schemaFile.getAbsolutePath();
+        
         try {
-            final String baseURI = "file:///" + schemaFile.getAbsolutePath();
             JsonSchemaFactory factory = new JsonSchemaFactory.Builder().setNamespace(baseURI)
                     .build();
             JsonNode rawSchema = JsonLoader.fromFile(schemaFile);
@@ -44,6 +45,7 @@ public class JSONValidator {
                 }
             }
         } catch (Exception e) {
+            System.err.println("Failed to load json schema from " + baseURI);
             e.printStackTrace();
             report.getMessages().add(e.getMessage());
         }
