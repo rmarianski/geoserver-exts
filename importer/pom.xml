@@ -106,6 +106,12 @@
       <version>${gt.version}</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.geotools.xsd</groupId>
+      <artifactId>gt-xsd-kml</artifactId>
+      <version>${gt.version}</version>
+      <scope>provided</scope>
+    </dependency>
 
     <dependency>
         <groupId>org.opengeo.data.csv</groupId>
@@ -146,11 +152,6 @@
       <groupId>com.mockrunner</groupId>
       <artifactId>mockrunner</artifactId>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.geotools.xsd</groupId>
-      <artifactId>gt-xsd-kml</artifactId>
-      <version>8-SNAPSHOT</version>
     </dependency>
 
   </dependencies>
