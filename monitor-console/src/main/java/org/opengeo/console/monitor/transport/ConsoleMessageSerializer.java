@@ -103,7 +103,16 @@ public class ConsoleMessageSerializer {
             json.element("bbox", bboxList);
         }
 
-        json.elementOpt("error", requestData.getErrorMessage());
+        String errorMessage = requestData.getErrorMessage();
+        if (errorMessage == null) {
+            // unfortunately, we can have an error but no error message at this point
+            // toString will at least give us something here
+            Throwable error = requestData.getError();
+            if (error != null) {
+                errorMessage = error.toString();
+            }
+        }
+        json.elementOpt("error", errorMessage);
 
         List<String> resources = requestData.getResources();
         if (resources != null && !resources.isEmpty()) {
