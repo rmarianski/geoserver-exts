@@ -294,8 +294,8 @@
         <version>${gs.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.geoserver.community</groupId>
-        <artifactId>monitoring</artifactId>
+        <groupId>org.geoserver.extension</groupId>
+        <artifactId>monitor-core</artifactId>
         <version>${gs.version}</version>
       </dependency>
       <dependency>
@@ -352,6 +352,11 @@
         <groupId>commons-vfs</groupId>
         <artifactId>commons-vfs</artifactId>
         <version>1.0</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-httpclient</groupId>
+        <artifactId>commons-httpclient</artifactId>
+        <version>3.0</version>
       </dependency>
       <dependency>
         <groupId>xerces</groupId>
@@ -425,6 +430,7 @@
     <module>analytics</module>
     <module>csv</module>
     <module>importer</module>
+    <module>monitor-console</module>
     <module>printng</module>
     <module>web</module>
   </modules>

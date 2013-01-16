@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:tx="http://www.springframework.org/schema/tx"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/tx
+    http://www.springframework.org/schema/tx/spring-tx.xsd"
+    default-autowire="byName">
+
+    <bean id="consoleTransporterPostProcessor" class="org.geoserver.monitor.MessageTransportPostProcessor">
+      <constructor-arg ref="consoleMonitorTransport" index="0"/>
+      <constructor-arg ref="consoleRequestDataFactory" index="1"/>
+    </bean>
+
+    <bean id="consoleMonitorTransport" class="org.opengeo.console.monitor.transport.QueuedMessageTransport">
+      <constructor-arg ref="monitorHttpTransport" index="0"/>
+      <constructor-arg value="3" index="1"/>
+    </bean>
+
+    <bean id="monitorHttpTransport"
+          factory-bean="monitorHttpTransportFactory"
+          factory-method="getInstance" />
+
+    <bean id="monitorHttpTransportFactory" class="org.opengeo.console.monitor.transport.HttpMessageTransportFactory">
+      <constructor-arg value="monitoring" index="0"/>
+      <constructor-arg value="controller.properties" index="1"/>
+      <constructor-arg ref="resourceLoader" index="2"/>
+    </bean>
+
+    <bean id="consoleRequestDataFactory" class="org.opengeo.console.monitor.ConsoleRequestDataFactory">
+      <constructor-arg ref="consoleJmxSystemMonitor" index="0"/>
+    </bean>
+
+    <bean id="consoleJmxSystemMonitor" class="org.opengeo.console.monitor.JmxSystemMonitor" />
+
+</beans>
