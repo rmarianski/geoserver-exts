@@ -17,9 +17,8 @@
   <!-- declare depenency on geoserver main -->
   <dependencies>
     <dependency>
-      <groupId>org.geoserver.community</groupId>
-      <artifactId>monitoring</artifactId>
-      <version>${gs.version}</version>
+      <groupId>org.geoserver.extension</groupId>
+      <artifactId>monitor-hibernate</artifactId>
     </dependency>
     <dependency>
       <groupId>joda-time</groupId>
