@@ -29,7 +29,4 @@
      </property>
     </bean>
   
-    <bean id="metricsInitializer" class="org.geoserver.metrics.MetricsInitializer"/>
-    <bean id="metricsWmsCallback" class="org.geoserver.metrics.wms.WMSCallback"/>
-   
 </beans>
