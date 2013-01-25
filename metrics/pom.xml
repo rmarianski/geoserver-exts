@@ -35,7 +35,7 @@
   </dependencyManagement>
 
   <modules>
-    <module>core</module>
+    <module>base</module>
     <module>common</module>
     <module>wms</module>
   </modules>

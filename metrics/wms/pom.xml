@@ -16,7 +16,7 @@
   <dependencies>
     <dependency>
       <groupId>org.opengeo.geoserver</groupId>
-      <artifactId>metrics-core</artifactId>
+      <artifactId>metrics-base</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

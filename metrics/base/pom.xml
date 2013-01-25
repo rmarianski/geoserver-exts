@@ -9,9 +9,9 @@
   </parent>
 
   <groupId>org.opengeo.geoserver</groupId>
-  <artifactId>metrics-core</artifactId>
+  <artifactId>metrics-base</artifactId>
   <packaging>jar</packaging>
-  <name>Metrics Core Module</name>
+  <name>Metrics Base Module</name>
 
   <dependencies>
     <dependency>
