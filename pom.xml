@@ -143,6 +143,31 @@
         </executions>
       </plugin>
 
+      <!-- assembly -->
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <configuration>
+        </configuration>
+        <executions>
+         <execution>
+          <phase>package</phase>
+          <goals>
+           <goal>copy-dependencies</goal>
+          </goals>
+         </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.3</version>
+        <configuration>
+          <descriptors>
+            <descriptor>assembly.xml</descriptor>
+          </descriptors>
+        </configuration>
+      </plugin>
     </plugins>
 
     <testResources>
@@ -294,8 +319,13 @@
         <version>${gs.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.geoserver.community</groupId>
-        <artifactId>monitoring</artifactId>
+        <groupId>org.geoserver.extension</groupId>
+        <artifactId>monitor-core</artifactId>
+        <version>${gs.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geoserver.extension</groupId>
+        <artifactId>monitor-hibernate</artifactId>
         <version>${gs.version}</version>
       </dependency>
       <dependency>
@@ -352,6 +382,16 @@
         <groupId>commons-vfs</groupId>
         <artifactId>commons-vfs</artifactId>
         <version>1.0</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-httpclient</groupId>
+        <artifactId>commons-httpclient</artifactId>
+        <version>3.0</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-collections</groupId>
+        <artifactId>commons-collections</artifactId>
+        <version>3.1</version>
       </dependency>
       <dependency>
         <groupId>xerces</groupId>
@@ -425,14 +465,15 @@
     <module>analytics</module>
     <module>csv</module>
     <module>importer</module>
+    <module>monitor-console</module>
     <module>printng</module>
     <module>web</module>
     <module>gsr</module>
   </modules>
 
   <properties>
-    <gs.version>2.4-SNAPSHOT</gs.version>
-    <gt.version>8-SNAPSHOT</gt.version>
+    <gs.version>2.3-SNAPSHOT</gs.version>
+    <gt.version>9-SNAPSHOT</gt.version>
     <spring.version>3.1.1.RELEASE</spring.version>
     <spring.security.version>3.1.0.RELEASE</spring.security.version>
     <jetty.version>6.1.8</jetty.version>
