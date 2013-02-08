@@ -8,6 +8,10 @@
     http://www.springframework.org/schema/tx/spring-tx.xsd"
     default-autowire="byName">
 
+    <bean id="monitorGeoIPPostProcessor" class="org.geoserver.monitor.GeoIPPostProcessor">
+        <constructor-arg ref="resourceLoader" index="0" />
+    </bean>
+
     <bean id="consoleTransporterPostProcessor" class="org.geoserver.monitor.MessageTransportPostProcessor">
       <constructor-arg ref="consoleMonitorTransport" index="0"/>
       <constructor-arg ref="consoleRequestDataFactory" index="1"/>
