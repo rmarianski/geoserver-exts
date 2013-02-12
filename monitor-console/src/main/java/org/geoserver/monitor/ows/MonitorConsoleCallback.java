@@ -64,7 +64,7 @@ public class MonitorConsoleCallback implements DispatcherCallback {
         // compute gwc stats
         GwcStatistics gwcStats = gwcStatistician.getGwcStats(Optional.fromNullable(operation),
                 result);
-        ConsoleData consoleData = new ConsoleData(gwcStats.isCacheHit());
+        ConsoleData consoleData = new ConsoleData(gwcStats.isCacheHit(), gwcStats.getMissReason());
 
         // store data into a map keyed off the request data id
         // this map is used later to lookup the console data for the requestdata from the post processor

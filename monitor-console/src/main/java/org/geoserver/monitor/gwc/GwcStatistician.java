@@ -24,23 +24,28 @@ public class GwcStatistician {
 
         boolean isTiled = mapRequest.isTiled();
         boolean isCacheHit = false;
+        Optional<String> missReason = Optional.absent();
 
         if (isTiled && owsResponseDispatchedResult instanceof WebMap) {
             WebMap map = (WebMap) owsResponseDispatchedResult;
-            for (String[] h : map.getResponseHeaders()) {
+            String[][] responseHeaders = map.getResponseHeaders();
+            for (String[] h : responseHeaders) {
                 if ("geowebcache-cache-result".equalsIgnoreCase(h[0])
                         && "HIT".equalsIgnoreCase(h[1])) {
                     isCacheHit = true;
                     break;
                 }
+                if ("geowebcache-miss-reason".equalsIgnoreCase(h[0])) {
+                    missReason = Optional.of(h[1]);
+                }
             }
         }
 
-        return new GwcStatistics(isTiled, isCacheHit);
+        return new GwcStatistics(isTiled, isCacheHit, missReason);
     }
 
     private GwcStatistics emptyStats() {
-        return new GwcStatistics(false, false);
+        return new GwcStatistics(false, false, Optional.<String>absent());
     }
 
 }

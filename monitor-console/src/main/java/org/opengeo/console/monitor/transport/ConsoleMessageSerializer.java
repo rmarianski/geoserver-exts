@@ -126,8 +126,14 @@ public class ConsoleMessageSerializer {
         // track gwc cache hits
         if (optionalConsoleData.isPresent()) {
             ConsoleData consoleData = optionalConsoleData.get();
+
             boolean cacheHit = consoleData.isCacheHit();
             json.element("cache_hit", cacheHit);
+
+            Optional<String> cacheMissReason = consoleData.getCacheMissReason();
+            if (cacheMissReason.isPresent()) {
+                json.element("cache_miss_reason", cacheMissReason.get());
+            }
         }
 
         // system stats
