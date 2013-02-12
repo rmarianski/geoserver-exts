@@ -1,16 +1,15 @@
 package org.opengeo.console.monitor;
 
-
 public class ConsoleData {
 
-    private final SystemStatSnapshot systemStatSnapshot;
+    private final boolean isCacheHit;
 
-    public ConsoleData(SystemStatSnapshot systemStatSnapshot) {
-        this.systemStatSnapshot = systemStatSnapshot;
+    public ConsoleData(boolean isCacheHit) {
+        this.isCacheHit = isCacheHit;
     }
 
-    public SystemStatSnapshot getSystemStatSnapshot() {
-        return systemStatSnapshot;
+    public boolean isCacheHit() {
+        return isCacheHit;
     }
 
 }
