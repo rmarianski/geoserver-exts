@@ -132,6 +132,8 @@ public class ImportResource extends AbstractResource {
                     //take it from the store 
                     context.setTargetWorkspace(targetStore.getWorkspace());
                 }
+
+                context.setData(newContext.getData());
             }
 
             context.reattach(importer.getCatalog(), true);
@@ -250,13 +252,8 @@ public class ImportResource extends AbstractResource {
 
     class ImportContextJSONFormat extends StreamDataFormat {
 
-        XStreamPersister xp;
-
         public ImportContextJSONFormat() {
             super(MediaType.APPLICATION_JSON);
-            xp = new XStreamPersisterFactory().createJSONPersister();
-            xp.setReferenceByName(true);
-            xp.setExcludeIds();
         }
 
         @Override

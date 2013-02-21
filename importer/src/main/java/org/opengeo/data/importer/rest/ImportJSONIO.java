@@ -31,6 +31,7 @@ import org.geoserver.config.util.XStreamPersister;
 import org.geoserver.config.util.XStreamPersisterFactory;
 import org.geoserver.rest.PageInfo;
 import org.geoserver.rest.RestletException;
+import org.opengeo.data.importer.Archive;
 import org.opengeo.data.importer.Database;
 import org.opengeo.data.importer.Directory;
 import org.opengeo.data.importer.FileData;
@@ -43,6 +44,7 @@ import org.opengeo.data.importer.SpatialFile;
 import org.opengeo.data.importer.Table;
 import org.opengeo.data.importer.UpdateMode;
 import org.opengeo.data.importer.ImportContext.State;
+import org.opengeo.data.importer.mosaic.Mosaic;
 import org.opengeo.data.importer.transform.*;
 import org.restlet.data.Status;
 import org.restlet.ext.json.JsonRepresentation;
@@ -82,6 +84,10 @@ public class ImportJSONIO {
             json.key("targetStore").value(toJSON(context.getTargetStore()));
         }
 
+        if (context.getData() != null) {
+            json.key("data");
+            data(context.getData(), page, json);
+        }
         tasks(context.getTasks(), true, page, json);
 
         json.endObject();
@@ -114,6 +120,7 @@ public class ImportJSONIO {
                     fromJSON(json.getJSONObject("targetStore"), StoreInfo.class));
             }
             if (json.has("data")) {
+                context.setData(data(json.getJSONObject("data")));
             }
         }
         return context;
@@ -440,12 +447,47 @@ public class ImportJSONIO {
     public void data(ImportData data, PageInfo page, JSONBuilder json) throws IOException {
         if (data instanceof FileData) {
             if (data instanceof Directory) {
-                directory((Directory) data, page, json);
+                if (data instanceof Mosaic) {
+                    mosaic((Mosaic) data, page, json);
+                }
+                else {
+                    directory((Directory) data, page, json);
+                }
             } else {
                 file((FileData) data, page, json);
             }
         } else if (data instanceof Database) {
             database((Database) data, page, json);
+        }
+    }
+
+    public ImportData data(InputStream in) throws IOException {
+        return data(parse(in));
+    }
+    
+    public ImportData data(JSONObject json) throws IOException {
+        String type = json.getString("type");
+        if (type == null) {
+            throw new IOException("Data object must specify 'type' property");
+        }
+
+        if ("file".equalsIgnoreCase(type)) {
+            return file(json);
+        }
+        else if("directory".equalsIgnoreCase(type)) {
+            return directory(json);
+        }
+        else if("mosaic".equalsIgnoreCase(type)) {
+            return mosaic(json);
+        }
+        else if("archive".equalsIgnoreCase(type)) {
+            return archive(json);
+        }
+        else if ("database".equalsIgnoreCase(type)) {
+            return database(json);
+        }
+        else {
+            throw new IllegalArgumentException("Unknown data type: " + type);
         }
     }
 
@@ -481,13 +523,56 @@ public class ImportJSONIO {
         }
     }
 
+    public FileData file(JSONObject json) throws IOException {
+        if (json.has("file")) {
+            //TODO: find out if spatial or not
+            String file = json.getString("file");
+            return new FileData(new File(file));
+        }
+        else {
+            //TODO: create a temp file
+            return new FileData(null);
+        }
+    }
+
+    public void mosaic(Mosaic data, PageInfo page, OutputStream out) throws IOException {
+        directory(data, "mosaic", page, out);
+    }
+
+    public void mosaic(Mosaic data, PageInfo page, JSONBuilder json) throws IOException {
+        directory(data, "mosaic", page, json);
+    }
+
+    public Mosaic mosaic(JSONObject json) throws IOException {
+        if (json.has("location")) {
+            return new Mosaic(new File(json.getString("location")));
+        }
+        else {
+            return new Mosaic(Directory.createNew(importer.getUploadRoot()).getFile());
+        }
+    }
+
+    public Archive archive(JSONObject json) throws IOException {
+        throw new UnsupportedOperationException("TODO: implement");
+    }
+
     public void directory(Directory data, PageInfo page, OutputStream out) throws IOException {
         directory(data, page, builder(out));
     }
 
     public void directory(Directory data, PageInfo page, JSONBuilder json) throws IOException {
+        directory(data, "directory", page, json);
+    }
+
+    public void directory(Directory data, String typeName, PageInfo page, OutputStream out) 
+        throws IOException {
+        directory(data, "directory", page, builder(out));
+    }
+
+    public void directory(Directory data, String typeName, PageInfo page, JSONBuilder json) 
+            throws IOException {
         json.object();
-        json.key("type").value("directory");
+        json.key("type").value(typeName);
         json.key("format").value(data.getFormat() != null ? data.getFormat().getName() : null);
         json.key("location").value(data.getFile().getPath());
         json.key("files").array();
@@ -503,6 +588,15 @@ public class ImportJSONIO {
         json.endArray();
 
         json.endObject();
+    }
+
+    public Directory directory(JSONObject json) throws IOException {
+        if (json.has("location")) {
+            return new Directory(new File(json.getString("location")));
+        }
+        else {
+            return Directory.createNew(importer.getUploadRoot());
+        }
     }
 
     public void database(Database data, PageInfo page, OutputStream out) throws IOException {
@@ -528,6 +622,10 @@ public class ImportJSONIO {
         json.endArray();
 
         json.endObject();
+    }
+
+    public Database database(JSONObject json) throws IOException {
+        throw new UnsupportedOperationException("TODO: implement");
     }
 
     FlushableJSONBuilder builder(OutputStream out) {

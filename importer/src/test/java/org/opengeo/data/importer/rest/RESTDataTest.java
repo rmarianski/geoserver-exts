@@ -213,6 +213,31 @@ public class RESTDataTest extends ImporterTestSupport {
         assertEquals("archsites", store.getTypeNames()[0]);
     }
 
+    public void testMosaicUpload() throws Exception {
+        String json = 
+                "{" + 
+                    "\"import\": { " + 
+                        "\"data\": {" +
+                           "\"type\": \"mosaic\" " + 
+                         "}" +
+                    "}" + 
+                "}";
+        int i = postNewImport(json);
+        postNewTaskAsMultiPartForm(i, "mosaic/bm.zip");
+        postImport(i);
+
+        ImportContext context = importer.getContext(i);
+        assertEquals(ImportContext.State.COMPLETE, context.getState());
+
+        String layername = context.getTasks().get(0).getItems().get(0).getLayer().getName();
+        runChecks(layername);
+    }
+
+    JSONObject getImport(int imp) throws Exception {
+        JSON json = getAsJSON(String.format("/rest/imports/%d", imp));
+        return ((JSONObject)json).getJSONObject("import");
+    }
+
     JSONObject getTask(int imp, int task) throws Exception {
         JSON json = getAsJSON(String.format("/rest/imports/%d/tasks/%d", imp, task));
         return ((JSONObject)json).getJSONObject("task");

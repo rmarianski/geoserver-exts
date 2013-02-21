@@ -32,10 +32,20 @@ public class Directory extends FileData {
     /**
      * list of files contained in directory
      */
-    List<FileData> files = new ArrayList<FileData>();
-    
+    protected List<FileData> files = new ArrayList<FileData>();
+
+    /**
+     * flag controlling whether file look up should recurse into sub directories.
+     */
+    boolean recursive;
+
     public Directory(File file) {
+        this(file, true);
+    }
+
+    public Directory(File file, boolean recursive) {
         super(file);
+        this.recursive = recursive;
     }
 
     public static Directory createNew(File parent) throws IOException {
@@ -119,6 +129,10 @@ public class Directory extends FileData {
                     continue;
                 }
                 if (f.isDirectory()) {
+                    if (!recursive && !f.equals(file)) {
+                        //skip it
+                        continue;
+                    }
                     // @hacky - ignore __MACOSX
                     // this could probably be dealt with in a better way elsewhere
                     // like by having Directory ignore the contents since they

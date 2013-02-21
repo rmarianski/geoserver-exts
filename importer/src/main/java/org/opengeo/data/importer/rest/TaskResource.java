@@ -67,12 +67,12 @@ public class TaskResource extends AbstractResource {
 
     public void handlePost() {
         ImportData data = null;
-        
+
         getLogger().info("Handling POST of " + getRequest().getEntity().getMediaType());
         //file posted from form
         MediaType mimeType = getRequest().getEntity().getMediaType(); 
         if (MediaType.MULTIPART_FORM_DATA.equals(mimeType, true)) {
-            data = handleMultiPartFormUpload();
+            data = handleMultiPartFormUpload(lookupContext());
         }
         else if (MediaType.APPLICATION_WWW_FORM.equals(mimeType, true)) {
             data = handleFormPost();
@@ -112,17 +112,21 @@ public class TaskResource extends AbstractResource {
 
     }
 
-    private Directory createDirectory() {
+    private Directory findOrCreateDirectory(ImportContext context) {
+        if (context.getData() instanceof Directory) {
+            return (Directory) context.getData();
+        }
+    
         try {
-            return Directory.createNew(importer.getCatalog().getResourceLoader().findOrCreateDirectory("uploads"));
+            return Directory.createNew(importer.getUploadRoot());
         } catch (IOException ioe) {
             throw new RestletException("File upload failed", Status.SERVER_ERROR_INTERNAL, ioe);
         }
     }
     
-    private ImportData handleFileUpload() {
-        Directory directory = createDirectory();
-        
+    private ImportData handleFileUpload(ImportContext context) {
+        Directory directory = findOrCreateDirectory(context);
+
         try {
             directory.accept(getAttribute("task"),getRequest().getEntity().getStream());
         } catch (IOException e) {
@@ -133,7 +137,7 @@ public class TaskResource extends AbstractResource {
         return directory;
     }
     
-    private ImportData handleMultiPartFormUpload() {
+    private ImportData handleMultiPartFormUpload(ImportContext context) {
         DiskFileItemFactory factory = new DiskFileItemFactory();
         // @revisit - this appears to be causing OOME
         //factory.setSizeThreshold(102400000);
@@ -146,8 +150,8 @@ public class TaskResource extends AbstractResource {
             throw new RestletException("File upload failed", Status.SERVER_ERROR_INTERNAL, e);
         }
 
-        //create a directory to hold the files
-        Directory directory = createDirectory();
+        //look for a directory to hold the files
+        Directory directory = findOrCreateDirectory(context);
 
         //unpack all the files
         for (FileItem item : items) {
@@ -171,7 +175,7 @@ public class TaskResource extends AbstractResource {
         if (getRequest().getEntity().getMediaType().equals(MediaType.APPLICATION_JSON)) {
             handleTaskPut();
         } else {
-            acceptData(handleFileUpload());
+            acceptData(handleFileUpload(lookupContext()));
         }
     }
 

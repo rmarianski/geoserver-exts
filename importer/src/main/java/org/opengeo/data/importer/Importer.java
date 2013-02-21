@@ -59,6 +59,7 @@ import org.opengeo.data.importer.job.Job;
 import org.opengeo.data.importer.job.JobQueue;
 import org.opengeo.data.importer.job.ProgressMonitor;
 import org.opengeo.data.importer.job.Task;
+import org.opengeo.data.importer.mosaic.Mosaic;
 import org.opengeo.data.importer.transform.RasterTransformChain;
 import org.opengeo.data.importer.transform.ReprojectTransform;
 import org.opengeo.data.importer.transform.TransformChain;
@@ -303,68 +304,11 @@ public class Importer implements InitializingBean, DisposableBean {
         List<ImportTask> tasks = new ArrayList();
         StoreInfo targetStore = context.getTargetStore();
         if (data instanceof FileData) {
-            if (data instanceof Directory) {
-                //flatten out the directory into itself and all sub directories and process in order
-                for (Directory dir : ((Directory) data).flatten()) {
-                    //ignore empty directories
-                    if (dir.getFiles().isEmpty()) continue;
-
-                    //group the contents of the directory by format
-                    Map<DataFormat,List<FileData>> map = new HashMap<DataFormat,List<FileData>>();
-                    for (FileData f : dir.getFiles()) {
-                        DataFormat format = f.getFormat();
-                        List<FileData> files = map.get(format);
-                        if (files == null) {
-                            files = new ArrayList<FileData>();
-                            map.put(format, files);
-                        }
-                        files.add(f);
-                    }
-
-                    // if no target store specified group the directory into pieces that can be 
-                    // processed as a single task
-                    if (targetStore == null) {
-
-                        //create a task for each "format" if that format can handle a directory
-                        for (DataFormat format: new ArrayList<DataFormat>(map.keySet())) {
-                            if (format != null && format.canRead(dir)) {
-                                List<FileData> files = map.get(format);
-                                if (files.size() == 1) {
-                                    //use the file directly
-                                    tasks.add(createTask(files.get(0), context, null));
-                                }
-                                else {
-                                    tasks.add(createTask(dir.filter(files), context, null));
-                                }
-                                
-                                map.remove(format);
-                            }
-                        }
-    
-                        //handle the left overs, each file gets its own task
-                        for (List<FileData> files : map.values()) {
-                            for (FileData file : files) {
-                                tasks.add(createTask(file, context, null));
-                            }
-                        }
-
-                    }
-                    else {
-                        for (DataFormat format: new ArrayList<DataFormat>(map.keySet())) {
-                            List<FileData> files = map.get(format);
-                            if (files.size() == 1) {
-                                //use the file directly
-                                tasks.add(createTask(files.get(0), context, targetStore));
-                            }
-                            else {
-                                tasks.add(createTask(dir.filter(files), context, targetStore));
-                            }
-                        }
-                        //for (FileData file : dir.getFiles()) {
-                        //    createTask(file, context, targetStore);
-                        //}
-                    }
-                }
+            if (data instanceof Mosaic) {
+                initForMosaic(context, (Mosaic)data, tasks);
+            }
+            else if (data instanceof Directory) {
+                initForDirectory(context, (Directory)data, tasks);
             }
             else {
                 //single file case
@@ -385,6 +329,75 @@ public class Importer implements InitializingBean, DisposableBean {
 
         prep(context);
         return tasks;
+    }
+
+    void initForMosaic(ImportContext context, Mosaic mosaic, List<ImportTask> tasks) throws IOException {
+        tasks.add(createTask(mosaic, context, context.getTargetStore()));
+    }
+
+    void initForDirectory(ImportContext context, Directory data, List<ImportTask> tasks) throws IOException {
+      //flatten out the directory into itself and all sub directories and process in order
+        for (Directory dir : data.flatten()) {
+            //ignore empty directories
+            if (dir.getFiles().isEmpty()) continue;
+
+            //group the contents of the directory by format
+            Map<DataFormat,List<FileData>> map = new HashMap<DataFormat,List<FileData>>();
+            for (FileData f : dir.getFiles()) {
+                DataFormat format = f.getFormat();
+                List<FileData> files = map.get(format);
+                if (files == null) {
+                    files = new ArrayList<FileData>();
+                    map.put(format, files);
+                }
+                files.add(f);
+            }
+    
+            // if no target store specified group the directory into pieces that can be 
+            // processed as a single task
+            StoreInfo targetStore = context.getTargetStore();
+            if (targetStore == null) {
+    
+                //create a task for each "format" if that format can handle a directory
+                for (DataFormat format: new ArrayList<DataFormat>(map.keySet())) {
+                    if (format != null && format.canRead(dir)) {
+                        List<FileData> files = map.get(format);
+                        if (files.size() == 1) {
+                            //use the file directly
+                            tasks.add(createTask(files.get(0), context, null));
+                        }
+                        else {
+                            tasks.add(createTask(dir.filter(files), context, null));
+                        }
+                        
+                        map.remove(format);
+                    }
+                }
+    
+                //handle the left overs, each file gets its own task
+                for (List<FileData> files : map.values()) {
+                    for (FileData file : files) {
+                        tasks.add(createTask(file, context, null));
+                    }
+                }
+    
+            }
+            else {
+                for (DataFormat format: new ArrayList<DataFormat>(map.keySet())) {
+                    List<FileData> files = map.get(format);
+                    if (files.size() == 1) {
+                        //use the file directly
+                        tasks.add(createTask(files.get(0), context, targetStore));
+                    }
+                    else {
+                        tasks.add(createTask(dir.filter(files), context, targetStore));
+                    }
+                }
+                //for (FileData file : dir.getFiles()) {
+                //    createTask(file, context, targetStore);
+                //}
+            }
+        }
     }
 
     ImportTask createTask(ImportData data, ImportContext context, StoreInfo targetStore) {
@@ -1161,6 +1174,15 @@ public class Importer implements InitializingBean, DisposableBean {
         try {
             return catalog.getResourceLoader().findOrCreateDirectory("imports");
         } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public File getUploadRoot() {
+        try {
+            return catalog.getResourceLoader().findOrCreateDirectory("uploads");
+        }
+        catch(IOException e) {
             throw new RuntimeException(e);
         }
     }

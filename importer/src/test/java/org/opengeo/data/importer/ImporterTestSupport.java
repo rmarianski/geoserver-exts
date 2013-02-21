@@ -1,11 +1,16 @@
 package org.opengeo.data.importer;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.StringWriter;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
-import org.apache.commons.io.IOUtils;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import net.sf.json.util.JSONBuilder;
+
 import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.DataStoreInfo;
 import org.geoserver.catalog.FeatureTypeInfo;
@@ -14,19 +19,9 @@ import org.geoserver.catalog.WorkspaceInfo;
 import org.geoserver.test.GeoServerTestSupport;
 import org.geotools.data.FeatureSource;
 import org.geotools.data.Query;
-import org.geotools.factory.Hints;
 import org.w3c.dom.Document;
 
 import com.mockrunner.mock.web.MockHttpServletResponse;
-import java.io.StringWriter;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import net.sf.json.JSONArray;
-
-import net.sf.json.JSONObject;
-import net.sf.json.util.JSONBuilder;
 
 public abstract class ImporterTestSupport extends GeoServerTestSupport {
 
@@ -34,9 +29,7 @@ public abstract class ImporterTestSupport extends GeoServerTestSupport {
 
     @Override
     protected void oneTimeSetUp() throws Exception {
-        //need to set hint which allows for lax projection lookups to match
-        // random wkt to an epsg code
-        Hints.putSystemDefault(Hints.COMPARISON_TOLERANCE, 1e-9);
+        ImporterTestUtils.setComparisonTolerance();
         super.oneTimeSetUp();
     }
 
@@ -47,48 +40,27 @@ public abstract class ImporterTestSupport extends GeoServerTestSupport {
     }
 
     protected File tmpDir() throws Exception {
-        File dir = File.createTempFile("importer", "data", new File("target"));
-        dir.delete();
-        dir.mkdirs();
-        return dir;
+        return ImporterTestUtils.tmpDir();
     }
 
     protected File unpack(String path) throws Exception {
-        return unpack(path, tmpDir());
+        return ImporterTestUtils.unpack(path);
     }
 
     protected File getTestDataFile(String path) throws Exception {
-        URL url = ImporterTestSupport.class.getResource("../test-data/" + path);
-        return new File(url.toURI().getPath());
+        return ImporterTestUtils.getTestDataFile(path);
     }
 
     protected File unpack(String path, File dir) throws Exception {
-        
-        File file = file(path, dir);
-        
-        new VFSWorker().extractTo(file, dir);
-        file.delete();
-        
-        return dir;
+        return ImporterTestUtils.unpack(path, dir);
     }
 
     protected File file(String path) throws Exception {
-        return file(path, tmpDir());
+        return ImporterTestUtils.file(path);
     }
 
     protected File file(String path, File dir) throws IOException {
-        String filename = new File(path).getName();
-        InputStream in = ImporterTestSupport.class.getResourceAsStream("../test-data/" + path);
-        
-        File file = new File(dir, filename);
-        
-        FileOutputStream out = new FileOutputStream(file);
-        IOUtils.copy(in, out);
-        in.close();
-        out.flush();
-        out.close();
-
-        return file;
+        return ImporterTestUtils.file(path, dir);
     }
 
     protected void runChecks(String layerName) throws Exception {
