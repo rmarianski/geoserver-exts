@@ -29,6 +29,12 @@ public class SpatialFile extends FileData {
         super(file);
     }
 
+    public SpatialFile(SpatialFile other) {
+        super(other);
+        this.prjFile = other.getPrjFile();
+        this.suppFiles.addAll(other.getSuppFiles());
+    }
+
     public File getPrjFile() {
         return prjFile;
     }

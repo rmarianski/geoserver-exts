@@ -24,6 +24,14 @@ public abstract class ImportData implements Serializable{
     
     String charsetEncoding;
 
+    public ImportData() {
+    }
+
+    public ImportData(ImportData data) {
+        this.format = data.getFormat();
+        this.charsetEncoding = data.getCharsetEncoding();
+    }
+
     public String getCharsetEncoding() {
         return charsetEncoding;
     }

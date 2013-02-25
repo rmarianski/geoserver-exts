@@ -1,5 +1,7 @@
 package org.opengeo.data.importer.rest;
 
+import com.ibm.icu.text.SimpleDateFormat;
+import com.ibm.icu.util.TimeZone;
 import com.thoughtworks.xstream.converters.MarshallingContext;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 import java.io.ByteArrayInputStream;
@@ -44,7 +46,9 @@ import org.opengeo.data.importer.SpatialFile;
 import org.opengeo.data.importer.Table;
 import org.opengeo.data.importer.UpdateMode;
 import org.opengeo.data.importer.ImportContext.State;
+import org.opengeo.data.importer.mosaic.Granule;
 import org.opengeo.data.importer.mosaic.Mosaic;
+import org.opengeo.data.importer.mosaic.TimeMode;
 import org.opengeo.data.importer.transform.*;
 import org.restlet.data.Status;
 import org.restlet.ext.json.JsonRepresentation;
@@ -55,6 +59,11 @@ import org.restlet.ext.json.JsonRepresentation;
  * @author Justin Deoliveira, OpenGeo
  */
 public class ImportJSONIO {
+
+    static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SZ");
+    static {
+        DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
+    }
 
     Importer importer;
     
@@ -520,6 +529,13 @@ public class ImportJSONIO {
                 json.value(supp.getName());
             }
             json.endArray();
+
+            if (sf instanceof Granule) {
+                Granule g = (Granule) sf;
+                if (g.getTimestamp() != null) {
+                    json.key("timestamp").value(DATE_FORMAT.format(g.getTimestamp()));
+                }
+            }
         }
     }
 
@@ -531,7 +547,7 @@ public class ImportJSONIO {
         }
         else {
             //TODO: create a temp file
-            return new FileData(null);
+            return new FileData((File)null);
         }
     }
 
@@ -544,12 +560,20 @@ public class ImportJSONIO {
     }
 
     public Mosaic mosaic(JSONObject json) throws IOException {
-        if (json.has("location")) {
-            return new Mosaic(new File(json.getString("location")));
+        Mosaic m = new Mosaic(json.has("location") ?  new File(json.getString("location")) : 
+            Directory.createNew(importer.getUploadRoot()).getFile());
+
+        if (json.containsKey("time")) {
+            JSONObject time = json.getJSONObject("time");
+            if (!time.containsKey("mode")) {
+                throw new IllegalArgumentException("time object must specific mode property as " +
+                    "one of " + TimeMode.values());
+            }
+
+            m.setTimeMode(TimeMode.valueOf(time.getString("mode").toUpperCase()));
+            m.getTimeHandler().init(time);
         }
-        else {
-            return new Mosaic(Directory.createNew(importer.getUploadRoot()).getFile());
-        }
+        return m;
     }
 
     public Archive archive(JSONObject json) throws IOException {

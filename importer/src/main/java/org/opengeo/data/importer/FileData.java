@@ -24,6 +24,11 @@ public class FileData extends ImportData {
         this.file = file;
     }
 
+    public FileData(FileData file) {
+        super(file);
+        this.file = file.getFile();
+    }
+
     public static FileData createFromFile(File file) throws IOException {
         if (file.isDirectory()) {
             return new Directory(file);

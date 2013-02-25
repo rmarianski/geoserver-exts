@@ -1,11 +1,21 @@
 package org.opengeo.data.importer.mosaic;
 
 import java.io.File;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import org.custommonkey.xmlunit.XMLAssert;
+import org.geoserver.catalog.DimensionInfo;
+import org.geoserver.catalog.LayerInfo;
+import org.geoserver.catalog.ResourceInfo;
 import org.junit.Test;
+import org.opengeo.data.importer.FileData;
 import org.opengeo.data.importer.ImportContext;
 import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.ImporterTestSupport;
+import org.w3c.dom.Document;
 
 public class ImporterMosaicTest extends ImporterTestSupport {
 
@@ -22,5 +32,70 @@ public class ImporterMosaicTest extends ImporterTestSupport {
         importer.run(context);
 
         runChecks(dir.getName());
+    }
+
+    @Test
+    public void testFilenameTimeHandler() throws Exception {
+        Mosaic m = new Mosaic(unpack("mosaic/bm_time.zip"));
+
+        m.setTimeMode(TimeMode.FILENAME);
+        FilenameTimeHandler th = (FilenameTimeHandler) m.getTimeHandler(); 
+        th.setFilenameRegex("(\\d){6}");
+        th.setTimeFormat("yyyyMM");
+
+        m.prepare();
+
+        List<FileData> files = m.getFiles();
+        assertEquals(4,files.size());
+
+        for (int i = 0; i < files.size(); i++) {
+            FileData fd = files.get(i);
+            assertTrue(fd instanceof Granule);
+
+            Granule g = (Granule) fd;
+            assertEquals(date(2004, i), g.getTimestamp());
+        }
+    }
+
+    public void testTimeMosaic() throws Exception {
+        Mosaic m = new Mosaic(unpack("mosaic/bm_time.zip"));
+
+        m.setTimeMode(TimeMode.FILENAME);
+        FilenameTimeHandler th = (FilenameTimeHandler) m.getTimeHandler(); 
+        th.setFilenameRegex("(\\d){6}");
+        th.setTimeFormat("yyyyMM");
+
+        ImportContext context = importer.createContext(m);
+        assertEquals(1, context.getTasks().size());
+        assertEquals(1, context.getTasks().get(0).getItems().size());
+
+        importer.run(context);
+
+        LayerInfo l = context.getTasks().get(0).getItems().get(0).getLayer();
+        ResourceInfo r = l.getResource();
+        assertTrue(r.getMetadata().containsKey("time"));
+
+        DimensionInfo d = (DimensionInfo) r.getMetadata().get("time");
+        assertNotNull(d);
+
+        runChecks(l.getName());
+
+        Document dom = getAsDOM(String.format("/%s/%s/wms?request=getcapabilities", 
+            r.getStore().getWorkspace().getName(), l.getName()));
+        XMLAssert.assertXpathExists(
+            "//wms:Layer[wms:Name = '" + m.getName() + "']/wms:Dimension[@name = 'time']", dom);
+        
+    }
+
+    Date date(int year, int month) {
+        Calendar c = Calendar.getInstance();
+        c.set(Calendar.YEAR, year);
+        c.set(Calendar.MONTH, month);
+        c.set(Calendar.DAY_OF_MONTH, 1);
+        c.set(Calendar.HOUR_OF_DAY, 0);
+        c.set(Calendar.MINUTE, 0);
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
+        return c.getTime();
     }
 }

@@ -233,6 +233,26 @@ public class RESTDataTest extends ImporterTestSupport {
         runChecks(layername);
     }
 
+    public void testTimeMosaicUpload() throws Exception {
+        String json = 
+                "{" + 
+                    "\"import\": { " + 
+                        "\"data\": {" +
+                           "\"type\": \"mosaic\", " + 
+                           "\"time\": {" +
+                              " \"mode\": \"filename\"," + 
+                              " \"filenameRegex\": \"(\\\\d){6}\"," + 
+                              " \"timeFormat\": \"yyyyMM\"" + 
+                           "}" + 
+                         "}" +
+                    "}" + 
+                "}";
+        int i = postNewImport(json);
+        int t = postNewTaskAsMultiPartForm(i, "mosaic/bm_time.zip");
+
+        print(getTask(i, t));
+    }
+
     JSONObject getImport(int imp) throws Exception {
         JSON json = getAsJSON(String.format("/rest/imports/%d", imp));
         return ((JSONObject)json).getJSONObject("import");

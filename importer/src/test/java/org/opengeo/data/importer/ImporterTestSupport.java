@@ -11,6 +11,8 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import net.sf.json.util.JSONBuilder;
 
+import org.custommonkey.xmlunit.SimpleNamespaceContext;
+import org.custommonkey.xmlunit.XMLUnit;
 import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.DataStoreInfo;
 import org.geoserver.catalog.FeatureTypeInfo;
@@ -30,6 +32,15 @@ public abstract class ImporterTestSupport extends GeoServerTestSupport {
     @Override
     protected void oneTimeSetUp() throws Exception {
         ImporterTestUtils.setComparisonTolerance();
+
+        // init xmlunit
+        Map<String, String> namespaces = new HashMap<String, String>();
+        namespaces.put("xlink", "http://www.w3.org/1999/xlink");
+        namespaces.put("xsi", "http://www.w3.org/2001/XMLSchema-instance");
+        namespaces.put("wms", "http://www.opengis.net/wms");
+        
+        XMLUnit.setXpathNamespaceContext(new SimpleNamespaceContext(namespaces));
+
         super.oneTimeSetUp();
     }
 

@@ -157,9 +157,8 @@ public class Directory extends FileData {
                 DataFormat format = DataFormat.lookup(f);
 
                 if (format != null) {
-                    SpatialFile sf = new SpatialFile(f);
-                    sf.setFormat(format);
-
+                    SpatialFile sf = newSpatialFile(f, format);
+                    
                     //gather up the related files
                     sf.prepare(m);
 
@@ -205,6 +204,18 @@ public class Directory extends FileData {
 //        for (DataFile f : files()) {
 //            f.prepare();
 //        }
+    }
+
+    /**
+     * Creates a new spatial file.
+     * 
+     * @param f The raw file.
+     * @param format The spatial format of the file.
+     */
+    protected SpatialFile newSpatialFile(File f, DataFormat format) {
+        SpatialFile sf = new SpatialFile(f);
+        sf.setFormat(format);
+        return sf;
     }
 
     public List<Directory> flatten() {
