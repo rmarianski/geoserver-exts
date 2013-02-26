@@ -278,7 +278,7 @@ public class Importer implements InitializingBean, DisposableBean {
     }
 
     public List<ImportTask> update(ImportContext context, ImportData data) throws IOException {
-        List<ImportTask> tasks = init(context, data);
+        List<ImportTask> tasks = init(context, data, true);
         
         prep(context);
         changed(context);
@@ -287,19 +287,25 @@ public class Importer implements InitializingBean, DisposableBean {
     }
 
     public void init(ImportContext context) throws IOException {
+        init(context, true);
+    }
+    
+    public void init(ImportContext context, boolean prepData) throws IOException {
         context.reattach(catalog);
 
         ImportData data = context.getData();
         if (data != null) {
-            init(context, data); 
+            init(context, data, prepData); 
         }
     }
 
-    List<ImportTask> init(ImportContext context, ImportData data) throws IOException {
+    List<ImportTask> init(ImportContext context, ImportData data, boolean prepData) throws IOException {
         if (data == null) {
             return Collections.EMPTY_LIST;
         }
-        data.prepare(context.progress());
+        if (prepData) {
+            data.prepare(context.progress());
+        }
 
         List<ImportTask> tasks = new ArrayList();
         StoreInfo targetStore = context.getTargetStore();
@@ -327,7 +333,7 @@ public class Importer implements InitializingBean, DisposableBean {
             tasks.add(createTask(db, context, targetStore));
         }
 
-        prep(context);
+        prep(context, prepData);
         return tasks;
     }
 
@@ -411,10 +417,14 @@ public class Importer implements InitializingBean, DisposableBean {
     }
 
     public void prep(ImportContext context) throws IOException {
+        prep(context, true);
+    }
+        
+    void prep(ImportContext context, boolean prepData) throws IOException {
         boolean ready = true;
         for (ImportTask task : context.getTasks()) {
             ImportData data = task.getData();
-            data.prepare(context.progress());
+            if (prepData) data.prepare(context.progress());
 
             DataFormat format = data.getFormat();
 

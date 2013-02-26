@@ -90,7 +90,16 @@ public class Directory extends FileData {
         }
     }
     
-    public File getChild(String name) {
+    public File child(String name) {
+        if (name == null) {
+            //create random
+            try {
+                return File.createTempFile("child", "tmp", file);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         return new File(this.file,name);
     }
 
@@ -330,7 +339,7 @@ public class Directory extends FileData {
     }
 
     public void accept(String childName, InputStream in) throws IOException {
-        File dest = getChild(childName);
+        File dest = child(childName);
         
         IOUtils.copy(in, dest);
 
@@ -344,7 +353,7 @@ public class Directory extends FileData {
     }
 
     public void accept(FileItem item) throws Exception {
-        File dest = getChild(item.getName());
+        File dest = child(item.getName());
         item.write(dest);
 
         try {

@@ -10,7 +10,6 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
@@ -19,7 +18,6 @@ import org.geoserver.catalog.CatalogBuilder;
 import org.geoserver.catalog.DataStoreInfo;
 import org.geoserver.catalog.StoreInfo;
 import org.geoserver.catalog.impl.StoreInfoImpl;
-import org.geoserver.rest.AbstractResource;
 import org.geoserver.rest.RestletException;
 import org.geoserver.rest.format.DataFormat;
 import org.geoserver.rest.format.StreamDataFormat;
@@ -28,7 +26,11 @@ import org.opengeo.data.importer.ImportContext;
 import org.opengeo.data.importer.ImportData;
 import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.Importer;
-import org.restlet.data.*;
+import org.restlet.data.Form;
+import org.restlet.data.MediaType;
+import org.restlet.data.Request;
+import org.restlet.data.Response;
+import org.restlet.data.Status;
 import org.restlet.ext.fileupload.RestletFileUpload;
 
 /**
