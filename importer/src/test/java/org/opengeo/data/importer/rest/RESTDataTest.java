@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.sf.json.JSON;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.httpclient.methods.PostMethod;
@@ -14,6 +15,7 @@ import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
 import org.apache.commons.httpclient.methods.multipart.Part;
 import org.opengeo.data.importer.Directory;
 import org.opengeo.data.importer.ImportContext;
+import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.ImporterTestSupport;
 
 import com.mockrunner.mock.web.MockHttpServletRequest;
@@ -26,6 +28,7 @@ import javax.servlet.Filter;
 
 import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.DataStoreInfo;
+import org.geoserver.catalog.LayerInfo;
 import org.geoserver.data.test.MockData;
 import org.geoserver.platform.GeoServerExtensions;
 import org.geotools.data.DataStore;
@@ -250,7 +253,58 @@ public class RESTDataTest extends ImporterTestSupport {
         int i = postNewImport(json);
         int t = postNewTaskAsMultiPartForm(i, "mosaic/bm_time.zip");
 
-        print(getTask(i, t));
+        postImport(i);
+
+        LayerInfo l = importer.getContext(i).getTasks().get(0).getItems().get(0).getLayer();
+        runChecks(l.getName());
+    }
+
+    public void testTimeMosaicManual() throws Exception {
+        String json = 
+                "{" + 
+                    "\"import\": { " + 
+                        "\"data\": {" +
+                           "\"type\": \"mosaic\", " + 
+                           "\"time\": {" +
+                              " \"mode\": \"manual\"" + 
+                           "}" + 
+                         "}" +
+                    "}" + 
+                "}";
+        int imp = postNewImport(json);
+        int task = postNewTaskAsMultiPartForm(imp, "mosaic/bm_time.zip");
+
+        //update all the files
+        JSONObject t = getTask(imp, task);
+        JSONArray files = t.getJSONObject("source").getJSONArray("files");
+        assertEquals(4, files.size());
+
+        for (int i = 0; i < files.size(); i++) {
+            JSONObject obj = files.getJSONObject(i);
+            assertFalse(obj.has("timestamp"));
+        }
+
+        for (int i = 0; i < files.size(); i++) {
+            JSONObject obj = files.getJSONObject(i);
+
+            String path =
+                String.format("/rest/imports/%d/data/files/%s", imp, obj.getString("file"));
+            json = String.format("{" + 
+                       "\"timestamp\": \"2004-0%d-01T00:00:00.000+0000\"" +  
+                "}", (i+1));
+            put(path, json, "application/json");
+        }
+
+        t = getTask(imp, task);
+        files = t.getJSONObject("source").getJSONArray("files");
+        for (int i = 0; i < files.size(); i++) {
+            JSONObject obj = files.getJSONObject(i);
+            assertTrue(obj.has("timestamp"));
+
+            String timestamp = obj.getString("timestamp");
+            assertEquals(String.format("2004-0%d-01T00:00:00.000+0000", (i+1)), 
+                timestamp);
+        }
     }
 
     JSONObject getImport(int imp) throws Exception {

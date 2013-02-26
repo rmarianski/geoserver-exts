@@ -1,7 +1,5 @@
 package org.opengeo.data.importer.rest;
 
-import com.ibm.icu.text.SimpleDateFormat;
-import com.ibm.icu.util.TimeZone;
 import com.thoughtworks.xstream.converters.MarshallingContext;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 import java.io.ByteArrayInputStream;
@@ -12,9 +10,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.text.SimpleDateFormat;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.logging.LogRecord;
 import net.sf.json.JSONArray;
 
@@ -60,7 +60,7 @@ import org.restlet.ext.json.JsonRepresentation;
  */
 public class ImportJSONIO {
 
-    static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SZ");
+    static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
     static {
         DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
     }
@@ -453,7 +453,7 @@ public class ImportJSONIO {
         data(data, page, builder(out));
     }
 
-    public void data(ImportData data, PageInfo page, JSONBuilder json) throws IOException {
+    public void data(ImportData data, PageInfo page, FlushableJSONBuilder json) throws IOException {
         if (data instanceof FileData) {
             if (data instanceof Directory) {
                 if (data instanceof Mosaic) {
@@ -468,6 +468,7 @@ public class ImportJSONIO {
         } else if (data instanceof Database) {
             database((Database) data, page, json);
         }
+        json.flush();
     }
 
     public ImportData data(InputStream in) throws IOException {
@@ -504,7 +505,7 @@ public class ImportJSONIO {
         file(data, page, builder(out));
     }
 
-    public void file(FileData data, PageInfo page, JSONBuilder json) throws IOException {
+    public void file(FileData data, PageInfo page, FlushableJSONBuilder json) throws IOException {
         json.object();
         
         json.key("type").value("file");
@@ -516,6 +517,7 @@ public class ImportJSONIO {
         fileContents(data, json);
 
         json.endObject();
+        json.flush();
     }
 
     void fileContents(FileData data, JSONBuilder json) throws IOException {
@@ -555,7 +557,7 @@ public class ImportJSONIO {
         directory(data, "mosaic", page, out);
     }
 
-    public void mosaic(Mosaic data, PageInfo page, JSONBuilder json) throws IOException {
+    public void mosaic(Mosaic data, PageInfo page, FlushableJSONBuilder json) throws IOException {
         directory(data, "mosaic", page, json);
     }
 
@@ -584,7 +586,7 @@ public class ImportJSONIO {
         directory(data, page, builder(out));
     }
 
-    public void directory(Directory data, PageInfo page, JSONBuilder json) throws IOException {
+    public void directory(Directory data, PageInfo page, FlushableJSONBuilder json) throws IOException {
         directory(data, "directory", page, json);
     }
 
@@ -593,25 +595,39 @@ public class ImportJSONIO {
         directory(data, "directory", page, builder(out));
     }
 
-    public void directory(Directory data, String typeName, PageInfo page, JSONBuilder json) 
+    public void directory(Directory data, String typeName, PageInfo page, FlushableJSONBuilder json) 
             throws IOException {
         json.object();
         json.key("type").value(typeName);
         json.key("format").value(data.getFormat() != null ? data.getFormat().getName() : null);
         json.key("location").value(data.getFile().getPath());
-        json.key("files").array();
         if (data.getCharsetEncoding() != null) {
             json.key("charset").value(data.getCharsetEncoding());
         }
         
+        json.key("files");
+        files(data, json);
+        json.endObject();
+        json.flush();
+    }
+
+    public void files(Directory data, OutputStream out) throws IOException {
+        files(data, builder(out));
+    }
+
+    public void files(Directory data, FlushableJSONBuilder json) throws IOException {
+        json.array();
         for (FileData file : data.getFiles()) {
             json.object();
             fileContents(file, json);
             json.endObject();
         }
         json.endArray();
+        json.flush();
+    }
 
-        json.endObject();
+    public Directory directory(InputStream in) throws IOException {
+        return directory(parse(in));
     }
 
     public Directory directory(JSONObject json) throws IOException {

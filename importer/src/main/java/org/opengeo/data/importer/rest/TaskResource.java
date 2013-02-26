@@ -37,12 +37,10 @@ import org.restlet.ext.fileupload.RestletFileUpload;
  * @author Justin Deoliveira, OpenGeo
  *
  */
-public class TaskResource extends AbstractResource {
-
-    Importer importer;
+public class TaskResource extends BaseResource {
 
     public TaskResource(Importer importer) {
-        this.importer = importer;
+        super(importer);
     }
 
     @Override
@@ -177,16 +175,6 @@ public class TaskResource extends AbstractResource {
         } else {
             acceptData(handleFileUpload(lookupContext()));
         }
-    }
-
-    ImportContext lookupContext() {
-        long i = Long.parseLong(getAttribute("import"));
-
-        ImportContext context = importer.getContext(i);
-        if (context == null) {
-            throw new RestletException("No such import: " + i, Status.CLIENT_ERROR_NOT_FOUND);
-        }
-        return context;
     }
 
     Object lookupTask(boolean allowAll) {
