@@ -1,14 +1,12 @@
 package org.opengeo.data.importer.transform;
 
 import java.text.ParseException;
-import java.text.ParsePosition;
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
 import java.util.logging.Level;
 
 import org.geotools.data.DataStore;
+import org.opengeo.data.importer.DatePattern;
+import org.opengeo.data.importer.Dates;
 import org.opengeo.data.importer.ImportItem;
 import org.opengeo.data.importer.ValidationException;
 import org.opengis.feature.simple.SimpleFeature;
@@ -23,24 +21,8 @@ import org.opengis.feature.simple.SimpleFeature;
 public class DateFormatTransform extends AttributeRemapTransform {
     
     private static final long serialVersionUID = 1L;
-    /**
-     * All patterns that are correct regarding the ISO-8601 norm.
-     */
-    static final String[] PATTERNS = {
-        "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-        "yyyy-MM-dd'T'HH:mm:sss'Z'",
-        "yyyy-MM-dd'T'HH:mm:ss'Z'",
-        "yyyy-MM-dd'T'HH:mm'Z'",
-        "yyyy-MM-dd'T'HH'Z'",
-        "yyyy-MM-dd",
-        "yyyy-MM",
-        "yyyy"
-    };
-    static final TimeZone UTC_TZ = TimeZone.getTimeZone("UTC");
-    transient ParsePosition pos;
-    SimpleDateFormat dateFormat;
-    transient SimpleDateFormat lastFormat;
-    transient SimpleDateFormat[] patterns;
+    
+    DatePattern datePattern;
 
     public DateFormatTransform(String field, String datePattern) throws ValidationException  {
         init(field,datePattern);
@@ -50,39 +32,31 @@ public class DateFormatTransform extends AttributeRemapTransform {
     DateFormatTransform() {
         this(null,null);
     }
+
+    public DatePattern getDatePattern() {
+        return datePattern;
+    }
+
+    public void setDatePattern(DatePattern datePattern) {
+        this.datePattern = datePattern;
+    }
     
     private void init(String field, String datePattern) throws ValidationException {
         setType(Date.class);
         setField(field);
         if (datePattern != null) {
-            // @todo allow timezone?
+            this.datePattern = new DatePattern(datePattern, null, true, false);
+
+            //parse the date format to ensure its legal
             try {
-                this.dateFormat = new SimpleDateFormat(datePattern);
-            } catch (IllegalArgumentException iae) {
+                this.datePattern.dateFormat();
+            }
+            catch(IllegalArgumentException iae) {
                 throw new ValidationException("Invalid date parsing format",iae);
             }
-            this.dateFormat.setTimeZone(UTC_TZ);
-        }
-    }
-    
-    public final void init() {
-        pos = new ParsePosition(0);
-        patterns = new SimpleDateFormat[PATTERNS.length];
-        for (int i = 0; i < PATTERNS.length; i++) {
-            SimpleDateFormat format = new SimpleDateFormat(PATTERNS[i], Locale.CANADA);
-            format.setTimeZone(UTC_TZ);
-            patterns[i] = format;
         }
     }
 
-    public SimpleDateFormat getDateFormat() {
-        return dateFormat;
-    }
-
-    public void setDateFormat(SimpleDateFormat dateFormat) {
-        this.dateFormat = dateFormat;
-    }
-    
     @Override
     public SimpleFeature apply(ImportItem item, DataStore dataStore, SimpleFeature oldFeature,
             SimpleFeature feature) throws Exception {
@@ -99,40 +73,17 @@ public class DateFormatTransform extends AttributeRemapTransform {
         return feature;
     }
 
-    private Date parseDate(SimpleDateFormat format, String value) throws ParseException {
-        Date parsed = null;
-        /*
-         * We do not use the standard method DateFormat.parse(String), because
-         * if the parsing stops before the end of the string, the remaining
-         * characters are just ignored and no exception is thrown. So we have to
-         * ensure that the whole string is correct for the format.
-         */
-        pos.setIndex(0);
-        Date p = format.parse(value, pos);
-        if (pos.getIndex() == value.length()) {
-            parsed = p;
-            lastFormat = format;
-        }
-        return parsed;
-    }
-
     Date parseDate(String value) throws ParseException {
         Date parsed = null;
         
         // if a format was provided, use it
-        if (dateFormat != null) {
-            parsed = parseDate(dateFormat, value);
+        if (datePattern != null) {
+            parsed = datePattern.parse(value);
         }
 
         // fall back to others
         if (parsed == null) {
-            // optimization to use last working pattern
-            if (lastFormat != null) {
-                parsed = parseDate(lastFormat, value);
-            }
-            for (int i = 0; i < patterns.length && parsed == null; i++) {
-                parsed = parseDate(patterns[i], value);
-            }
+            parsed = Dates.parse(value);
         }
         if (parsed != null) {
             return parsed;

@@ -90,6 +90,31 @@ public class ImporterMosaicTest extends ImporterTestSupport {
         
     }
 
+    public void testTimeMosaicAuto() throws Exception {
+        Mosaic m = new Mosaic(unpack("mosaic/bm_time.zip"));
+        m.setTimeMode(TimeMode.AUTO);
+
+        ImportContext context = importer.createContext(m);
+        assertEquals(1, context.getTasks().size());
+        assertEquals(1, context.getTasks().get(0).getItems().size());
+
+        importer.run(context);
+
+        LayerInfo l = context.getTasks().get(0).getItems().get(0).getLayer();
+        ResourceInfo r = l.getResource();
+        assertTrue(r.getMetadata().containsKey("time"));
+
+        DimensionInfo d = (DimensionInfo) r.getMetadata().get("time");
+        assertNotNull(d);
+
+        runChecks(l.getName());
+
+        Document dom = getAsDOM(String.format("/%s/%s/wms?request=getcapabilities", 
+            r.getStore().getWorkspace().getName(), l.getName()));
+        XMLAssert.assertXpathExists(
+            "//wms:Layer[wms:Name = '" + m.getName() + "']/wms:Dimension[@name = 'time']", dom);
+    }
+
     Date date(int year, int month) {
         Calendar c = Calendar.getInstance();
         c.set(Calendar.YEAR, year);

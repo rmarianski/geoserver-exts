@@ -2,6 +2,8 @@ package org.opengeo.data.importer.mosaic;
 
 import java.util.Date;
 
+import org.opengeo.data.importer.Dates;
+
 /**
  * Enumeration for handling timestamps for granules. 
  *   
@@ -33,6 +35,18 @@ public enum TimeMode {
         }
     },
 
+    AUTO {
+        @Override
+        public TimeHandler createHandler() {
+            return new TimeHandler() {
+                @Override
+                public Date computeTimestamp(Granule g) {
+                    return Dates.matchAndParse(g.getFile().getName());
+                }
+            };
+        }
+    }, 
+    
     /**
      * No timestamp handling.
      */

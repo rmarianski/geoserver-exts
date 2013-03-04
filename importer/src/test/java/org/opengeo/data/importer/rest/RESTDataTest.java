@@ -307,6 +307,49 @@ public class RESTDataTest extends ImporterTestSupport {
         }
     }
 
+    public void testTimeMosaicAuto() throws Exception {
+        String json = 
+                "{" + 
+                    "\"import\": { " + 
+                        "\"data\": {" +
+                           "\"type\": \"mosaic\", " + 
+                           "\"time\": {" +
+                              " \"mode\": \"auto\"" + 
+                           "}" + 
+                         "}" +
+                    "}" + 
+                "}";
+        int imp = postNewImport(json);
+        int task = postNewTaskAsMultiPartForm(imp, "mosaic/bm_time.zip");
+
+        //verify files have a timestamp
+        JSONObject t = getTask(imp, task);
+        print(t);
+        JSONArray files = t.getJSONObject("source").getJSONArray("files");
+        assertEquals(4, files.size());
+
+        for (int i = 0; i < files.size(); i++) {
+            JSONObject obj = files.getJSONObject(i);
+            assertTrue(obj.has("timestamp"));
+        }
+
+        t = getTask(imp, task);
+        files = t.getJSONObject("source").getJSONArray("files");
+        for (int i = 0; i < files.size(); i++) {
+            JSONObject obj = files.getJSONObject(i);
+            assertTrue(obj.has("timestamp"));
+
+            String timestamp = obj.getString("timestamp");
+            assertEquals(String.format("2004-0%d-01T00:00:00.000+0000", (i+1)), 
+                timestamp);
+        }
+
+        postImport(imp);
+
+        LayerInfo l = importer.getContext(imp).getTasks().get(0).getItems().get(0).getLayer();
+        runChecks(l.getName());
+    }
+
     JSONObject getImport(int imp) throws Exception {
         JSON json = getAsJSON(String.format("/rest/imports/%d", imp));
         return ((JSONObject)json).getJSONObject("import");

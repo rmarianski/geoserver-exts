@@ -744,9 +744,10 @@ public class ImportJSONIO {
         if (transform instanceof DateFormatTransform) {
             DateFormatTransform df = (DateFormatTransform) transform;
             json.key("field").value(df.getField());
-            if (df.getDateFormat() != null) {
-                json.key("format").value(df.getDateFormat().toPattern()); 
+            if (df.getDatePattern() != null) {
+                json.key("format").value(df.getDatePattern().dateFormat().toPattern());
             }
+
         } else if (transform instanceof IntegerFieldToDateTransform) {
             IntegerFieldToDateTransform df = (IntegerFieldToDateTransform) transform;
             json.key("field").value(df.getField());

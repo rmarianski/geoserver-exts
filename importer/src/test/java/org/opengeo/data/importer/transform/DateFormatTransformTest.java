@@ -11,6 +11,12 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.TimeZone;
 
+import org.opengeo.data.importer.DatePattern;
+import org.opengeo.data.importer.Dates;
+
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
+
 /**
  *
  * @author Ian Schneider <ischneider@opengeo.org>
@@ -54,16 +60,20 @@ public class DateFormatTransformTest extends TransformTestSupport {
         // make a big shuffled list of patterns to ensure caching of last pattern
         // doesn't cause any problems
         List<String> patterns = new ArrayList<String>();
-        patterns.addAll(Arrays.asList(DateFormatTransform.PATTERNS));
-        patterns.addAll(Arrays.asList(DateFormatTransform.PATTERNS));
-        patterns.addAll(Arrays.asList(DateFormatTransform.PATTERNS));
-        patterns.addAll(Arrays.asList(DateFormatTransform.PATTERNS));
-        patterns.addAll(Arrays.asList(DateFormatTransform.PATTERNS));
+        patterns.addAll(Collections2.transform(Dates.patterns(false), 
+            new Function<DatePattern, String>() {
+            
+            @Override
+            public String apply(DatePattern input) {
+                return input.dateFormat().toPattern();
+            }
+        }));
+        
         Collections.shuffle(patterns);
         
         for (String f : patterns) {
             SimpleDateFormat fmt = new SimpleDateFormat(f);
-            fmt.setTimeZone(DateFormatTransform.UTC_TZ);
+            fmt.setTimeZone(Dates.UTC_TZ);
             Date expected = fmt.parse(fmt.format(now));
             Date parsed = transform.parseDate(fmt.format(now));
             assertEquals(expected, parsed);
@@ -76,7 +86,7 @@ public class DateFormatTransformTest extends TransformTestSupport {
 
         Date now = new Date();
         SimpleDateFormat fmt = new SimpleDateFormat(customFormat);
-        fmt.setTimeZone(DateFormatTransform.UTC_TZ);
+        fmt.setTimeZone(Dates.UTC_TZ);
         Date expected = fmt.parse(fmt.format(now));
         Date parsed = transform.parseDate(fmt.format(now));
         assertEquals(expected, parsed);
