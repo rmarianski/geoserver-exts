@@ -36,7 +36,10 @@ public class GwcStatistician {
                     break;
                 }
                 if ("geowebcache-miss-reason".equalsIgnoreCase(h[0])) {
-                    missReason = Optional.of(h[1]);
+                    String reason = h[1];
+                    if (reason != null && !reason.isEmpty()) {
+                        missReason = Optional.of(reason);
+                    }
                 }
             }
         }
