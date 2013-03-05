@@ -50,6 +50,10 @@ public class HttpMessageTransportFactory {
                 return;
             }
 
+            // remove surrounding whitespace from properties
+            url = url.trim();
+            apiKey = apiKey.trim();
+
             LOGGER.info("Monitoring Http Transport controller url: " + url);
             LOGGER.info("Monitoring Http Transport api key: " + apiKey);
 
