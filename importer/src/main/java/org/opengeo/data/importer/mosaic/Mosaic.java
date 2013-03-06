@@ -115,7 +115,7 @@ public class Mosaic extends Directory {
                     }
                 }
             } catch (Exception e) {
-                LOGGER.log(Level.WARNING, "Could not read file " + f + ", unable to compute bbox");
+                LOGGER.log(Level.WARNING, "Could not read file " + f + ", unable to get coverage info");
             }
         }
         return super.newSpatialFile(f, format);

@@ -72,22 +72,24 @@ public class FilenameTimeHandler extends TimeHandler {
 
         //TODO: add a reason for cases why timestamp can't be determined
         Matcher m = filenamePattern.matcher(g.getFile().getName());
-        if (!m.matches()) {
-            LOGGER.log(Level.WARNING, "Failure parsing time from file " + filename + 
-                " with pattern " + getFilenameRegex());
-            return null;
-        }
+        if (!m.matches() || m.groupCount() != 2) {
+            //report back message
+            String msg = "Failure parsing time from file " + filename + " with pattern " 
+                + getFilenameRegex();
+            g.setMessage(msg);
 
-        if (m.groupCount() != 2) {
-            LOGGER.log(Level.WARNING, "Failure parsing time from file " + filename + 
-                " with pattern " + getFilenameRegex());
+            LOGGER.log(Level.WARNING,msg);
             return null;
         }
 
         try {
             return timeFormat.parse(m.group(1));
         } catch (ParseException e) {
-            LOGGER.log(Level.WARNING, "Failure parsing timestamp from filename", e);
+            String msg = "Failure parsing timestamp with pattern " + timeFormat.toPattern() +  
+                ": " + e.getLocalizedMessage();
+            g.setMessage(msg);
+
+            LOGGER.log(Level.WARNING, msg, e);
             return null;
         }
     }

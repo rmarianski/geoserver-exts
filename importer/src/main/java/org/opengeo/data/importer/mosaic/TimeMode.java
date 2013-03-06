@@ -13,54 +13,24 @@ public enum TimeMode {
     /**
      * Extract the timestamp from the filename, via {@link FilenameTimeHandler} 
      */
-    FILENAME {
-        @Override
-        public FilenameTimeHandler createHandler() {
+    FILENAME, MANUAL, AUTO, NONE;
+
+    public TimeHandler createHandler() {
+        if (this == FILENAME) {
             return new FilenameTimeHandler();
         }
-    }, 
 
-    /**
-     * Timestamps handled manualy, and input directly by the user. 
-     */
-    MANUAL {
-        @Override
-        public TimeHandler createHandler() {
-            return new TimeHandler() {
-                @Override
-                public Date computeTimestamp(Granule g) {
+        return new TimeHandler() {
+            @Override
+            public Date computeTimestamp(Granule g) {
+                switch(TimeMode.this) {
+                case AUTO:
+                    return Dates.matchAndParse(g.getFile().getName());
+                case MANUAL:
                     return g.getTimestamp();
                 }
-            };
-        }
-    },
-
-    AUTO {
-        @Override
-        public TimeHandler createHandler() {
-            return new TimeHandler() {
-                @Override
-                public Date computeTimestamp(Granule g) {
-                    return Dates.matchAndParse(g.getFile().getName());
-                }
-            };
-        }
-    }, 
-    
-    /**
-     * No timestamp handling.
-     */
-    NONE {
-        @Override
-        public TimeHandler createHandler() {
-            return new TimeHandler() {
-                @Override
-                public Date computeTimestamp(Granule g) {
-                    return null;
-                }
-            };
-        }
-    };
-
-    public abstract TimeHandler createHandler();
+                return null;
+            }
+        };
+    }
 }
