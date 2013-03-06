@@ -24,6 +24,11 @@ public abstract class ImportData implements Serializable{
     
     String charsetEncoding;
 
+    /**
+     * message associated with the data, usually for error reporting.
+     */
+    String message;
+
     public ImportData() {
     }
 
@@ -46,6 +51,14 @@ public abstract class ImportData implements Serializable{
 
     public void setFormat(DataFormat format) {
         this.format = format;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 
     /**

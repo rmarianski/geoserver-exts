@@ -515,7 +515,7 @@ public class ImportJSONIO {
             json.key("charset").value(data.getCharsetEncoding());
         }
         fileContents(data, json);
-
+        message(data, json);
         json.endObject();
         json.flush();
     }
@@ -538,6 +538,12 @@ public class ImportJSONIO {
                     json.key("timestamp").value(DATE_FORMAT.format(g.getTimestamp()));
                 }
             }
+        }
+    }
+
+    void message(ImportData data, JSONBuilder json) throws IOException {
+        if (data.getMessage() != null) {
+            json.key("message").value(data.getMessage());
         }
     }
 
@@ -607,6 +613,7 @@ public class ImportJSONIO {
         
         json.key("files");
         files(data, json);
+        message(data, json);
         json.endObject();
         json.flush();
     }
@@ -659,6 +666,8 @@ public class ImportJSONIO {
         for (Table t : data.getTables()) {
             json.value(t.getName());
         }
+
+        message(data, json);
         json.endArray();
 
         json.endObject();
