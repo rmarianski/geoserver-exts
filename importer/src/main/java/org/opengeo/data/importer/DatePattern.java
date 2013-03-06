@@ -20,7 +20,6 @@ public class DatePattern {
     final boolean strict;
     final boolean forceGmt;
 
-    SimpleDateFormat dateFormat;
     Pattern pattern;
 
     /**
@@ -52,11 +51,9 @@ public class DatePattern {
     }
 
     public SimpleDateFormat dateFormat() {
-        if (dateFormat == null) {
-            dateFormat = new SimpleDateFormat(format, Locale.CANADA); 
-            if (forceGmt) {
-                dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-            }
+        SimpleDateFormat dateFormat = new SimpleDateFormat(format, Locale.CANADA); 
+        if (forceGmt) {
+            dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
         }
         return dateFormat;
     }
