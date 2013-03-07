@@ -3,6 +3,7 @@ package org.opengeo.data.importer.rest;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import net.sf.json.JSON;
@@ -18,12 +19,16 @@ import org.opengeo.data.importer.ImportContext;
 import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.ImporterTestSupport;
 
+import com.google.common.collect.Lists;
 import com.mockrunner.mock.web.MockHttpServletRequest;
 import com.mockrunner.mock.web.MockHttpServletResponse;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.Collections;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import javax.servlet.Filter;
 
 import org.geoserver.catalog.Catalog;
@@ -324,7 +329,6 @@ public class RESTDataTest extends ImporterTestSupport {
 
         //verify files have a timestamp
         JSONObject t = getTask(imp, task);
-        print(t);
         JSONArray files = t.getJSONObject("source").getJSONArray("files");
         assertEquals(4, files.size());
 
@@ -335,15 +339,23 @@ public class RESTDataTest extends ImporterTestSupport {
 
         t = getTask(imp, task);
         files = t.getJSONObject("source").getJSONArray("files");
+
+        //ensure all dates set up, can't rely on iteration order
+        List<Integer> ints = Lists.newArrayList(1,2,3,4);
+        Pattern p = Pattern.compile("2004-0(\\d)-01T00:00:00.000\\+0000");
+
         for (int i = 0; i < files.size(); i++) {
             JSONObject obj = files.getJSONObject(i);
             assertTrue(obj.has("timestamp"));
 
             String timestamp = obj.getString("timestamp");
-            assertEquals(String.format("2004-0%d-01T00:00:00.000+0000", (i+1)), 
-                timestamp);
-        }
+            Matcher m = p.matcher(timestamp);
+            assertTrue(m.matches());
 
+            ints.remove((Object)Integer.parseInt(m.group(1)));
+        }
+        assertTrue(ints.isEmpty());
+        
         postImport(imp);
 
         LayerInfo l = importer.getContext(imp).getTasks().get(0).getItems().get(0).getLayer();
