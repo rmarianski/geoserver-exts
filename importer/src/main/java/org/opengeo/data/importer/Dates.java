@@ -62,8 +62,7 @@ public class Dates {
     static DatePattern dp(String format, String regex, boolean forceGmt, boolean strict) {
         return new DatePattern(format, regex, forceGmt, strict);
     }
-    static DatePattern last;
-
+    
     public static Date matchAndParse(String str) {
         return parse(str, true);
     }
@@ -75,23 +74,14 @@ public class Dates {
     static Date parse(String str, boolean match) {
         Collection<DatePattern> patterns = patterns(match);
             
-        Date parsed = null;
-
-        DatePattern first = last;
-        if (first != null) {
-            parsed = match ? first.matchAndParse(str) : first.parse(str);
-        }
-
-        if (parsed == null) {
-            for (DatePattern dp : patterns) {
-                parsed = match ? dp.matchAndParse(str) : dp.parse(str);
-                if (parsed != null) {
-                    last = dp;
-                    return parsed;
-                }
+        for (DatePattern dp : patterns) {
+            Date parsed = match ? dp.matchAndParse(str) : dp.parse(str);
+            if (parsed != null) {
+                return parsed;
             }
         }
-        return parsed;
+
+        return null;
     }
 
     static Date parseDate(DatePattern dp, String str) {
