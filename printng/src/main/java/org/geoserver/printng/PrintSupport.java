@@ -5,6 +5,7 @@ import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.OutputStream;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
@@ -23,6 +24,10 @@ import org.w3c.dom.Document;
 public final class PrintSupport {
     
     private PrintSupport() {}
+
+    public static File getGlobalCacheDir() {
+        return new File(System.getProperty("java.io.tmpdir"), "printng-cache");
+    }
     
     /**
      * Scale an image to a specified width/height.
