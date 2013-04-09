@@ -60,7 +60,8 @@ public abstract class ImporterDbTestSupport extends ImporterTestSupport {
 
     class DbmsTestData extends LiveDbmsData {
 
-        public DbmsTestData(File dataDirSourceDirectory, String fixtureId, File sqlScript) {
+        public DbmsTestData(File dataDirSourceDirectory, String fixtureId, File sqlScript)
+            throws IOException {
             super(dataDirSourceDirectory, fixtureId, sqlScript);
             getFilteredPaths().clear();
         }

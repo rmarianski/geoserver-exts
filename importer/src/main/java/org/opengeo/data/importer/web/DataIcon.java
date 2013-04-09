@@ -6,6 +6,7 @@ import org.geoserver.web.GeoServerApplication;
 public enum DataIcon {
     FOLDER("img/icons/silk/folder.png"),
     VECTOR("img/icons/geosilk/vector.png"),
+    RASTER("img/icons/geosilk/raster.png"),
     FILE("img/icons/silk/page_white_text.png"),
     FILE_VECTOR("img/icons/geosilk/page_white_vector.png"),
     FILE_RASTER("img/icons/geosilk/page_white_raster.png"),

@@ -75,7 +75,8 @@ public class SpatialFilePanel extends ImportSourcePanel {
                                 dialog.close(target);
                             }
                         };
-                        //chooser.setFilter(new Model(new ExtensionFile"(".shp")));
+
+                        initFileChooser(chooser);
                         return chooser;
                     }
 
@@ -178,4 +179,7 @@ public class SpatialFilePanel extends ImportSourcePanel {
         };
     }
 
+    protected void initFileChooser(GeoServerFileChooser fileChooser) {
+        //chooser.setFilter(new Model(new ExtensionFile"(".shp")));
+    }
 }

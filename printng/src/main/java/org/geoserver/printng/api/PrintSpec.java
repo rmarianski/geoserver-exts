@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.httpclient.Cookie;
+import org.geoserver.printng.PrintSupport;
 import org.geoserver.printng.spi.ParsedDocument;
 import org.w3c.dom.Document;
 
@@ -143,17 +144,19 @@ public class PrintSpec {
         this.dpp = dpp;
     }
 
+    public boolean isCacheDirSet() {
+        return this.cacheDir != null;
+    }
+
     public File getCacheDir() {
         // ideally, caching would be configurable per source
         // to support caching common base layers, etc.
         // but for now, it is only to avoid memory issues...
-        File cache;
-        if (cacheDir == null) {
-            cache = new File(System.getProperty("java.io.tmpdir"));
-        } else {
-            cache = cacheDir;
+        File cache = cacheDir;
+        if (cache == null) {
+            cache = PrintSupport.getGlobalCacheDir();
         }
-        return new File(cache, String.valueOf(System.identityHashCode(this)));
+        return cache;
     }
 
     public void setCacheDirRoot(File cacheDir) {

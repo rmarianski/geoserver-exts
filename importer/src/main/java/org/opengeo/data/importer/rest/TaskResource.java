@@ -10,7 +10,6 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
@@ -19,7 +18,6 @@ import org.geoserver.catalog.CatalogBuilder;
 import org.geoserver.catalog.DataStoreInfo;
 import org.geoserver.catalog.StoreInfo;
 import org.geoserver.catalog.impl.StoreInfoImpl;
-import org.geoserver.rest.AbstractResource;
 import org.geoserver.rest.RestletException;
 import org.geoserver.rest.format.DataFormat;
 import org.geoserver.rest.format.StreamDataFormat;
@@ -28,7 +26,11 @@ import org.opengeo.data.importer.ImportContext;
 import org.opengeo.data.importer.ImportData;
 import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.Importer;
-import org.restlet.data.*;
+import org.restlet.data.Form;
+import org.restlet.data.MediaType;
+import org.restlet.data.Request;
+import org.restlet.data.Response;
+import org.restlet.data.Status;
 import org.restlet.ext.fileupload.RestletFileUpload;
 
 /**
@@ -37,12 +39,10 @@ import org.restlet.ext.fileupload.RestletFileUpload;
  * @author Justin Deoliveira, OpenGeo
  *
  */
-public class TaskResource extends AbstractResource {
-
-    Importer importer;
+public class TaskResource extends BaseResource {
 
     public TaskResource(Importer importer) {
-        this.importer = importer;
+        super(importer);
     }
 
     @Override
@@ -67,12 +67,12 @@ public class TaskResource extends AbstractResource {
 
     public void handlePost() {
         ImportData data = null;
-        
+
         getLogger().info("Handling POST of " + getRequest().getEntity().getMediaType());
         //file posted from form
         MediaType mimeType = getRequest().getEntity().getMediaType(); 
         if (MediaType.MULTIPART_FORM_DATA.equals(mimeType, true)) {
-            data = handleMultiPartFormUpload();
+            data = handleMultiPartFormUpload(lookupContext());
         }
         else if (MediaType.APPLICATION_WWW_FORM.equals(mimeType, true)) {
             data = handleFormPost();
@@ -112,17 +112,21 @@ public class TaskResource extends AbstractResource {
 
     }
 
-    private Directory createDirectory() {
+    private Directory findOrCreateDirectory(ImportContext context) {
+        if (context.getData() instanceof Directory) {
+            return (Directory) context.getData();
+        }
+    
         try {
-            return Directory.createNew(importer.getCatalog().getResourceLoader().findOrCreateDirectory("uploads"));
+            return Directory.createNew(importer.getUploadRoot());
         } catch (IOException ioe) {
             throw new RestletException("File upload failed", Status.SERVER_ERROR_INTERNAL, ioe);
         }
     }
     
-    private ImportData handleFileUpload() {
-        Directory directory = createDirectory();
-        
+    private ImportData handleFileUpload(ImportContext context) {
+        Directory directory = findOrCreateDirectory(context);
+
         try {
             directory.accept(getAttribute("task"),getRequest().getEntity().getStream());
         } catch (IOException e) {
@@ -133,7 +137,7 @@ public class TaskResource extends AbstractResource {
         return directory;
     }
     
-    private ImportData handleMultiPartFormUpload() {
+    private ImportData handleMultiPartFormUpload(ImportContext context) {
         DiskFileItemFactory factory = new DiskFileItemFactory();
         // @revisit - this appears to be causing OOME
         //factory.setSizeThreshold(102400000);
@@ -146,8 +150,8 @@ public class TaskResource extends AbstractResource {
             throw new RestletException("File upload failed", Status.SERVER_ERROR_INTERNAL, e);
         }
 
-        //create a directory to hold the files
-        Directory directory = createDirectory();
+        //look for a directory to hold the files
+        Directory directory = findOrCreateDirectory(context);
 
         //unpack all the files
         for (FileItem item : items) {
@@ -171,18 +175,8 @@ public class TaskResource extends AbstractResource {
         if (getRequest().getEntity().getMediaType().equals(MediaType.APPLICATION_JSON)) {
             handleTaskPut();
         } else {
-            acceptData(handleFileUpload());
+            acceptData(handleFileUpload(lookupContext()));
         }
-    }
-
-    ImportContext lookupContext() {
-        long i = Long.parseLong(getAttribute("import"));
-
-        ImportContext context = importer.getContext(i);
-        if (context == null) {
-            throw new RestletException("No such import: " + i, Status.CLIENT_ERROR_NOT_FOUND);
-        }
-        return context;
     }
 
     Object lookupTask(boolean allowAll) {

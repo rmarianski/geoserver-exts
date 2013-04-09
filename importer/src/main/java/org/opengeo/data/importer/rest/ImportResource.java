@@ -132,6 +132,8 @@ public class ImportResource extends AbstractResource {
                     //take it from the store 
                     context.setTargetWorkspace(targetStore.getWorkspace());
                 }
+
+                context.setData(newContext.getData());
             }
 
             context.reattach(importer.getCatalog(), true);
@@ -156,8 +158,15 @@ public class ImportResource extends AbstractResource {
         if (obj instanceof ImportContext) {
             //run an existing import
             try {
-                Form query = getRequest().getResourceRef().getQueryAsForm();
                 context = (ImportContext) obj;
+                
+                //if the import is empty, prep it but leave data as is
+                if (context.getTasks().isEmpty()) {
+                    importer.init(context, false);
+                }
+
+                Form query = getRequest().getResourceRef().getQueryAsForm();
+                
                 if (query.getNames().contains("async")) {
                     importer.runAsync(context, ImportFilter.ALL);
                 } else {
@@ -250,13 +259,8 @@ public class ImportResource extends AbstractResource {
 
     class ImportContextJSONFormat extends StreamDataFormat {
 
-        XStreamPersister xp;
-
         public ImportContextJSONFormat() {
             super(MediaType.APPLICATION_JSON);
-            xp = new XStreamPersisterFactory().createJSONPersister();
-            xp.setReferenceByName(true);
-            xp.setExcludeIds();
         }
 
         @Override

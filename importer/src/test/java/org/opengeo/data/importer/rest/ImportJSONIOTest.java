@@ -95,7 +95,7 @@ public class ImportJSONIOTest extends ImporterTestSupport {
         assertEquals(1, chain.getTransforms().size());
         DateFormatTransform dft = (DateFormatTransform) chain.getTransforms().get(0);
         assertEquals("foobar",dft.getField());
-        assertEquals("yyyy-MM-dd",dft.getDateFormat().toPattern());
+        assertEquals("yyyy-MM-dd",dft.getDatePattern().dateFormat().toPattern());
 
     }
 }

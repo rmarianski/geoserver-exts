@@ -10,9 +10,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.text.SimpleDateFormat;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.logging.LogRecord;
 import net.sf.json.JSONArray;
 
@@ -31,6 +33,7 @@ import org.geoserver.config.util.XStreamPersister;
 import org.geoserver.config.util.XStreamPersisterFactory;
 import org.geoserver.rest.PageInfo;
 import org.geoserver.rest.RestletException;
+import org.opengeo.data.importer.Archive;
 import org.opengeo.data.importer.Database;
 import org.opengeo.data.importer.Directory;
 import org.opengeo.data.importer.FileData;
@@ -43,6 +46,9 @@ import org.opengeo.data.importer.SpatialFile;
 import org.opengeo.data.importer.Table;
 import org.opengeo.data.importer.UpdateMode;
 import org.opengeo.data.importer.ImportContext.State;
+import org.opengeo.data.importer.mosaic.Granule;
+import org.opengeo.data.importer.mosaic.Mosaic;
+import org.opengeo.data.importer.mosaic.TimeMode;
 import org.opengeo.data.importer.transform.*;
 import org.restlet.data.Status;
 import org.restlet.ext.json.JsonRepresentation;
@@ -53,6 +59,11 @@ import org.restlet.ext.json.JsonRepresentation;
  * @author Justin Deoliveira, OpenGeo
  */
 public class ImportJSONIO {
+
+    static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+    static {
+        DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
+    }
 
     Importer importer;
     
@@ -82,6 +93,10 @@ public class ImportJSONIO {
             json.key("targetStore").value(toJSON(context.getTargetStore()));
         }
 
+        if (context.getData() != null) {
+            json.key("data");
+            data(context.getData(), page, json);
+        }
         tasks(context.getTasks(), true, page, json);
 
         json.endObject();
@@ -114,6 +129,7 @@ public class ImportJSONIO {
                     fromJSON(json.getJSONObject("targetStore"), StoreInfo.class));
             }
             if (json.has("data")) {
+                context.setData(data(json.getJSONObject("data")));
             }
         }
         return context;
@@ -437,15 +453,51 @@ public class ImportJSONIO {
         data(data, page, builder(out));
     }
 
-    public void data(ImportData data, PageInfo page, JSONBuilder json) throws IOException {
+    public void data(ImportData data, PageInfo page, FlushableJSONBuilder json) throws IOException {
         if (data instanceof FileData) {
             if (data instanceof Directory) {
-                directory((Directory) data, page, json);
+                if (data instanceof Mosaic) {
+                    mosaic((Mosaic) data, page, json);
+                }
+                else {
+                    directory((Directory) data, page, json);
+                }
             } else {
                 file((FileData) data, page, json);
             }
         } else if (data instanceof Database) {
             database((Database) data, page, json);
+        }
+        json.flush();
+    }
+
+    public ImportData data(InputStream in) throws IOException {
+        return data(parse(in));
+    }
+    
+    public ImportData data(JSONObject json) throws IOException {
+        String type = json.getString("type");
+        if (type == null) {
+            throw new IOException("Data object must specify 'type' property");
+        }
+
+        if ("file".equalsIgnoreCase(type)) {
+            return file(json);
+        }
+        else if("directory".equalsIgnoreCase(type)) {
+            return directory(json);
+        }
+        else if("mosaic".equalsIgnoreCase(type)) {
+            return mosaic(json);
+        }
+        else if("archive".equalsIgnoreCase(type)) {
+            return archive(json);
+        }
+        else if ("database".equalsIgnoreCase(type)) {
+            return database(json);
+        }
+        else {
+            throw new IllegalArgumentException("Unknown data type: " + type);
         }
     }
 
@@ -453,7 +505,7 @@ public class ImportJSONIO {
         file(data, page, builder(out));
     }
 
-    public void file(FileData data, PageInfo page, JSONBuilder json) throws IOException {
+    public void file(FileData data, PageInfo page, FlushableJSONBuilder json) throws IOException {
         json.object();
         
         json.key("type").value("file");
@@ -463,8 +515,9 @@ public class ImportJSONIO {
             json.key("charset").value(data.getCharsetEncoding());
         }
         fileContents(data, json);
-
+        message(data, json);
         json.endObject();
+        json.flush();
     }
 
     void fileContents(FileData data, JSONBuilder json) throws IOException {
@@ -478,31 +531,121 @@ public class ImportJSONIO {
                 json.value(supp.getName());
             }
             json.endArray();
+
+            if (sf instanceof Granule) {
+                Granule g = (Granule) sf;
+                if (g.getTimestamp() != null) {
+                    json.key("timestamp").value(DATE_FORMAT.format(g.getTimestamp()));
+                }
+            }
         }
+    }
+
+    void message(ImportData data, JSONBuilder json) throws IOException {
+        if (data.getMessage() != null) {
+            json.key("message").value(data.getMessage());
+        }
+    }
+
+    public FileData file(JSONObject json) throws IOException {
+        if (json.has("file")) {
+            //TODO: find out if spatial or not
+            String file = json.getString("file");
+            return new FileData(new File(file));
+        }
+        else {
+            //TODO: create a temp file
+            return new FileData((File)null);
+        }
+    }
+
+    public void mosaic(Mosaic data, PageInfo page, OutputStream out) throws IOException {
+        directory(data, "mosaic", page, out);
+    }
+
+    public void mosaic(Mosaic data, PageInfo page, FlushableJSONBuilder json) throws IOException {
+        directory(data, "mosaic", page, json);
+    }
+
+    public Mosaic mosaic(JSONObject json) throws IOException {
+        Mosaic m = new Mosaic(json.has("location") ?  new File(json.getString("location")) : 
+            Directory.createNew(importer.getUploadRoot()).getFile());
+        if (json.has("name")) {
+            m.setName(json.getString("name"));
+        }
+        if (json.containsKey("time")) {
+            JSONObject time = json.getJSONObject("time");
+            if (!time.containsKey("mode")) {
+                throw new IllegalArgumentException("time object must specific mode property as " +
+                    "one of " + TimeMode.values());
+            }
+
+            m.setTimeMode(TimeMode.valueOf(time.getString("mode").toUpperCase()));
+            m.getTimeHandler().init(time);
+        }
+        return m;
+    }
+
+    public Archive archive(JSONObject json) throws IOException {
+        throw new UnsupportedOperationException("TODO: implement");
     }
 
     public void directory(Directory data, PageInfo page, OutputStream out) throws IOException {
         directory(data, page, builder(out));
     }
 
-    public void directory(Directory data, PageInfo page, JSONBuilder json) throws IOException {
+    public void directory(Directory data, PageInfo page, FlushableJSONBuilder json) throws IOException {
+        directory(data, "directory", page, json);
+    }
+
+    public void directory(Directory data, String typeName, PageInfo page, OutputStream out) 
+        throws IOException {
+        directory(data, "directory", page, builder(out));
+    }
+
+    public void directory(Directory data, String typeName, PageInfo page, FlushableJSONBuilder json) 
+            throws IOException {
         json.object();
-        json.key("type").value("directory");
+        json.key("type").value(typeName);
         json.key("format").value(data.getFormat() != null ? data.getFormat().getName() : null);
         json.key("location").value(data.getFile().getPath());
-        json.key("files").array();
         if (data.getCharsetEncoding() != null) {
             json.key("charset").value(data.getCharsetEncoding());
         }
         
+        json.key("files");
+        files(data, json);
+        message(data, json);
+        json.endObject();
+        json.flush();
+    }
+
+    public void files(Directory data, OutputStream out) throws IOException {
+        files(data, builder(out));
+    }
+
+    public void files(Directory data, FlushableJSONBuilder json) throws IOException {
+        json.array();
         for (FileData file : data.getFiles()) {
             json.object();
             fileContents(file, json);
             json.endObject();
         }
         json.endArray();
+        json.flush();
+    }
 
-        json.endObject();
+    public Directory directory(InputStream in) throws IOException {
+        return directory(parse(in));
+    }
+
+    public Directory directory(JSONObject json) throws IOException {
+        if (json.has("location")) {
+            return new Directory(new File(json.getString("location")));
+        }
+        else {
+            return Directory.createNew(importer.getUploadRoot());
+        }
     }
 
     public void database(Database data, PageInfo page, OutputStream out) throws IOException {
@@ -525,9 +668,15 @@ public class ImportJSONIO {
         for (Table t : data.getTables()) {
             json.value(t.getName());
         }
+
+        message(data, json);
         json.endArray();
 
         json.endObject();
+    }
+
+    public Database database(JSONObject json) throws IOException {
+        throw new UnsupportedOperationException("TODO: implement");
     }
 
     FlushableJSONBuilder builder(OutputStream out) {
@@ -606,9 +755,10 @@ public class ImportJSONIO {
         if (transform instanceof DateFormatTransform) {
             DateFormatTransform df = (DateFormatTransform) transform;
             json.key("field").value(df.getField());
-            if (df.getDateFormat() != null) {
-                json.key("format").value(df.getDateFormat().toPattern()); 
+            if (df.getDatePattern() != null) {
+                json.key("format").value(df.getDatePattern().dateFormat().toPattern());
             }
+
         } else if (transform instanceof IntegerFieldToDateTransform) {
             IntegerFieldToDateTransform df = (IntegerFieldToDateTransform) transform;
             json.key("field").value(df.getField());
