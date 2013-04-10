@@ -41,6 +41,9 @@ import org.xhtmlrenderer.swing.NaiveUserAgent;
 
 /**
  * Extend the NaiveUserAgent with multi-threaded image resolution and optional caching.
+ * @todo interaction with the resolveAndOpenStream needs to be investigated
+ *       as it's possible that after running preload(), the httpClient connection
+ *       pool will be closed.
  * @author Ian Schneider <ischneider@opengeo.org>
  */
 public class PrintUserAgentCallback extends NaiveUserAgent {
@@ -113,6 +116,19 @@ public class PrintUserAgentCallback extends NaiveUserAgent {
     }
 
     public void preload() throws IOException {
+        try {
+            doPreload();
+        } finally {
+            // closing connection objects not good enough, need to shutdown
+            // pool to release sockets. due to the lifecycle of returned input
+            // streams, this is not possible on a per URL-resolution basis
+            MultiThreadedHttpConnectionManager connections = (MultiThreadedHttpConnectionManager)
+                    httpClient.getHttpConnectionManager();
+            connections.shutdown();
+        }
+    }
+
+    public void doPreload() throws IOException {
         MessageDigest digest;
         try {
             digest = MessageDigest.getInstance("SHA-256");
