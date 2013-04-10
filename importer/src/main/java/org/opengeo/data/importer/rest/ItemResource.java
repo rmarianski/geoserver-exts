@@ -133,23 +133,21 @@ public class ItemResource extends BaseResource {
         // validate SRS - an invalid one will destroy capabilities doc and make
         // the layer totally broken in UI
         CoordinateReferenceSystem newRefSystem = null;
-        if (r instanceof FeatureTypeInfo) {
-            String srs = ((FeatureTypeInfo) r).getSRS();
-            if (srs != null) {
-                try {
-                    newRefSystem = CRS.decode(srs);
-                } catch (NoSuchAuthorityCodeException ex) {
-                    String msg = "Invalid SRS " + srs;
-                    getLogger().warning(msg + " in PUT request");
-                    throw ImportJSONIO.badRequest(msg);
-                } catch (FactoryException ex) {
-                    throw new RestletException("Error with referencing",Status.SERVER_ERROR_INTERNAL,ex);
-                }
-                // make this the specified native if none exists
-                // useful for csv or other files
-                if (resource.getNativeCRS() == null) {
-                    resource.setNativeCRS(newRefSystem);
-                }
+        String srs = r != null ? r.getSRS() : null;
+        if (srs != null) {
+            try {
+                newRefSystem = CRS.decode(srs);
+            } catch (NoSuchAuthorityCodeException ex) {
+                String msg = "Invalid SRS " + srs;
+                getLogger().warning(msg + " in PUT request");
+                throw ImportJSONIO.badRequest(msg);
+            } catch (FactoryException ex) {
+                throw new RestletException("Error with referencing",Status.SERVER_ERROR_INTERNAL,ex);
+            }
+            // make this the specified native if none exists
+            // useful for csv or other files
+            if (resource.getNativeCRS() == null) {
+                resource.setNativeCRS(newRefSystem);
             }
         }
 
