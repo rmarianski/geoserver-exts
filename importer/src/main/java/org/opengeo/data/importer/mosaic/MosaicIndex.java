@@ -66,8 +66,16 @@ public class MosaicIndex {
                 }
 
                 String ext = FilenameUtils.getExtension(name);
+                ShpFileType shpFileType = null;
+                if (ext != null) {
+                    try {
+                        shpFileType = ShpFileType.valueOf(ext.toUpperCase());
+                    } catch (IllegalArgumentException iae) {
+                        // the extension is not matching
+                    }
+                }
                 return "properties".equalsIgnoreCase(ext) 
-                    || ShpFileType.valueOf(ext.toUpperCase()) != null;
+                    || shpFileType != null;
             }
         })) {
             f.delete();
