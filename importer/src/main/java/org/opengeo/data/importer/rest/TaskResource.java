@@ -24,6 +24,7 @@ import org.geoserver.rest.format.StreamDataFormat;
 import org.opengeo.data.importer.Directory;
 import org.opengeo.data.importer.ImportContext;
 import org.opengeo.data.importer.ImportData;
+import org.opengeo.data.importer.ImportItem;
 import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.Importer;
 import org.restlet.data.Form;
@@ -59,6 +60,19 @@ public class TaskResource extends BaseResource {
         else {
             getResponse().setEntity(getFormatGet().toRepresentation((List<ImportTask>)obj));
         }
+    }
+
+    @Override
+    public boolean allowDelete() {
+        return getAttribute("task") != null;
+    }
+
+    @Override
+    public void handleDelete() {
+        ImportTask task = (ImportTask) lookupTask(false);
+        task.getContext().removeTask(task);
+        importer.changed(task.getContext());
+        getResponse().setStatus(Status.SUCCESS_NO_CONTENT);
     }
 
     public boolean allowPost() {

@@ -161,6 +161,10 @@ public class ImportContext implements Serializable {
         return Collections.unmodifiableList(tasks);
     }
 
+    public void removeTask(ImportTask task) {
+        tasks.remove(task);
+    }
+
     public void addTask(ImportTask task) {
         task.setId(taskid++);
         task.setContext(this);
