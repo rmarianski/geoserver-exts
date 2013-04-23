@@ -45,12 +45,10 @@ import org.restlet.resource.Representation;
  * @author Justin Deoliveira, OpenGeo
  *
  */
-public class ItemResource extends AbstractResource {
-
-    Importer importer;
+public class ItemResource extends BaseResource {
 
     public ItemResource(Importer importer) {
-        this.importer = importer;
+        super(importer);
     }
 
     @Override
@@ -205,12 +203,8 @@ public class ItemResource extends AbstractResource {
     }
 
     Object lookupItem(boolean allowAll) {
-        long imprt = Long.parseLong(getAttribute("import"));
-
-        ImportContext context = importer.getContext(imprt);
-        if (context == null) {
-            throw new RestletException("No such import: " + imprt, Status.CLIENT_ERROR_NOT_FOUND);
-        }
+        ImportContext context = lookupContext();
+        Long imprt = context.getId();
 
         int t = Integer.parseInt(getAttribute("task"));
         if (t >= context.getTasks().size()) {

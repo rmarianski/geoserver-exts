@@ -32,10 +32,21 @@ public class Directory extends FileData {
     /**
      * list of files contained in directory
      */
-    List<FileData> files = new ArrayList<FileData>();
-    
+    protected List<FileData> files = new ArrayList<FileData>();
+
+    /**
+     * flag controlling whether file look up should recurse into sub directories.
+     */
+    boolean recursive;
+    String name;
+
     public Directory(File file) {
+        this(file, true);
+    }
+
+    public Directory(File file, boolean recursive) {
         super(file);
+        this.recursive = recursive;
     }
 
     public static Directory createNew(File parent) throws IOException {
@@ -80,13 +91,26 @@ public class Directory extends FileData {
         }
     }
     
-    public File getChild(String name) {
+    public File child(String name) {
+        if (name == null) {
+            //create random
+            try {
+                return File.createTempFile("child", "tmp", file);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         return new File(this.file,name);
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     @Override
     public String getName() {
-        return file.getName();
+        return this.name != null ? this.name : file.getName();
     }
 
     @Override
@@ -119,6 +143,10 @@ public class Directory extends FileData {
                     continue;
                 }
                 if (f.isDirectory()) {
+                    if (!recursive && !f.equals(file)) {
+                        //skip it
+                        continue;
+                    }
                     // @hacky - ignore __MACOSX
                     // this could probably be dealt with in a better way elsewhere
                     // like by having Directory ignore the contents since they
@@ -143,9 +171,8 @@ public class Directory extends FileData {
                 DataFormat format = DataFormat.lookup(f);
 
                 if (format != null) {
-                    SpatialFile sf = new SpatialFile(f);
-                    sf.setFormat(format);
-
+                    SpatialFile sf = newSpatialFile(f, format);
+                    
                     //gather up the related files
                     sf.prepare(m);
 
@@ -191,6 +218,18 @@ public class Directory extends FileData {
 //        for (DataFile f : files()) {
 //            f.prepare();
 //        }
+    }
+
+    /**
+     * Creates a new spatial file.
+     * 
+     * @param f The raw file.
+     * @param format The spatial format of the file.
+     */
+    protected SpatialFile newSpatialFile(File f, DataFormat format) {
+        SpatialFile sf = new SpatialFile(f);
+        sf.setFormat(format);
+        return sf;
     }
 
     public List<Directory> flatten() {
@@ -305,7 +344,7 @@ public class Directory extends FileData {
     }
 
     public void accept(String childName, InputStream in) throws IOException {
-        File dest = getChild(childName);
+        File dest = child(childName);
         
         IOUtils.copy(in, dest);
 
@@ -319,7 +358,7 @@ public class Directory extends FileData {
     }
 
     public void accept(FileItem item) throws Exception {
-        File dest = getChild(item.getName());
+        File dest = child(item.getName());
         item.write(dest);
 
         try {

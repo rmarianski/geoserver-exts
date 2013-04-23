@@ -464,6 +464,12 @@ public class ImportDataPage extends GeoServerSecuredPage {
                 return new SpatialFilePanel(panelId);
             }
         },
+        MOSAIC(DataIcon.RASTER) {
+            @Override
+            ImportSourcePanel createPanel(String panelId) {
+                return new MosaicPanel(panelId);
+            }
+        }, 
         POSTGIS(DataIcon.POSTGIS) {
             @Override
             ImportSourcePanel createPanel(String panelId) {

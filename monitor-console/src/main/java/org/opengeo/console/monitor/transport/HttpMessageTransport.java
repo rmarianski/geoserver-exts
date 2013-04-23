@@ -74,7 +74,7 @@ public class HttpMessageTransport implements ConsoleMessageTransport {
     }
 
     private void logCommunicationError(Exception e) {
-        LOGGER.warning("Error comunicating with: " + url);
+        LOGGER.warning("Error communicating with: " + url);
         if (LOGGER.isLoggable(Level.INFO)) {
             StringWriter out = new StringWriter();
             PrintWriter writer = new PrintWriter(out);

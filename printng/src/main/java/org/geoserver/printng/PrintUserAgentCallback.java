@@ -48,7 +48,6 @@ public class PrintUserAgentCallback extends NaiveUserAgent {
     private final UserAgentCallback callback;
     private final PrintSpec spec;
     private final File cacheDir;
-    private final List<File> tempFiles = new ArrayList<File>();
     private final HttpClient httpClient = new HttpClient(new MultiThreadedHttpConnectionManager());
     private final Logger logger = Logging.getLogger(getClass());
 
@@ -56,7 +55,8 @@ public class PrintUserAgentCallback extends NaiveUserAgent {
         this.spec = spec;
         this.callback = callback;
         this.cacheDir = spec.getCacheDir();
-        if (cacheDir != null && !cacheDir.exists() && !cacheDir.mkdirs()) {
+        assert this.cacheDir != null;
+        if (!cacheDir.exists() && !cacheDir.mkdirs()) {
             throw new RuntimeException("Error creating cache dirs: " + cacheDir.getPath());
         }
         setBaseURL(spec.getBaseURL());
@@ -122,12 +122,9 @@ public class PrintUserAgentCallback extends NaiveUserAgent {
         List<String> imagesToResolve = new ArrayList<String>();
         List<File> cacheDestination = new ArrayList<File>();
         List<Element> elements = getImages();
+        final boolean debug = logger.isLoggable(Level.FINE);
         for (int i = 0; i < elements.size(); i++) {
             String href = elements.get(i).getAttribute("src");
-            if (cacheDir == null) {
-                imagesToResolve.add(href);
-                continue;
-            }
             File cacheFile;
             try {
                 String b64 = new BigInteger(digest.digest(href.getBytes())).toString(16);
@@ -139,6 +136,9 @@ public class PrintUserAgentCallback extends NaiveUserAgent {
                 imagesToResolve.add(href);
                 cacheDestination.add(cacheFile);
             } else {
+                if (debug) {
+                    logger.fine("using cache for " + href);
+                }
                 try {
                     cache(href, callback.getImageResource(cacheFile.toURI().toString()));
                 } catch (Exception ex) {
@@ -152,8 +152,7 @@ public class PrintUserAgentCallback extends NaiveUserAgent {
             List<Future<File>> futures = new ArrayList<Future<File>>(imagesToResolve.size());
             for (int i = 0; i < imagesToResolve.size(); i++) {
                 final String href = imagesToResolve.get(i);
-                final File dest = cacheDestination.isEmpty() ? getTempFile() : cacheDestination.get(i);
-                tempFiles.add(dest);
+                final File dest = cacheDestination.get(i);
                 futures.add(executor.submit(new Callable<File>() {
                     public File call() throws Exception {
                         return resolve(href, dest);
@@ -184,6 +183,7 @@ public class PrintUserAgentCallback extends NaiveUserAgent {
         }
     }
     
+    @Override
     protected InputStream resolveAndOpenStream(String uriSpec) {
         InputStream is = null;
         try {        
@@ -205,12 +205,13 @@ public class PrintUserAgentCallback extends NaiveUserAgent {
         String host = get.getURI().getHost();
         Cookie cookie = spec.getCookie(host);
         PasswordAuthentication creds = spec.getCredentials(host);
+        final boolean debug = logger.isLoggable(Level.FINE);
         if (creds != null) {
             httpClient.getState().setCredentials(new AuthScope(host, -1, AuthScope.ANY_REALM),
                     new UsernamePasswordCredentials(creds.getUserName(), new String(creds.getPassword())));
         }
         if (creds != null) {
-            if (logger.isLoggable(Level.FINE)) {
+            if (debug) {
                 logger.fine("setting credentials for " + host);
             }
             // geoserver doesn't challenge - things are just hidden
@@ -220,12 +221,15 @@ public class PrintUserAgentCallback extends NaiveUserAgent {
         // even if using basic auth, disable cookies
         get.getParams().setCookiePolicy(CookiePolicy.IGNORE_COOKIES);
         if (cookie != null) {
-            if (logger.isLoggable(Level.FINE)) {
+            if (debug) {
                 logger.fine("setting cookie for " + host + " to " + cookie);
             }
             // this made things work - not sure what I was doing wrong with
             // other cookie API
             get.setRequestHeader("Cookie", cookie.getName() + "=" + cookie.getValue());
+        }
+        if (debug) {
+            logger.fine("fetching " + uri);
         }
         httpClient.executeMethod(get);
         if (get.getStatusCode() == 200) {
@@ -286,22 +290,7 @@ public class PrintUserAgentCallback extends NaiveUserAgent {
     }
 
     public void cleanup() {
-        for (File f : tempFiles) {
-            if (!f.delete()) {
-                logger.warning("Error removing temporary file: " + f.getPath());
-            }
-        }
-        // @TODO - if/when caching is more robust, don't worry about this
-        boolean deleted = cacheDir.delete();
-        if (! deleted) {
-            logger.warning("Cache dir not deleted " + cacheDir.getAbsolutePath());
-        }
-    }
-
-    private File getTempFile() throws IOException {
-        File temp = File.createTempFile("printcache", null);
-        tempFiles.add(temp);
-        return temp;
+        // @todo when caching is done more intelligently, implement this
     }
 
     private void cache(String resource, ImageResource imageResource) {

@@ -35,8 +35,9 @@ public class RequestPrintSpecTest {
         PrintSpec spec = new PrintSpec(null);
         assertNotNull(spec.getCacheDir());
 
-        spec.setCacheDirRoot(new File("foobar"));
-        assertEquals(new File("foobar"), spec.getCacheDir().getParentFile());
+        File root = new File("foobar").getAbsoluteFile();
+        spec.setCacheDirRoot(root);
+        assertEquals(root, spec.getCacheDir());
     }
 
     @Test

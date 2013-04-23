@@ -31,7 +31,7 @@
   <bean id="importContextFinder" class="org.geoserver.rest.BeanResourceFinder">
       <constructor-arg value="importResource"/>
   </bean>
-  
+
   <bean id="importTaskResource" class="org.opengeo.data.importer.rest.TaskResource">
     <constructor-arg ref="importer"/>
   </bean>
@@ -44,6 +44,20 @@
   </bean>
   <bean id="importItemFinder" class="org.geoserver.rest.BeanResourceFinder">
       <constructor-arg value="importItemResource"/>
+  </bean>
+
+  <bean id="importDataResource" class="org.opengeo.data.importer.rest.DataResource">
+    <constructor-arg ref="importer"/>
+  </bean>
+  <bean id="importDataFinder" class="org.geoserver.rest.BeanResourceFinder">
+      <constructor-arg value="importDataResource"/>
+  </bean>
+
+  <bean id="dirResource" class="org.opengeo.data.importer.rest.DirectoryResource">
+    <constructor-arg ref="importer"/>
+  </bean>
+  <bean id="dirFinder" class="org.geoserver.rest.BeanResourceFinder">
+      <constructor-arg value="dirResource"/>
   </bean>
 
   <bean id="importRestMapping" class="org.geoserver.rest.RESTMapping">
@@ -60,6 +74,24 @@
             <value>/imports/{import}</value>
           </key>
           <value>importContextFinder</value>
+        </entry>
+        <entry>
+          <key>
+            <value>/imports/{import}/data</value>
+          </key>
+          <value>importDataFinder</value>
+        </entry>
+        <entry>
+          <key>
+            <value>/imports/{import}/data/files</value>
+          </key>
+          <value>dirFinder</value>
+        </entry>
+        <entry>
+          <key>
+            <value>/imports/{import}/data/files/{file}</value>
+          </key>
+          <value>dirFinder</value>
         </entry>
         <entry>
           <key>

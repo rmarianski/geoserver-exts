@@ -26,8 +26,8 @@
       <version>1.6.2</version>
     </dependency>
     <dependency>
-      <groupId>org.geoserver.community</groupId>
-      <artifactId>monitoring</artifactId>
+      <groupId>org.geoserver.extension</groupId>
+      <artifactId>monitor-core</artifactId>
       <version>${gs.version}</version>
       <classifier>tests</classifier>
       <scope>test</scope>
