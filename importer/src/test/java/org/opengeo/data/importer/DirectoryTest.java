@@ -5,11 +5,43 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import static junit.framework.Assert.assertEquals;
+import junit.framework.TestCase;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.opengeo.data.importer.mosaic.Mosaic;
+import static org.opengeo.data.importer.ImporterTestUtils.unpack;
 
-public class DirectoryTest extends ImporterTestSupport {
+public class DirectoryTest extends TestCase {
+
+    public void testMosaicAuxillaryFiles() throws Exception {
+        File unpack = ImporterTestUtils.unpack("mosaic/bm.zip");
+
+        // all types of junk!
+        String[] aux = new String[] {
+            "aux", "rrd", "xml", "tif.aux.xml", "tfw"
+        };
+        File[] tifs = unpack.listFiles();
+        for (int i = 0; i < tifs.length; i++) {
+            File file = tifs[i];
+            for (int j = 0; j < aux.length; j++) {
+                new File(unpack, file.getName().replace("tif",aux[j])).createNewFile();
+            }
+        }
+
+        Mosaic m = new Mosaic(unpack);
+        m.prepare();
+
+        assertEquals(4, m.getFiles().size());
+        for (int i = 0; i < m.getFiles().size(); i++) {
+            assertEquals("GeoTIFF", m.getFiles().get(1).getFormat().getName());
+        }
+        // make sure the junk was actually picked up
+        for (FileData f: m.getFiles()) {
+            assertEquals(aux.length, ((SpatialFile) f).getSuppFiles().size());
+        }
+    }
 
     public void testSingleSpatialFile() throws Exception {
         File dir = unpack("shape/archsites_epsg_prj.zip");
@@ -64,6 +96,7 @@ public class DirectoryTest extends ImporterTestSupport {
         new File(dir, "archsites.shp.xml").createNewFile();
         new File(dir, "archsites.sbx").createNewFile();
         new File(dir, "archsites.sbn").createNewFile();
+        new File(dir, "archsites.shp.ed.lock").createNewFile();
         
         Directory d = new Directory(dir);
         d.prepare();

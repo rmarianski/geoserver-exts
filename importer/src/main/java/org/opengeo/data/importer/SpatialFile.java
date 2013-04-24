@@ -62,6 +62,8 @@ public class SpatialFile extends FileData {
         //round up all the files with the same name
         suppFiles = new ArrayList();
         prjFile = null;
+
+        // getBaseName only gets the LAST extension so beware for .shp.aux.xml stuff
         final String baseName = getBaseName(file.getName());
         
         for (File f : file.getParentFile().listFiles()) {
@@ -69,17 +71,14 @@ public class SpatialFile extends FileData {
                 continue;
             }
             
-            String bn = getBaseName(f.getName());
-            String ext = getExtension(f.getName());
-            
-            // make sure we catch the .shp.xml auxillary file
-            // getBaseName will return the .shp extension the first time around
-            if ("xml".equals(ext)) {
-                bn = getBaseName(bn);
+            if (!f.getName().startsWith(baseName)) {
+                continue;
             }
             
-            if (bn.equals(baseName)) {
-                if ("prj".equalsIgnoreCase(ext)) {
+            String ext = f.getName().substring(baseName.length());
+            // once the basename is stripped, extension(s) should be present
+            if (ext.charAt(0) == '.') {
+                if (".prj".equalsIgnoreCase(ext)) {
                     prjFile = f;
                 }
                 else {
