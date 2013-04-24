@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.io.FilenameUtils;
 import org.geoserver.catalog.Catalog;
@@ -63,7 +64,26 @@ public abstract class DataFormat implements Serializable {
         }
 
         //look for a gridformat that can handle the file
-        AbstractGridFormat format = GridFormatFinder.findFormat(file);
+        Set<AbstractGridFormat> formats = GridFormatFinder.findFormats(file);
+        AbstractGridFormat format = null;
+        // in the case of 2 formats, let's ensure any ambiguity that cannot
+        // be resolved is an error to prevent spurious bugs related to
+        // the first format that is found being returned (and this can vary
+        // to to hashing in the set)
+        if (formats.size() > 1) {
+            for (AbstractGridFormat f: formats) {
+                // prefer GeoTIFF over WorldImageFormat
+                if ("GeoTIFF".equals(f.getName())) {
+                    format = f;
+                    break;
+                }
+            }
+            if (format == null) {
+                throw new RuntimeException("multiple formats found but not handled " + formats);
+            }
+        } else if (formats.size() == 1) {
+            format = formats.iterator().next();
+        }
         if (format != null && !(format instanceof UnknownFormat)) {
             return new GridFormat(format);
         }
