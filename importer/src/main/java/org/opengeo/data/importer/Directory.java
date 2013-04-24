@@ -316,6 +316,7 @@ public class Directory extends FileData {
      */
     public DataFormat format() throws IOException {
         if (files.isEmpty()) {
+            LOGGER.warning("no files recognized");
             return null;
         }
 
@@ -324,14 +325,29 @@ public class Directory extends FileData {
         for (int i = 1; i < files.size(); i++) {
             FileData other = files.get(i);
             if (format != null && !format.equals(other.getFormat())) {
+                logFormatMismatch();
                 return null;
             }
             if (format == null && other.getFormat() != null) {
+                logFormatMismatch();
                 return null;
             }
         }
 
         return format;
+    }
+
+    private void logFormatMismatch() {
+        StringBuilder buf = new StringBuilder("all files are not the same format:\n");
+        for (int i = 0; i < files.size(); i++) {
+            FileData f = files.get(i);
+            String format = "not recognized";
+            if (f.getFormat() != null) {
+                format = f.getName();
+            }
+            buf.append(f.getFile().getName()).append(" : ").append(format).append('\n');
+        }
+        LOGGER.warning(buf.toString());
     }
 
     public Directory filter(List<FileData> files) {
