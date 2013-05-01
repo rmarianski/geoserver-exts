@@ -27,6 +27,7 @@ import org.opengeo.data.importer.ImportData;
 import org.opengeo.data.importer.ImportItem;
 import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.Importer;
+import org.opengeo.data.importer.ValidationException;
 import org.restlet.data.Form;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
@@ -106,8 +107,9 @@ public class TaskResource extends BaseResource {
             newTasks = importer.update(context, data);
             //importer.prep(context);
             //context.updated();
-        } 
-        catch (IOException e) {
+        } catch (ValidationException ve) {
+            throw ImportJSONIO.badRequest(ve.getMessage());
+        } catch (IOException e) {
             throw new RestletException("Error updating context", Status.SERVER_ERROR_INTERNAL, e);
         }
 

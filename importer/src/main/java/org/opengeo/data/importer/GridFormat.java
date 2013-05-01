@@ -15,6 +15,7 @@ import org.geoserver.catalog.WorkspaceInfo;
 import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.opengeo.data.importer.job.ProgressMonitor;
+import org.opengis.referencing.operation.OperationNotFoundException;
 
 /**
  * Base for formats that have a GridFormat implementation.
@@ -92,6 +93,10 @@ public class GridFormat extends RasterFormat {
 
                 LayerInfo layer = cb.buildLayer((ResourceInfo)coverage);
                 resources.add(new ImportItem(layer));
+            } catch (OperationNotFoundException onfe) {
+                throw new ValidationException("It appears we cannot process the"
+                        + " coordinate reference system of your data. The specific"
+                        + " problem is : " + onfe.getMessage(), onfe);
             } catch (Exception e) {
                 throw (IOException) new IOException(). initCause(e);
             }
