@@ -343,7 +343,7 @@
       </dependency>
       <dependency>
         <groupId>org.geoserver.community</groupId>
-        <artifactId>dbconfig</artifactId>
+        <artifactId>jdbcconfig</artifactId>
         <version>${gs.version}</version>
       </dependency>
       <dependency>
