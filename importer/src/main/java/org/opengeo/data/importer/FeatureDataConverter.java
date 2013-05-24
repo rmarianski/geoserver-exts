@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashSet;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import org.geotools.data.FeatureReader;
 import org.geotools.feature.AttributeTypeBuilder;
@@ -60,6 +62,12 @@ public class FeatureDataConverter {
         ORACLE_RESERVED_WORDS = Collections.unmodifiableSet(words);
     }
 
+    /**
+     * characters we strip out of type names and attribute names because they can't be represented
+     * as xml
+     */
+    static final Pattern UNSAFE_CHARS = Pattern.compile("(^[^a-zA-Z\\._]+)|([^a-zA-Z\\._0-9]+)");
+
     private FeatureDataConverter() {
     }
 
@@ -67,8 +75,14 @@ public class FeatureDataConverter {
         ImportData data, ImportItem item) {
 
         SimpleFeatureTypeBuilder typeBuilder = new SimpleFeatureTypeBuilder();
-        typeBuilder.setName(featureType.getTypeName());
-        typeBuilder.addAll(featureType.getAttributeDescriptors());
+        typeBuilder.setName(convertTypeName(featureType.getTypeName()));
+
+        AttributeTypeBuilder attBuilder = new AttributeTypeBuilder();
+        for (AttributeDescriptor att : featureType.getAttributeDescriptors()) {
+            attBuilder.init(att);
+            typeBuilder.add(attBuilder.buildDescriptor(convertAttributeName(att.getLocalName())));
+        }
+        
         return typeBuilder.buildFeatureType();
     }
 
@@ -78,8 +92,22 @@ public class FeatureDataConverter {
         Set<String> commonNames = new HashSet<String>(fromAttrNames);
         commonNames.retainAll(toAttrNames);
         for (String attrName : commonNames) {
-            to.setAttribute(attrName, from.getAttribute(attrName));
+            to.setAttribute(convertAttributeName(attrName), from.getAttribute(attrName));
         }
+    }
+
+    protected String convertTypeName(String typeName) {
+        StringBuilder builder = new StringBuilder();
+        // instead of allowing prefix digits to 'collapse', prepend a valid char
+        if (Character.isDigit(typeName.charAt(0))) {
+            builder.append('_');
+        }
+        builder.append(typeName);
+        return UNSAFE_CHARS.matcher(builder).replaceAll("_");
+    }
+
+    protected String convertAttributeName(String attName) {
+        return convertTypeName(attName);
     }
 
     protected Set<String> attributeNames(SimpleFeature feature) {
@@ -101,7 +129,7 @@ public class FeatureDataConverter {
             //for shapefile we always ensure the geometry is the first type, and we have to deal
             // with the max field name length of 10
             SimpleFeatureTypeBuilder typeBuilder = new SimpleFeatureTypeBuilder();
-            typeBuilder.setName(featureType.getTypeName());
+            typeBuilder.setName(convertTypeName(featureType.getTypeName()));
 
             GeometryDescriptor gd = featureType.getGeometryDescriptor();
             if (gd != null) {
@@ -149,6 +177,7 @@ public class FeatureDataConverter {
         }
 
         String attName(String name) {
+            name = convertAttributeName(name);
             return name.length() > 10 ? name.substring(0,10) : name;
         }
     };
@@ -159,7 +188,7 @@ public class FeatureDataConverter {
         public SimpleFeatureType convertType(SimpleFeatureType featureType, VectorFormat format,
                 ImportData data, ImportItem item) {
             SimpleFeatureType converted = featureType;
-            String featureTypeName = featureType.getTypeName();
+            String featureTypeName = convertTypeName(featureType.getTypeName());
             // trim the length of the name
             // by default, postgis table/index names need to fit in 64 characters
             // with the "spatial_" prefix and "_geometry" suffix, that leaves 47 chars
@@ -183,7 +212,7 @@ public class FeatureDataConverter {
             for (String name : fromAttrNames) {
                 String toName = name.toUpperCase();
                 if (toAttrNames.contains(toName)) {
-                    to.setAttribute(toName, from.getAttribute(name));
+                    to.setAttribute(convertAttributeName(toName), from.getAttribute(name));
                 }
             }
         };
@@ -201,7 +230,7 @@ public class FeatureDataConverter {
         }
 
         private final String ensureOracleSafe(final String identifier) {
-            final String capitalized = identifier.toUpperCase();
+            final String capitalized = convertTypeName(identifier).toUpperCase();
             final String notReserved;
             if (ORACLE_RESERVED_WORDS.contains(capitalized)) {
                 notReserved = capitalized + "_";
