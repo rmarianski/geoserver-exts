@@ -29,16 +29,18 @@ public class GwcStatistician {
         if (isTiled && owsResponseDispatchedResult instanceof WebMap) {
             WebMap map = (WebMap) owsResponseDispatchedResult;
             String[][] responseHeaders = map.getResponseHeaders();
-            for (String[] h : responseHeaders) {
-                if ("geowebcache-cache-result".equalsIgnoreCase(h[0])
-                        && "HIT".equalsIgnoreCase(h[1])) {
-                    isCacheHit = true;
-                    break;
-                }
-                if ("geowebcache-miss-reason".equalsIgnoreCase(h[0])) {
-                    String reason = h[1];
-                    if (reason != null && !reason.isEmpty()) {
-                        missReason = Optional.of(reason);
+            if (responseHeaders != null) {
+                for (String[] h : responseHeaders) {
+                    if ("geowebcache-cache-result".equalsIgnoreCase(h[0])
+                            && "HIT".equalsIgnoreCase(h[1])) {
+                        isCacheHit = true;
+                        break;
+                    }
+                    if ("geowebcache-miss-reason".equalsIgnoreCase(h[0])) {
+                        String reason = h[1];
+                        if (reason != null && !reason.isEmpty()) {
+                            missReason = Optional.of(reason);
+                        }
                     }
                 }
             }
@@ -48,7 +50,7 @@ public class GwcStatistician {
     }
 
     private GwcStatistics emptyStats() {
-        return new GwcStatistics(false, false, Optional.<String>absent());
+        return new GwcStatistics(false, false, Optional.<String> absent());
     }
 
 }
