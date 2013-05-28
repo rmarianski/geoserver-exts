@@ -1154,13 +1154,13 @@ public class Importer implements InitializingBean, DisposableBean {
     }
 
     boolean isOracleDataStore(DataStore dataStore) {
-        return "org.geotools.data.oracle.OracleDialect".equals(
-            ((JDBCDataStore)dataStore).getSQLDialect().getClass().getName());
+        return dataStore instanceof JDBCDataStore && "org.geotools.data.oracle.OracleDialect"
+            .equals(((JDBCDataStore)dataStore).getSQLDialect().getClass().getName());
     }
 
     boolean isPostGISDataStore(DataStore dataStore) {
-        return ((JDBCDataStore) dataStore).getSQLDialect().getClass().getName()
-                .startsWith("org.geotools.data.postgis");
+        return dataStore instanceof JDBCDataStore && ((JDBCDataStore)dataStore).getSQLDialect()
+            .getClass().getName().startsWith("org.geotools.data.postgis");
     }
 
     /*
