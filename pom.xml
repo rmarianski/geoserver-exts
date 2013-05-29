@@ -467,7 +467,6 @@
   </distributionManagement>
 
   <modules>
-    <module>analytics</module>
     <module>csv</module>
     <module>importer</module>
     <module>monitor-console</module>
