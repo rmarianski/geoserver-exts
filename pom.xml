@@ -51,6 +51,9 @@
     <repository>
       <id>org.mapfish</id>
       <url>http://dev.mapfish.org/maven/repository</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
     </repository>
   </repositories>
 
