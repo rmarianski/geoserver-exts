@@ -45,6 +45,11 @@
    <artifactId>printng</artifactId>
    <version>${gs.version}</version>
   </dependency>
+  <dependency>
+   <groupId>org.opengeo.geoserver</groupId>
+   <artifactId>gsr</artifactId>
+   <version>${gs.version}</version>
+  </dependency>
 
   <dependency>
    <groupId>org.mortbay.jetty</groupId>

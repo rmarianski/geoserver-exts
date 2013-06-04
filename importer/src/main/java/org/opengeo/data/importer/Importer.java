@@ -1134,7 +1134,13 @@ public class Importer implements InitializingBean, DisposableBean {
 
     private String findUniqueNativeFeatureTypeName(String name, DataStoreInfo store) throws IOException {
         DataStore dataStore = (DataStore) store.getDataStore(null);
-        
+
+        //hack for oracle, all names must be upper case
+        //TODO: abstract this into FeatureConverter
+        if (isOracleDataStore(dataStore)) {
+            name = name.toUpperCase();
+        }
+
         //TODO: put an upper limit on how many times to try
         List<String> names = Arrays.asList(dataStore.getTypeNames());
         if (names.contains(name)) {
