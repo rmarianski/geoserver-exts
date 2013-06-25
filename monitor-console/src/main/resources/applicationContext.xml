@@ -18,23 +18,20 @@
     </bean>
 
     <bean id="consoleMonitorTransport" class="org.opengeo.console.monitor.transport.QueuedMessageTransport">
-      <constructor-arg ref="monitorHttpTransport" index="0"/>
+      <constructor-arg ref="consoleMonitorHttpTransport" index="0"/>
+      <!-- Seconds delay between transports -->
       <constructor-arg value="3" index="1"/>
     </bean>
 
-    <bean id="monitorHttpTransport"
-          factory-bean="monitorHttpTransportFactory"
-          factory-method="getInstance" />
+    <bean id="consoleMonitorHttpTransport" class="org.opengeo.console.monitor.transport.HttpMessageTransport" >
+      <constructor-arg ref="consoleMessageHttpTransportConfig" index="0" />
+    </bean>
 
-    <bean id="consoleMessageTransportConfig" class="org.opengeo.console.monitor.transport.ConsoleMessageTransportConfigProperties">
+    <bean id="consoleMessageHttpTransportConfig" class="org.opengeo.console.monitor.transport.ConsoleMessageTransportConfigProperties">
       <constructor-arg value="monitoring" index="0"/>
       <constructor-arg value="controller.properties" index="1"/>
       <constructor-arg value="https://app.mapmeter.com/controller/v1/message/store" index="2"/>
       <constructor-arg ref="resourceLoader" index="3"/>
-    </bean>
-
-    <bean id="monitorHttpTransportFactory" class="org.opengeo.console.monitor.transport.HttpMessageTransportFactory">
-      <constructor-arg ref="consoleMessageTransportConfig" index="0" />
     </bean>
 
     <bean id="consoleRequestDataMapping" class="java.util.concurrent.ConcurrentHashMap"></bean>

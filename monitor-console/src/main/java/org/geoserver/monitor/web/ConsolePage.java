@@ -48,13 +48,13 @@ public class ConsolePage extends GeoServerSecuredPage {
                 String apiKey = apiKeyField.getModelObject().trim();
                 try {
                     save(apiKey);
-                    form.info("Api key saved: '" + apiKey + "'. Please restart GeoServer to apply these changes.");
+                    form.info("Api key saved");
                 } catch (IOException e) {
                     String msg = "Failure saving api key: " + apiKey;
                     LOGGER.severe(msg);
                     LOGGER.severe(e.getLocalizedMessage());
-                    if (LOGGER.isLoggable(Level.WARNING)) {
-                        LOGGER.warning(Throwables.getStackTraceAsString(e));
+                    if (LOGGER.isLoggable(Level.INFO)) {
+                        LOGGER.info(Throwables.getStackTraceAsString(e));
                     }
                     form.error(msg);
                 }
@@ -73,8 +73,10 @@ public class ConsolePage extends GeoServerSecuredPage {
     }
 
     private void save(String apiKey) throws IOException {
-        messageTransportConfig.setApiKey(apiKey);
-        messageTransportConfig.save();
+        synchronized (messageTransportConfig) {
+            messageTransportConfig.setApiKey(apiKey);
+            messageTransportConfig.save();
+        }
     }
 
 }

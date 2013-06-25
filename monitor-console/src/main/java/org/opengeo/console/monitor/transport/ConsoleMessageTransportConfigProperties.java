@@ -68,9 +68,9 @@ public class ConsoleMessageTransportConfigProperties implements ConsoleMessageTr
                 }
             }
         } catch (IOException e) {
-            if (LOGGER.isLoggable(Level.SEVERE)) {
-                LOGGER.severe("Failure reading: " + controllerPropertiesName + " from data dir");
-                LOGGER.severe(Throwables.getStackTraceAsString(e));
+            LOGGER.severe("Failure reading: " + controllerPropertiesRelPath + " from data dir");
+            if (LOGGER.isLoggable(Level.INFO)) {
+                LOGGER.info(Throwables.getStackTraceAsString(e));
             }
         } finally {
             Closeables.closeQuietly(fileReader);
@@ -84,7 +84,7 @@ public class ConsoleMessageTransportConfigProperties implements ConsoleMessageTr
         if (propFile == null) {
             String msg = "Could not find controller properties file in data dir. Expected data dir location: "
                     + controllerPropertiesRelPath;
-            LOGGER.severe(msg);
+            LOGGER.warning(msg);
             return Optional.absent();
         } else {
             return Optional.of(propFile);
@@ -121,11 +121,17 @@ public class ConsoleMessageTransportConfigProperties implements ConsoleMessageTr
         if (apiKey.isPresent()) {
             properties.setProperty("apikey", apiKey.get());
         }
-        properties.setProperty("url", url.or(defaultControllerUrl));
+        if (!url.isPresent()) {
+            // if we don't have a url and we are asked to save
+            // then use the default url and set that in memory
+            url = Optional.of(defaultControllerUrl);
+        }
+        properties.setProperty("url", url.get());
 
         File propFile = null;
         Optional<File> maybePropFile = findControllerPropertiesFile();
         if (!maybePropFile.isPresent()) {
+            LOGGER.warning("Creating controller properties: " + controllerPropertiesRelPath);
             propFile = loader.createFile(controllerPropertiesRelPath);
         } else {
             propFile = maybePropFile.get();

@@ -16,25 +16,46 @@ import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.geotools.util.logging.Logging;
 import org.opengeo.console.monitor.ConsoleRequestData;
 
+import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 
 public class HttpMessageTransport implements ConsoleMessageTransport {
 
-    private final String url;
-
-    private final ConsoleMessageSerializer consoleMessageSerializer;
-
     private static final Logger LOGGER = Logging.getLogger(HttpMessageTransport.class);
 
-    public HttpMessageTransport(String url, String apiKey) {
-        this.url = url;
-        this.consoleMessageSerializer = new ConsoleMessageSerializer(apiKey);
+    private final ConsoleMessageTransportConfig config;
+
+    public HttpMessageTransport(ConsoleMessageTransportConfig config) {
+        if (!config.getUrl().isPresent()) {
+            LOGGER.warning("Missing mapmeter url. Will NOT send messages with no url.");
+        }
+        if (!config.getApiKey().isPresent()) {
+            LOGGER.warning("Missing mapmeter apikey. Will NOT send messages with no apikey.");
+        }
+        this.config = config;
     }
 
     // send request data via http post
     // if sending fails, log failure and just drop message
     @Override
     public void transport(Collection<ConsoleRequestData> data) {
+
+        Optional<String> maybeUrl;
+        Optional<String> maybeApiKey;
+        synchronized (config) {
+            maybeUrl = config.getUrl();
+            maybeApiKey = config.getApiKey();
+        }
+
+        if (!maybeUrl.isPresent() || !maybeApiKey.isPresent()) {
+            LOGGER.fine("Missing mapmeter url or apikey. NOT sending messages.");
+            return;
+        }
+
+        String url = maybeUrl.get();
+        String apiKey = maybeApiKey.get();
+        ConsoleMessageSerializer consoleMessageSerializer = new ConsoleMessageSerializer(apiKey);
+
         HttpClient client = new HttpClient();
         PostMethod postMethod = new PostMethod(url);
 
@@ -59,19 +80,20 @@ public class HttpMessageTransport implements ConsoleMessageTransport {
             // additionally, we may have a status code to signal that we should queue up messages
             // until the controller is ready to receive them again
             if (statusCode != HttpStatus.SC_OK) {
-                LOGGER.warning("Did not receive ok response: " + statusCode + " from: " + url);
+                LOGGER.severe("Error response from: " + url + " - " + statusCode);
             }
         } catch (HttpException e) {
-            logCommunicationError(e);
+            logCommunicationError(e, url);
         } catch (IOException e) {
-            logCommunicationError(e);
+            logCommunicationError(e, url);
         } finally {
             postMethod.releaseConnection();
         }
     }
 
-    private void logCommunicationError(Exception e) {
-        LOGGER.warning("Error communicating with: " + url);
+    private void logCommunicationError(Exception e, String url) {
+        LOGGER.severe("Error sending messages to: " + url);
+        LOGGER.severe(e.getLocalizedMessage());
         if (LOGGER.isLoggable(Level.INFO)) {
             LOGGER.info(Throwables.getStackTraceAsString(e));
         }
