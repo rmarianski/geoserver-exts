@@ -25,6 +25,8 @@ public class HttpMessageTransport implements ConsoleMessageTransport {
 
     private final ConsoleMessageTransportConfig config;
 
+    private final ConsoleMessageSerializer consoleMessageSerializer;
+
     public HttpMessageTransport(ConsoleMessageTransportConfig config) {
         if (!config.getUrl().isPresent()) {
             LOGGER.warning("Missing mapmeter url. Will NOT send messages with no url.");
@@ -33,6 +35,7 @@ public class HttpMessageTransport implements ConsoleMessageTransport {
             LOGGER.warning("Missing mapmeter apikey. Will NOT send messages with no apikey.");
         }
         this.config = config;
+        consoleMessageSerializer = new ConsoleMessageSerializer();
     }
 
     // send request data via http post
@@ -54,12 +57,11 @@ public class HttpMessageTransport implements ConsoleMessageTransport {
 
         String url = maybeUrl.get();
         String apiKey = maybeApiKey.get();
-        ConsoleMessageSerializer consoleMessageSerializer = new ConsoleMessageSerializer(apiKey);
 
         HttpClient client = new HttpClient();
         PostMethod postMethod = new PostMethod(url);
 
-        JSONObject json = consoleMessageSerializer.serialize(data);
+        JSONObject json = consoleMessageSerializer.serialize(apiKey, data);
         String jsonPayload = json.toString();
 
         StringRequestEntity requestEntity = null;

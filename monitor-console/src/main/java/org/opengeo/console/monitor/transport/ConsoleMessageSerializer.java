@@ -17,13 +17,7 @@ import com.google.common.collect.ImmutableList;
 
 public class ConsoleMessageSerializer {
 
-    private final String apiKey;
-
-    public ConsoleMessageSerializer(String apiKey) {
-        this.apiKey = apiKey;
-    }
-
-    public JSONObject serialize(Collection<ConsoleRequestData> data) {
+    public JSONObject serialize(String apiKey, Collection<ConsoleRequestData> data) {
         JSONObject json = new JSONObject();
         json.element("api", apiKey);
         json.element("messages", serializeMessages(data));
