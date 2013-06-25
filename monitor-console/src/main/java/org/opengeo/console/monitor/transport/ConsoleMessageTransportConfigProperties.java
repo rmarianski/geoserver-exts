@@ -14,7 +14,6 @@ import org.geotools.util.logging.Logging;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
-import com.sun.xml.internal.txw2.IllegalSignatureException;
 
 public class ConsoleMessageTransportConfigProperties implements ConsoleMessageTransportConfig {
 
@@ -22,24 +21,30 @@ public class ConsoleMessageTransportConfigProperties implements ConsoleMessageTr
 
     private final String defaultControllerUrl;
 
+    private final String defaultCheckUrl;
+
     private final String controllerPropertiesRelPath;
 
     private final GeoServerResourceLoader loader;
 
-    private Optional<String> url;
+    private Optional<String> storageUrl;
+
+    private Optional<String> checkUrl;
 
     private Optional<String> apiKey;
 
     public ConsoleMessageTransportConfigProperties(String monitoringDataDirName,
-            String controllerPropertiesName, String defaultControllerUrl,
+            String controllerPropertiesName, String defaultControllerUrl, String defaultCheckUrl,
             GeoServerResourceLoader loader) {
 
         this.defaultControllerUrl = defaultControllerUrl;
+        this.defaultCheckUrl = defaultCheckUrl;
         this.loader = loader;
         this.controllerPropertiesRelPath = monitoringDataDirName + File.separatorChar
                 + controllerPropertiesName;
 
-        Optional<String> url = Optional.absent();
+        Optional<String> storageUrl = Optional.absent();
+        Optional<String> checkUrl = Optional.absent();
         Optional<String> apiKey = Optional.absent();
 
         FileReader fileReader = null;
@@ -52,19 +57,24 @@ public class ConsoleMessageTransportConfigProperties implements ConsoleMessageTr
                 fileReader = new FileReader(propFile.get());
                 properties.load(fileReader);
 
-                String urlString = (String) properties.get("url");
+                String storageUrlString = (String) properties.get("url");
+                String checkUrlString = (String) properties.get("checkurl");
                 String apiKeyString = (String) properties.get("apikey");
 
-                if (urlString != null) {
-                    url = Optional.of(urlString.trim());
+                if (storageUrlString != null) {
+                    storageUrl = Optional.of(storageUrlString.trim());
                 } else {
-                    LOGGER.severe("Failure reading 'url' property from " + controllerPropertiesName);
+                    LOGGER.severe("Failure reading 'url' property from "
+                            + controllerPropertiesName);
                 }
                 if (apiKeyString != null) {
                     apiKey = Optional.of(apiKeyString.trim());
                 } else {
                     LOGGER.severe("Failure reading 'apikey' property from "
                             + controllerPropertiesName);
+                }
+                if (checkUrlString != null) {
+                    checkUrl = Optional.of(checkUrlString.trim());
                 }
             }
         } catch (IOException e) {
@@ -75,7 +85,8 @@ public class ConsoleMessageTransportConfigProperties implements ConsoleMessageTr
         } finally {
             Closeables.closeQuietly(fileReader);
         }
-        this.url = url;
+        this.storageUrl = storageUrl;
+        this.checkUrl = checkUrl;
         this.apiKey = apiKey;
     }
 
@@ -92,8 +103,13 @@ public class ConsoleMessageTransportConfigProperties implements ConsoleMessageTr
     }
 
     @Override
-    public Optional<String> getUrl() {
-        return url;
+    public Optional<String> getStorageUrl() {
+        return storageUrl;
+    }
+
+    @Override
+    public Optional<String> getCheckUrl() {
+        return checkUrl;
     }
 
     @Override
@@ -102,8 +118,13 @@ public class ConsoleMessageTransportConfigProperties implements ConsoleMessageTr
     }
 
     @Override
-    public void setUrl(String url) {
-        this.url = Optional.of(url);
+    public void setStorageUrl(String storageUrl) {
+        this.storageUrl = Optional.of(storageUrl);
+    }
+
+    @Override
+    public void setCheckUrl(String checkUrl) {
+        this.checkUrl = Optional.of(checkUrl);
     }
 
     @Override
@@ -115,18 +136,20 @@ public class ConsoleMessageTransportConfigProperties implements ConsoleMessageTr
     public void save() throws IOException {
         Properties properties = new Properties();
         if (!apiKey.isPresent()) {
-            throw new IllegalSignatureException("need api key to save: "
-                    + controllerPropertiesRelPath);
+            throw new IllegalStateException("need api key to save: " + controllerPropertiesRelPath);
         }
-        if (apiKey.isPresent()) {
-            properties.setProperty("apikey", apiKey.get());
+        properties.setProperty("apikey", apiKey.get());
+        if (!storageUrl.isPresent()) {
+            // if we don't have a storageUrl and we are asked to save
+            // then use the default storageUrl and set that in memory
+            storageUrl = Optional.of(defaultControllerUrl);
         }
-        if (!url.isPresent()) {
-            // if we don't have a url and we are asked to save
-            // then use the default url and set that in memory
-            url = Optional.of(defaultControllerUrl);
+        properties.setProperty("url", storageUrl.get());
+        if (!checkUrl.isPresent()) {
+            // ditto for check url
+            checkUrl = Optional.of(defaultCheckUrl);
         }
-        properties.setProperty("url", url.get());
+        properties.setProperty("checkurl", checkUrl.get());
 
         File propFile = null;
         Optional<File> maybePropFile = findControllerPropertiesFile();

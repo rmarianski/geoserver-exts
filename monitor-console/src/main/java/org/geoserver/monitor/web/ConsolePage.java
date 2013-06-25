@@ -13,8 +13,11 @@ import org.apache.wicket.model.Model;
 import org.geoserver.web.GeoServerApplication;
 import org.geoserver.web.GeoServerSecuredPage;
 import org.geotools.util.logging.Logging;
+import org.opengeo.console.monitor.transport.ConnectionResult;
+import org.opengeo.console.monitor.transport.ConsoleConnectionChecker;
 import org.opengeo.console.monitor.transport.ConsoleMessageTransportConfig;
 
+import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 
 public class ConsolePage extends GeoServerSecuredPage {
@@ -23,23 +26,65 @@ public class ConsolePage extends GeoServerSecuredPage {
 
     private final transient ConsoleMessageTransportConfig messageTransportConfig;
 
+    private final transient ConsoleConnectionChecker connectionChecker;
+
     public ConsolePage() {
         GeoServerApplication geoServerApplication = getGeoServerApplication();
         this.messageTransportConfig = geoServerApplication.getBeanOfType(ConsoleMessageTransportConfig.class);
+        if (messageTransportConfig == null) {
+            throw new IllegalStateException("Error finding ConsoleMessageTransportConfig bean");
+        }
+        this.connectionChecker = geoServerApplication.getBeanOfType(ConsoleConnectionChecker.class);
+        if (connectionChecker == null) {
+            throw new IllegalStateException("Error finding ConsoleConnectionChecker bean");
+        }
         addElements();
     }
 
     private void addElements() {
-        Form<?> form = new Form<Void>("apikey-form");
+        addApiKeyForm();
+        addConnectionCheckForm();
+    }
+
+    private void addConnectionCheckForm() {
+        Form<?> connectionCheckForm = new Form<Void>("connection-check-form");
+
+        connectionCheckForm.add(new FeedbackPanel("connection-check-feedback"));
+
+        AjaxButton connectionCheckButton = new AjaxButton("connection-check-button") {
+
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            protected void onSubmit(AjaxRequestTarget target, Form<?> form) {
+                ConnectionResult result = connectionChecker.checkConnection();
+                if (result.isError()) {
+                    Optional<Integer> maybeStatusCode = result.getStatusCode();
+                    String statusCodeString = maybeStatusCode.isPresent() ? maybeStatusCode.get()
+                            + " " : "";
+                    form.error("Error: " + statusCodeString + result.getError());
+                } else {
+                    form.info("Connection successfully established.");
+                }
+                target.addComponent(form);
+            }
+        };
+        connectionCheckForm.add(connectionCheckButton);
+
+        add(connectionCheckForm);
+    }
+
+    public void addApiKeyForm() {
+        Form<?> apiKeyForm = new Form<Void>("apikey-form");
 
         String apiKey = messageTransportConfig.getApiKey().or("");
         final RequiredTextField<String> apiKeyField = new RequiredTextField<String>("apikey",
                 Model.of(apiKey));
-        form.add(apiKeyField);
+        apiKeyForm.add(apiKeyField);
 
-        form.add(new FeedbackPanel("feedback"));
+        apiKeyForm.add(new FeedbackPanel("apikey-feedback"));
 
-        AjaxButton ajaxButton = new AjaxButton("apikey-button") {
+        AjaxButton apiKeyButton = new AjaxButton("apikey-button") {
 
             private static final long serialVersionUID = 1L;
 
@@ -67,9 +112,9 @@ public class ConsolePage extends GeoServerSecuredPage {
             }
 
         };
-        form.add(ajaxButton);
+        apiKeyForm.add(apiKeyButton);
 
-        add(form);
+        add(apiKeyForm);
     }
 
     private void save(String apiKey) throws IOException {

@@ -31,7 +31,8 @@
       <constructor-arg value="monitoring" index="0"/>
       <constructor-arg value="controller.properties" index="1"/>
       <constructor-arg value="https://app.mapmeter.com/controller/v1/message/store" index="2"/>
-      <constructor-arg ref="resourceLoader" index="3"/>
+      <constructor-arg value="https://app.mapmeter.com/controller/v1/message/check" index="3"/>
+      <constructor-arg ref="resourceLoader" index="4"/>
     </bean>
 
     <bean id="consoleRequestDataMapping" class="java.util.concurrent.ConcurrentHashMap"></bean>
@@ -50,6 +51,10 @@
     </bean>
 
     <bean id="consoleJmxSystemMonitor" class="org.opengeo.console.monitor.JmxSystemMonitor" />
+
+    <bean id="consoleConnectionChecker" class="org.opengeo.console.monitor.transport.HttpConnectionChecker">
+      <constructor-arg ref="consoleMessageHttpTransportConfig" index="0" />
+    </bean>
 
     <bean class="org.geoserver.web.MenuPageInfo" id="myPageLink">
     <!-- An internal identifier for the link component -->

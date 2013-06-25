@@ -6,6 +6,7 @@
   </head>
   <body>
   <wicket:extend>
+
   <form wicket:id="apikey-form" method="POST">
     <fieldset>
       <legend>Edit Api Key</legend>
@@ -19,8 +20,23 @@
         <input wicket:id="apikey-button" type="submit" value="Save" />
       </li>
     </ul>
-    <div wicket:id="feedback"></div>
+    <div wicket:id="apikey-feedback"></div>
   </form>
+
+  <form wicket:id="connection-check-form" method="GET" style="margin-top: 50px">
+    <fieldset>
+      <legend>Check Connection</legend>
+    </fieldset>
+    <ul>
+      <li>
+        <div wicket:id="connection-check-feedback"></div>
+      </li>
+      <li>
+        <input wicket:id="connection-check-button" type="submit" value="Check" />
+      </li>
+    </ul>
+  </form>
+
   </wicket:extend>
   </body>
 </html>

@@ -28,7 +28,7 @@ public class HttpMessageTransport implements ConsoleMessageTransport {
     private final ConsoleMessageSerializer consoleMessageSerializer;
 
     public HttpMessageTransport(ConsoleMessageTransportConfig config) {
-        if (!config.getUrl().isPresent()) {
+        if (!config.getStorageUrl().isPresent()) {
             LOGGER.warning("Missing mapmeter url. Will NOT send messages with no url.");
         }
         if (!config.getApiKey().isPresent()) {
@@ -46,7 +46,7 @@ public class HttpMessageTransport implements ConsoleMessageTransport {
         Optional<String> maybeUrl;
         Optional<String> maybeApiKey;
         synchronized (config) {
-            maybeUrl = config.getUrl();
+            maybeUrl = config.getStorageUrl();
             maybeApiKey = config.getApiKey();
         }
 
