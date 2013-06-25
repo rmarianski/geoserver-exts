@@ -26,10 +26,15 @@
           factory-bean="monitorHttpTransportFactory"
           factory-method="getInstance" />
 
-    <bean id="monitorHttpTransportFactory" class="org.opengeo.console.monitor.transport.HttpMessageTransportFactory">
+    <bean id="consoleMessageTransportConfig" class="org.opengeo.console.monitor.transport.ConsoleMessageTransportConfigProperties">
       <constructor-arg value="monitoring" index="0"/>
       <constructor-arg value="controller.properties" index="1"/>
-      <constructor-arg ref="resourceLoader" index="2"/>
+      <constructor-arg value="https://app.mapmeter.com/controller/v1/message/store" index="2"/>
+      <constructor-arg ref="resourceLoader" index="3"/>
+    </bean>
+
+    <bean id="monitorHttpTransportFactory" class="org.opengeo.console.monitor.transport.HttpMessageTransportFactory">
+      <constructor-arg ref="consoleMessageTransportConfig" index="0" />
     </bean>
 
     <bean id="consoleRequestDataMapping" class="java.util.concurrent.ConcurrentHashMap"></bean>
@@ -48,5 +53,22 @@
     </bean>
 
     <bean id="consoleJmxSystemMonitor" class="org.opengeo.console.monitor.JmxSystemMonitor" />
+
+    <bean class="org.geoserver.web.MenuPageInfo" id="myPageLink">
+    <!-- An internal identifier for the link component -->
+    <property name="id" value="ogconsolepage"/>
+    <!-- The i18n key for the link title -->
+    <property name="titleKey" value="ConsolePage.title"/>
+    <!-- The i18n key for a longer description of the page -->
+    <property name="descriptionKey" value="ConsolePage.description"/>
+    <!-- The fully qualified name of the page class -->
+    <property name="componentClass" value="org.geoserver.monitor.web.ConsolePage"/>
+    <!-- Optional, an icon to display alongside the link. -->
+<!--     <property name="icon" value="imgs/some-image.png"/> -->
+    <!-- Optional, the category in which the link should be grouped. -->
+<!--     <property name="category" ref="someCategory"/> -->
+    <!-- Optional, a key used to order the links in the menu. -->
+    <property name="order" value="100"/>
+</bean>
 
 </beans>

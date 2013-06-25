@@ -1,0 +1,26 @@
+<html xmlns:wicket="http://wicket.apache.org/">
+  <head>
+    <title>
+      <wicket:message key="org.geoserver.monitor.web.ConsolePage.page.title">OpenGeo Console</wicket:message>
+    </title>
+  </head>
+  <body>
+  <wicket:extend>
+  <form wicket:id="apikey-form" method="POST">
+    <fieldset>
+      <legend>Edit Api Key</legend>
+    </fieldset>
+    <ul>
+      <li>
+      <label for="apikey"><wicket:message key="ConsolePage.field.apikey">Api Key</wicket:message></label>
+      <input wicket:id="apikey" type="text" />
+      </li>
+      <li>
+        <input wicket:id="apikey-button" type="submit" value="Save" />
+      </li>
+    </ul>
+    <div wicket:id="feedback"></div>
+  </form>
+  </wicket:extend>
+  </body>
+</html>
