@@ -13,9 +13,9 @@ import org.apache.wicket.model.Model;
 import org.geoserver.web.GeoServerApplication;
 import org.geoserver.web.GeoServerSecuredPage;
 import org.geotools.util.logging.Logging;
-import org.opengeo.console.monitor.transport.ConnectionResult;
-import org.opengeo.console.monitor.transport.ConsoleConnectionChecker;
-import org.opengeo.console.monitor.transport.ConsoleMessageTransportConfig;
+import org.opengeo.console.monitor.check.ConnectionResult;
+import org.opengeo.console.monitor.check.ConsoleConnectionChecker;
+import org.opengeo.console.monitor.config.ConsoleMessageTransportConfig;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;

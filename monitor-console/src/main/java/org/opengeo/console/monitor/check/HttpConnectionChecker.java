@@ -1,4 +1,4 @@
-package org.opengeo.console.monitor.transport;
+package org.opengeo.console.monitor.check;
 
 import java.io.IOException;
 import java.util.logging.Level;
@@ -9,6 +9,7 @@ import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.geotools.util.logging.Logging;
+import org.opengeo.console.monitor.config.ConsoleMessageTransportConfig;
 
 import com.google.common.base.Throwables;
 

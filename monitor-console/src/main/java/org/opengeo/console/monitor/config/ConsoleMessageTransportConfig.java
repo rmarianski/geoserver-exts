@@ -1,4 +1,4 @@
-package org.opengeo.console.monitor.transport;
+package org.opengeo.console.monitor.config;
 
 import java.io.IOException;
 

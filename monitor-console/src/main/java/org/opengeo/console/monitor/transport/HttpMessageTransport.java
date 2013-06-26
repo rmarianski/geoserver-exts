@@ -15,6 +15,7 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.geotools.util.logging.Logging;
 import org.opengeo.console.monitor.ConsoleRequestData;
+import org.opengeo.console.monitor.config.ConsoleMessageTransportConfig;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;

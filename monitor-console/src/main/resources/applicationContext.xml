@@ -27,7 +27,7 @@
       <constructor-arg ref="consoleMessageHttpTransportConfig" index="0" />
     </bean>
 
-    <bean id="consoleMessageHttpTransportConfig" class="org.opengeo.console.monitor.transport.ConsoleMessageTransportConfigProperties">
+    <bean id="consoleMessageHttpTransportConfig" class="org.opengeo.console.monitor.config.ConsoleMessageTransportConfigProperties">
       <constructor-arg value="monitoring" index="0"/>
       <constructor-arg value="controller.properties" index="1"/>
       <constructor-arg value="https://app.mapmeter.com/controller/v1/message/store" index="2"/>
@@ -52,7 +52,7 @@
 
     <bean id="consoleJmxSystemMonitor" class="org.opengeo.console.monitor.JmxSystemMonitor" />
 
-    <bean id="consoleConnectionChecker" class="org.opengeo.console.monitor.transport.HttpConnectionChecker">
+    <bean id="consoleConnectionChecker" class="org.opengeo.console.monitor.check.HttpConnectionChecker">
       <constructor-arg ref="consoleMessageHttpTransportConfig" index="0" />
     </bean>
 
