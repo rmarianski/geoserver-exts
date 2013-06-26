@@ -56,21 +56,14 @@
       <constructor-arg ref="consoleMessageHttpTransportConfig" index="0" />
     </bean>
 
-    <bean class="org.geoserver.web.MenuPageInfo" id="myPageLink">
-    <!-- An internal identifier for the link component -->
-    <property name="id" value="ogconsolepage"/>
-    <!-- The i18n key for the link title -->
+    <bean class="org.geoserver.web.MenuPageInfo" id="consoleMenuPageLink">
+    <property name="id" value="consoleMenuPageId"/>
     <property name="titleKey" value="ConsolePage.title"/>
-    <!-- The i18n key for a longer description of the page -->
     <property name="descriptionKey" value="ConsolePage.description"/>
-    <!-- The fully qualified name of the page class -->
     <property name="componentClass" value="org.geoserver.monitor.web.ConsolePage"/>
-    <!-- Optional, an icon to display alongside the link. -->
 <!--     <property name="icon" value="imgs/some-image.png"/> -->
-    <!-- Optional, the category in which the link should be grouped. -->
-<!--     <property name="category" ref="someCategory"/> -->
-    <!-- Optional, a key used to order the links in the menu. -->
-    <property name="order" value="100"/>
+    <property name="category" ref="monitorCategory"/>
+    <property name="order" value="50"/>
 </bean>
 
 </beans>
