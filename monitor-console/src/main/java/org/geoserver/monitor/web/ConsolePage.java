@@ -5,7 +5,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
+import org.apache.wicket.extensions.ajax.markup.html.IndicatingAjaxButton;
+import org.apache.wicket.extensions.ajax.markup.html.IndicatingAjaxLink;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.form.RequiredTextField;
 import org.apache.wicket.markup.html.panel.FeedbackPanel;
@@ -13,8 +16,8 @@ import org.apache.wicket.model.Model;
 import org.geoserver.web.GeoServerApplication;
 import org.geoserver.web.GeoServerSecuredPage;
 import org.geotools.util.logging.Logging;
-import org.opengeo.console.monitor.check.ConnectionResult;
 import org.opengeo.console.monitor.check.ConnectionChecker;
+import org.opengeo.console.monitor.check.ConnectionResult;
 import org.opengeo.console.monitor.config.MessageTransportConfig;
 
 import com.google.common.base.Optional;
@@ -47,26 +50,26 @@ public class ConsolePage extends GeoServerSecuredPage {
     }
 
     private void addConnectionCheckForm() {
-        Form<?> connectionCheckForm = new Form<Void>("connection-check-form");
+        final Form<?> connectionCheckForm = new Form<Void>("connection-check-form");
 
         connectionCheckForm.add(new FeedbackPanel("connection-check-feedback"));
 
-        AjaxButton connectionCheckButton = new AjaxButton("connection-check-button") {
+        AjaxLink<?> connectionCheckButton = new IndicatingAjaxLink<Void>("connection-check-button") {
 
             private static final long serialVersionUID = 1L;
 
             @Override
-            protected void onSubmit(AjaxRequestTarget target, Form<?> form) {
+            public void onClick(AjaxRequestTarget target) {
                 ConnectionResult result = connectionChecker.checkConnection();
                 if (result.isError()) {
                     Optional<Integer> maybeStatusCode = result.getStatusCode();
                     String statusCodeString = maybeStatusCode.isPresent() ? maybeStatusCode.get()
                             + " " : "";
-                    form.error("Error: " + statusCodeString + result.getError());
+                    connectionCheckForm.error("Error: " + statusCodeString + result.getError());
                 } else {
-                    form.info("Connection successfully established.");
+                    connectionCheckForm.info("Connection successfully established.");
                 }
-                target.addComponent(form);
+                target.addComponent(connectionCheckForm);
             }
         };
         connectionCheckForm.add(connectionCheckButton);
@@ -84,7 +87,7 @@ public class ConsolePage extends GeoServerSecuredPage {
 
         apiKeyForm.add(new FeedbackPanel("apikey-feedback"));
 
-        AjaxButton apiKeyButton = new AjaxButton("apikey-button") {
+        AjaxButton apiKeyButton = new IndicatingAjaxButton("apikey-button") {
 
             private static final long serialVersionUID = 1L;
 
