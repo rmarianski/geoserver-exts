@@ -10,7 +10,6 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.geotools.util.logging.Logging;
 
-import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 
 public class HttpConnectionChecker implements ConsoleConnectionChecker {
@@ -26,32 +25,27 @@ public class HttpConnectionChecker implements ConsoleConnectionChecker {
     @Override
     public ConnectionResult checkConnection() {
         HttpClient client = new HttpClient();
-        Optional<String> maybeCheckUrl;
+        String checkUrl;
         synchronized (config) {
-            maybeCheckUrl = config.getCheckUrl();
+            checkUrl = config.getCheckUrl();
         }
-        if (maybeCheckUrl.isPresent()) {
-            String checkUrl = maybeCheckUrl.get();
-            GetMethod getMethod = new GetMethod(checkUrl);
-            try {
-                int statusCode = client.executeMethod(getMethod);
-                if (statusCode == HttpStatus.SC_OK) {
-                    return new ConnectionResult(statusCode);
-                } else {
-                    // this buffers the whole response in memory
-                    String responseBodyAsString = getMethod.getResponseBodyAsString();
-                    return new ConnectionResult(statusCode, responseBodyAsString);
-                }
-            } catch (HttpException e) {
-                return logExceptionAndCreateErrorResult(e);
-
-            } catch (IOException e) {
-                return logExceptionAndCreateErrorResult(e);
-            } finally {
-                getMethod.releaseConnection();
+        GetMethod getMethod = new GetMethod(checkUrl);
+        try {
+            int statusCode = client.executeMethod(getMethod);
+            if (statusCode == HttpStatus.SC_OK) {
+                return new ConnectionResult(statusCode);
+            } else {
+                // this buffers the whole response in memory
+                String responseBodyAsString = getMethod.getResponseBodyAsString();
+                return new ConnectionResult(statusCode, responseBodyAsString);
             }
-        } else {
-            return new ConnectionResult("No check url specified in config");
+        } catch (HttpException e) {
+            return logExceptionAndCreateErrorResult(e);
+
+        } catch (IOException e) {
+            return logExceptionAndCreateErrorResult(e);
+        } finally {
+            getMethod.releaseConnection();
         }
     }
 

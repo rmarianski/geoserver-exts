@@ -7,10 +7,10 @@ import com.google.common.base.Optional;
 public interface ConsoleMessageTransportConfig {
 
     // this is where messages will be persisted
-    Optional<String> getStorageUrl();
+    String getStorageUrl();
 
     // this is where connection checks are made
-    Optional<String> getCheckUrl();
+    String getCheckUrl();
 
     Optional<String> getApiKey();
 

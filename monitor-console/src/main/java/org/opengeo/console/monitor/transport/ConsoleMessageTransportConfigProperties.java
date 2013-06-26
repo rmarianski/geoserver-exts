@@ -19,7 +19,7 @@ public class ConsoleMessageTransportConfigProperties implements ConsoleMessageTr
 
     private final static Logger LOGGER = Logging.getLogger(ConsoleMessageTransportConfigProperties.class);
 
-    private final String defaultControllerUrl;
+    private final String defaultStorageUrl;
 
     private final String defaultCheckUrl;
 
@@ -34,10 +34,10 @@ public class ConsoleMessageTransportConfigProperties implements ConsoleMessageTr
     private Optional<String> apiKey;
 
     public ConsoleMessageTransportConfigProperties(String monitoringDataDirName,
-            String controllerPropertiesName, String defaultControllerUrl, String defaultCheckUrl,
+            String controllerPropertiesName, String defaultStorageUrl, String defaultCheckUrl,
             GeoServerResourceLoader loader) {
 
-        this.defaultControllerUrl = defaultControllerUrl;
+        this.defaultStorageUrl = defaultStorageUrl;
         this.defaultCheckUrl = defaultCheckUrl;
         this.loader = loader;
         this.controllerPropertiesRelPath = monitoringDataDirName + File.separatorChar
@@ -61,17 +61,14 @@ public class ConsoleMessageTransportConfigProperties implements ConsoleMessageTr
                 String checkUrlString = (String) properties.get("checkurl");
                 String apiKeyString = (String) properties.get("apikey");
 
-                if (storageUrlString != null) {
-                    storageUrl = Optional.of(storageUrlString.trim());
-                } else {
-                    LOGGER.severe("Failure reading 'url' property from "
-                            + controllerPropertiesName);
-                }
                 if (apiKeyString != null) {
                     apiKey = Optional.of(apiKeyString.trim());
                 } else {
                     LOGGER.severe("Failure reading 'apikey' property from "
                             + controllerPropertiesName);
+                }
+                if (storageUrlString != null) {
+                    storageUrl = Optional.of(storageUrlString.trim());
                 }
                 if (checkUrlString != null) {
                     checkUrl = Optional.of(checkUrlString.trim());
@@ -103,13 +100,13 @@ public class ConsoleMessageTransportConfigProperties implements ConsoleMessageTr
     }
 
     @Override
-    public Optional<String> getStorageUrl() {
-        return storageUrl;
+    public String getStorageUrl() {
+        return storageUrl.or(defaultStorageUrl);
     }
 
     @Override
-    public Optional<String> getCheckUrl() {
-        return checkUrl;
+    public String getCheckUrl() {
+        return checkUrl.or(defaultCheckUrl);
     }
 
     @Override
@@ -139,25 +136,21 @@ public class ConsoleMessageTransportConfigProperties implements ConsoleMessageTr
             throw new IllegalStateException("need api key to save: " + controllerPropertiesRelPath);
         }
         properties.setProperty("apikey", apiKey.get());
-        if (!storageUrl.isPresent()) {
-            // if we don't have a storageUrl and we are asked to save
-            // then use the default storageUrl and set that in memory
-            storageUrl = Optional.of(defaultControllerUrl);
+        // only persist the storage/check urls if they are set
+        if (storageUrl.isPresent()) {
+            properties.setProperty("url", storageUrl.get());
         }
-        properties.setProperty("url", storageUrl.get());
-        if (!checkUrl.isPresent()) {
-            // ditto for check url
-            checkUrl = Optional.of(defaultCheckUrl);
+        if (checkUrl.isPresent()) {
+            properties.setProperty("checkurl", checkUrl.get());
         }
-        properties.setProperty("checkurl", checkUrl.get());
 
         File propFile = null;
         Optional<File> maybePropFile = findControllerPropertiesFile();
-        if (!maybePropFile.isPresent()) {
+        if (maybePropFile.isPresent()) {
+            propFile = maybePropFile.get();
+        } else {
             LOGGER.warning("Creating controller properties: " + controllerPropertiesRelPath);
             propFile = loader.createFile(controllerPropertiesRelPath);
-        } else {
-            propFile = maybePropFile.get();
         }
 
         FileWriter out = null;

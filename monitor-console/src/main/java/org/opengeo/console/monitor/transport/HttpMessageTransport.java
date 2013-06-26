@@ -28,9 +28,6 @@ public class HttpMessageTransport implements ConsoleMessageTransport {
     private final ConsoleMessageSerializer consoleMessageSerializer;
 
     public HttpMessageTransport(ConsoleMessageTransportConfig config) {
-        if (!config.getStorageUrl().isPresent()) {
-            LOGGER.warning("Missing mapmeter url. Will NOT send messages with no url.");
-        }
         if (!config.getApiKey().isPresent()) {
             LOGGER.warning("Missing mapmeter apikey. Will NOT send messages with no apikey.");
         }
@@ -43,23 +40,22 @@ public class HttpMessageTransport implements ConsoleMessageTransport {
     @Override
     public void transport(Collection<ConsoleRequestData> data) {
 
-        Optional<String> maybeUrl;
+        String storageUrl;
         Optional<String> maybeApiKey;
         synchronized (config) {
-            maybeUrl = config.getStorageUrl();
+            storageUrl = config.getStorageUrl();
             maybeApiKey = config.getApiKey();
         }
 
-        if (!maybeUrl.isPresent() || !maybeApiKey.isPresent()) {
-            LOGGER.fine("Missing mapmeter url or apikey. NOT sending messages.");
+        if (!maybeApiKey.isPresent()) {
+            LOGGER.fine("Missing mapmeter apikey. NOT sending messages.");
             return;
         }
 
-        String url = maybeUrl.get();
         String apiKey = maybeApiKey.get();
 
         HttpClient client = new HttpClient();
-        PostMethod postMethod = new PostMethod(url);
+        PostMethod postMethod = new PostMethod(storageUrl);
 
         JSONObject json = consoleMessageSerializer.serialize(apiKey, data);
         String jsonPayload = json.toString();
@@ -82,12 +78,12 @@ public class HttpMessageTransport implements ConsoleMessageTransport {
             // additionally, we may have a status code to signal that we should queue up messages
             // until the controller is ready to receive them again
             if (statusCode != HttpStatus.SC_OK) {
-                LOGGER.severe("Error response from: " + url + " - " + statusCode);
+                LOGGER.severe("Error response from: " + storageUrl + " - " + statusCode);
             }
         } catch (HttpException e) {
-            logCommunicationError(e, url);
+            logCommunicationError(e, storageUrl);
         } catch (IOException e) {
-            logCommunicationError(e, url);
+            logCommunicationError(e, storageUrl);
         } finally {
             postMethod.releaseConnection();
         }
