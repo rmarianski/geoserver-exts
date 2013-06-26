@@ -8,15 +8,15 @@ import javax.servlet.http.HttpServletResponse;
 import org.geoserver.platform.ExtensionPriority;
 import org.opengeo.console.monitor.ConsoleRequestData;
 import org.opengeo.console.monitor.ConsoleRequestDataFactory;
-import org.opengeo.console.monitor.transport.ConsoleMessageTransport;
+import org.opengeo.console.monitor.transport.MessageTransport;
 
 public class MessageTransportPostProcessor implements RequestPostProcessor, ExtensionPriority {
 
-    private final ConsoleMessageTransport transporter;
+    private final MessageTransport transporter;
 
     private final ConsoleRequestDataFactory consoleRequestDataFactory;
 
-    public MessageTransportPostProcessor(ConsoleMessageTransport transporter,
+    public MessageTransportPostProcessor(MessageTransport transporter,
             ConsoleRequestDataFactory consoleRequestDataFactory) {
         this.transporter = transporter;
         this.consoleRequestDataFactory = consoleRequestDataFactory;

@@ -9,17 +9,17 @@ import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.geotools.util.logging.Logging;
-import org.opengeo.console.monitor.config.ConsoleMessageTransportConfig;
+import org.opengeo.console.monitor.config.MessageTransportConfig;
 
 import com.google.common.base.Throwables;
 
-public class HttpConnectionChecker implements ConsoleConnectionChecker {
+public class HttpConnectionChecker implements ConnectionChecker {
 
     private static final Logger LOGGER = Logging.getLogger(HttpConnectionChecker.class);
 
-    private final ConsoleMessageTransportConfig config;
+    private final MessageTransportConfig config;
 
-    public HttpConnectionChecker(ConsoleMessageTransportConfig config) {
+    public HttpConnectionChecker(MessageTransportConfig config) {
         this.config = config;
     }
 

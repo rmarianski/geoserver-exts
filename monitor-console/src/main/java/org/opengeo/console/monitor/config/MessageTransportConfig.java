@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import com.google.common.base.Optional;
 
-public interface ConsoleMessageTransportConfig {
+public interface MessageTransportConfig {
 
     // this is where messages will be persisted
     String getStorageUrl();

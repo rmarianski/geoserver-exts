@@ -13,15 +13,15 @@ import org.opengeo.console.monitor.ConsoleRequestData;
  * Queue messages as they come in, and then send them all at fixed delays
  * 
  */
-public class QueuedMessageTransport implements ConsoleMessageTransport, Runnable {
+public class QueuedMessageTransport implements MessageTransport, Runnable {
 
-    private final ConsoleMessageTransport transporter;
+    private final MessageTransport transporter;
 
     private final ConcurrentLinkedQueue<ConsoleRequestData> messageQueue;
 
     private final ScheduledExecutorService executorService;
 
-    public QueuedMessageTransport(ConsoleMessageTransport transporter, int secondsToPoll) {
+    public QueuedMessageTransport(MessageTransport transporter, int secondsToPoll) {
         this.transporter = transporter;
         messageQueue = new ConcurrentLinkedQueue<ConsoleRequestData>();
         executorService = Executors.newScheduledThreadPool(1);

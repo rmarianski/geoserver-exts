@@ -8,7 +8,7 @@ import org.opengeo.console.monitor.ConsoleRequestData;
  * Takes request data from monitoring, and pushes it to where it needs to go
  * 
  */
-public interface ConsoleMessageTransport {
+public interface MessageTransport {
 
     /**
      * 

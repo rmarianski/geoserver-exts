@@ -14,8 +14,8 @@ import org.geoserver.web.GeoServerApplication;
 import org.geoserver.web.GeoServerSecuredPage;
 import org.geotools.util.logging.Logging;
 import org.opengeo.console.monitor.check.ConnectionResult;
-import org.opengeo.console.monitor.check.ConsoleConnectionChecker;
-import org.opengeo.console.monitor.config.ConsoleMessageTransportConfig;
+import org.opengeo.console.monitor.check.ConnectionChecker;
+import org.opengeo.console.monitor.config.MessageTransportConfig;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
@@ -24,19 +24,19 @@ public class ConsolePage extends GeoServerSecuredPage {
 
     private static final Logger LOGGER = Logging.getLogger(ConsolePage.class);
 
-    private final transient ConsoleMessageTransportConfig messageTransportConfig;
+    private final transient MessageTransportConfig messageTransportConfig;
 
-    private final transient ConsoleConnectionChecker connectionChecker;
+    private final transient ConnectionChecker connectionChecker;
 
     public ConsolePage() {
         GeoServerApplication geoServerApplication = getGeoServerApplication();
-        this.messageTransportConfig = geoServerApplication.getBeanOfType(ConsoleMessageTransportConfig.class);
+        this.messageTransportConfig = geoServerApplication.getBeanOfType(MessageTransportConfig.class);
         if (messageTransportConfig == null) {
-            throw new IllegalStateException("Error finding ConsoleMessageTransportConfig bean");
+            throw new IllegalStateException("Error finding MessageTransportConfig bean");
         }
-        this.connectionChecker = geoServerApplication.getBeanOfType(ConsoleConnectionChecker.class);
+        this.connectionChecker = geoServerApplication.getBeanOfType(ConnectionChecker.class);
         if (connectionChecker == null) {
-            throw new IllegalStateException("Error finding ConsoleConnectionChecker bean");
+            throw new IllegalStateException("Error finding ConnectionChecker bean");
         }
         addElements();
     }

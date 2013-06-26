@@ -1,6 +1,6 @@
 package org.opengeo.console.monitor.check;
 
-public interface ConsoleConnectionChecker {
+public interface ConnectionChecker {
 
     ConnectionResult checkConnection();
 

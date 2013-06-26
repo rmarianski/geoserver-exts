@@ -15,25 +15,25 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.geotools.util.logging.Logging;
 import org.opengeo.console.monitor.ConsoleRequestData;
-import org.opengeo.console.monitor.config.ConsoleMessageTransportConfig;
+import org.opengeo.console.monitor.config.MessageTransportConfig;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 
-public class HttpMessageTransport implements ConsoleMessageTransport {
+public class HttpMessageTransport implements MessageTransport {
 
     private static final Logger LOGGER = Logging.getLogger(HttpMessageTransport.class);
 
-    private final ConsoleMessageTransportConfig config;
+    private final MessageTransportConfig config;
 
-    private final ConsoleMessageSerializer consoleMessageSerializer;
+    private final MessageSerializer consoleMessageSerializer;
 
-    public HttpMessageTransport(ConsoleMessageTransportConfig config) {
+    public HttpMessageTransport(MessageTransportConfig config) {
         if (!config.getApiKey().isPresent()) {
             LOGGER.warning("Missing mapmeter apikey. Will NOT send messages with no apikey.");
         }
         this.config = config;
-        consoleMessageSerializer = new ConsoleMessageSerializer();
+        consoleMessageSerializer = new MessageSerializer();
     }
 
     // send request data via http post

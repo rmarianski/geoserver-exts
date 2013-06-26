@@ -15,9 +15,9 @@ import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 
-public class ConsoleMessageTransportConfigProperties implements ConsoleMessageTransportConfig {
+public class MessageTransportConfigProperties implements MessageTransportConfig {
 
-    private final static Logger LOGGER = Logging.getLogger(ConsoleMessageTransportConfigProperties.class);
+    private final static Logger LOGGER = Logging.getLogger(MessageTransportConfigProperties.class);
 
     private final String defaultStorageUrl;
 
@@ -33,7 +33,7 @@ public class ConsoleMessageTransportConfigProperties implements ConsoleMessageTr
 
     private Optional<String> apiKey;
 
-    public ConsoleMessageTransportConfigProperties(String monitoringDataDirName,
+    public MessageTransportConfigProperties(String monitoringDataDirName,
             String controllerPropertiesName, String defaultStorageUrl, String defaultCheckUrl,
             GeoServerResourceLoader loader) {
 
