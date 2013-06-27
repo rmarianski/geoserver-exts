@@ -96,7 +96,7 @@ public class ConsolePage extends GeoServerSecuredPage {
                 String apiKey = apiKeyField.getModelObject().trim();
                 try {
                     save(apiKey);
-                    form.info("Api key saved");
+                    form.info("API key saved");
                 } catch (IOException e) {
                     String msg = "Failure saving api key: " + apiKey;
                     LOGGER.severe(msg);
