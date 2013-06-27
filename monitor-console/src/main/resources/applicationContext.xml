@@ -54,6 +54,8 @@
 
     <bean id="consoleConnectionChecker" class="org.opengeo.console.monitor.check.HttpConnectionChecker">
       <constructor-arg ref="consoleMessageHttpTransportConfig" index="0" />
+      <!-- Connection timeout in milliseconds -->
+      <constructor-arg value="30000" index="1" />
     </bean>
 
     <bean class="org.geoserver.web.MenuPageInfo" id="consoleMenuPageLink">

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.httpclient.HttpStatus;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
@@ -60,16 +61,31 @@ public class ConsolePage extends GeoServerSecuredPage {
 
             @Override
             public void onClick(AjaxRequestTarget target) {
-                ConnectionResult result = connectionChecker.checkConnection();
-                if (result.isError()) {
-                    Optional<Integer> maybeStatusCode = result.getStatusCode();
-                    String statusCodeString = maybeStatusCode.isPresent() ? maybeStatusCode.get()
-                            + " " : "";
-                    connectionCheckForm.error("Error: " + statusCodeString + result.getError());
-                } else {
-                    connectionCheckForm.info("Connection successfully established.");
-                }
                 target.addComponent(connectionCheckForm);
+                Optional<String> maybeApiKey;
+                synchronized (messageTransportConfig) {
+                    maybeApiKey = messageTransportConfig.getApiKey();
+                }
+                if (maybeApiKey.isPresent()) {
+                    ConnectionResult result = connectionChecker.checkConnection(maybeApiKey.get());
+                    if (result.isError()) {
+                        Optional<Integer> maybeStatusCode = result.getStatusCode();
+                        if (maybeStatusCode.isPresent()) {
+                            int statusCode = maybeStatusCode.get();
+                            if (statusCode == HttpStatus.SC_OK) {
+                                connectionCheckForm.error(result.getError());
+                            } else {
+                                connectionCheckForm.error(statusCode + ": " + result.getError());
+                            }
+                        } else {
+                            connectionCheckForm.error(result.getError());
+                        }
+                    } else {
+                        connectionCheckForm.info("Connection successfully established.");
+                    }
+                } else {
+                    connectionCheckForm.error("Please set an api key first");
+                }
             }
         };
         connectionCheckForm.add(connectionCheckButton);

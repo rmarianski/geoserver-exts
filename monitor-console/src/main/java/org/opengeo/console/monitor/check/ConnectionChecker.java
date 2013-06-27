@@ -2,6 +2,6 @@ package org.opengeo.console.monitor.check;
 
 public interface ConnectionChecker {
 
-    ConnectionResult checkConnection();
+    ConnectionResult checkConnection(String apiKey);
 
 }
