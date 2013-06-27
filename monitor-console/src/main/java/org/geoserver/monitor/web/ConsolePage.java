@@ -80,7 +80,10 @@ public class ConsolePage extends GeoServerSecuredPage {
     public void addApiKeyForm() {
         Form<?> apiKeyForm = new Form<Void>("apikey-form");
 
-        String apiKey = messageTransportConfig.getApiKey().or("");
+        String apiKey;
+        synchronized (messageTransportConfig) {
+            apiKey = messageTransportConfig.getApiKey().or("");
+        }
         final RequiredTextField<String> apiKeyField = new RequiredTextField<String>("apikey",
                 Model.of(apiKey));
         apiKeyForm.add(apiKeyField);
