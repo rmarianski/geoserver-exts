@@ -1,6 +1,8 @@
 package org.opengeo.console.monitor.check;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.SocketTimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -18,8 +20,11 @@ import org.apache.commons.httpclient.params.HttpClientParams;
 import org.geotools.util.logging.Logging;
 import org.opengeo.console.monitor.config.MessageTransportConfig;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
+import com.google.common.io.CharStreams;
+import com.google.common.io.Closeables;
 
 public class HttpConnectionChecker implements ConnectionChecker {
 
@@ -61,7 +66,19 @@ public class HttpConnectionChecker implements ConnectionChecker {
             } else {
                 Header contentTypeHeader = getMethod.getResponseHeader("Content-Type");
                 if (isJsonResponse(contentTypeHeader)) {
-                    String responseBodyAsString = getMethod.getResponseBodyAsString();
+
+                    InputStream responseBodyAsStream = null;
+                    InputStreamReader inputStreamReader = null;
+                    String responseBodyAsString = null;
+                    try {
+                        responseBodyAsStream = getMethod.getResponseBodyAsStream();
+                        inputStreamReader = new InputStreamReader(responseBodyAsStream,
+                                Charsets.UTF_8);
+                        responseBodyAsString = CharStreams.toString(inputStreamReader);
+                    } finally {
+                        Closeables.closeQuietly(inputStreamReader);
+                        Closeables.closeQuietly(responseBodyAsStream);
+                    }
                     JSONObject jsonObject = JSONObject.fromObject(responseBodyAsString);
                     return createConnectionResultFromJson(jsonObject);
                 } else {
