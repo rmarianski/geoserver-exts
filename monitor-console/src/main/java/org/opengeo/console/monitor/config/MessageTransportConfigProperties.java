@@ -1,8 +1,8 @@
 package org.opengeo.console.monitor.config;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -11,9 +11,11 @@ import java.util.logging.Logger;
 import org.geoserver.platform.GeoServerResourceLoader;
 import org.geotools.util.logging.Logging;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
+import com.google.common.io.Files;
 
 public class MessageTransportConfigProperties implements MessageTransportConfig {
 
@@ -47,14 +49,14 @@ public class MessageTransportConfigProperties implements MessageTransportConfig 
         Optional<String> checkUrl = Optional.absent();
         Optional<String> apiKey = Optional.absent();
 
-        FileReader fileReader = null;
+        BufferedReader fileReader = null;
 
         try {
             Optional<File> propFile = findControllerPropertiesFile();
 
             if (propFile.isPresent()) {
                 Properties properties = new Properties();
-                fileReader = new FileReader(propFile.get());
+                fileReader = Files.newReader(propFile.get(), Charsets.UTF_8);
                 properties.load(fileReader);
 
                 String storageUrlString = (String) properties.get("url");
@@ -153,9 +155,9 @@ public class MessageTransportConfigProperties implements MessageTransportConfig 
             propFile = loader.createFile(controllerPropertiesRelPath);
         }
 
-        FileWriter out = null;
+        BufferedWriter out = null;
         try {
-            out = new FileWriter(propFile);
+            out = Files.newWriter(propFile, Charsets.UTF_8);
             properties.store(out, null);
         } finally {
             Closeables.closeQuietly(out);

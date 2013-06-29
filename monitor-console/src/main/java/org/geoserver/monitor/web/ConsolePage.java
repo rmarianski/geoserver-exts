@@ -26,6 +26,8 @@ import com.google.common.base.Throwables;
 
 public class ConsolePage extends GeoServerSecuredPage {
 
+    private static final long serialVersionUID = 1L;
+
     private static final Logger LOGGER = Logging.getLogger(ConsolePage.class);
 
     private final transient MessageTransportConfig messageTransportConfig;
