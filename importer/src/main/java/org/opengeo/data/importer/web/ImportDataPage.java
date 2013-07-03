@@ -161,7 +161,8 @@ public class ImportDataPage extends GeoServerSecuredPage {
         workspaceNameContainer.add(workspaceNameTextField);
 
         //store chooser
-        store = new StoreModel(catalog.getDefaultDataStore((WorkspaceInfo) workspace.getObject()));
+        WorkspaceInfo ws = (WorkspaceInfo) workspace.getObject();
+        store = new StoreModel(ws != null ? catalog.getDefaultDataStore(ws) : null);
         storeChoice = new DropDownChoice("store", store, new EnabledStoresModel(workspace),
             new StoreChoiceRenderer()) {
             protected String getNullValidKey() {
