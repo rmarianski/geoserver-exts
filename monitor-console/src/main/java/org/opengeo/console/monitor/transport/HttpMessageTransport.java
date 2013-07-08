@@ -1,8 +1,6 @@
 package org.opengeo.console.monitor.transport;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 import java.util.logging.Level;
@@ -17,42 +15,61 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.geotools.util.logging.Logging;
 import org.opengeo.console.monitor.ConsoleRequestData;
+import org.opengeo.console.monitor.config.MessageTransportConfig;
 
+import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 
-public class HttpMessageTransport implements ConsoleMessageTransport {
-
-    private final String url;
-
-    private final ConsoleMessageSerializer consoleMessageSerializer;
+public class HttpMessageTransport implements MessageTransport {
 
     private static final Logger LOGGER = Logging.getLogger(HttpMessageTransport.class);
 
-    public HttpMessageTransport(String url, String apiKey) {
-        this.url = url;
-        this.consoleMessageSerializer = new ConsoleMessageSerializer(apiKey);
+    private final MessageTransportConfig config;
+
+    private final MessageSerializer consoleMessageSerializer;
+
+    public HttpMessageTransport(MessageTransportConfig config) {
+        if (!config.getApiKey().isPresent()) {
+            LOGGER.warning("Missing mapmeter apikey. Will NOT send messages with no apikey.");
+        }
+        this.config = config;
+        consoleMessageSerializer = new MessageSerializer();
     }
 
     // send request data via http post
     // if sending fails, log failure and just drop message
     @Override
     public void transport(Collection<ConsoleRequestData> data) {
-        HttpClient client = new HttpClient();
-        PostMethod postMethod = new PostMethod(url);
 
-        JSONObject json = consoleMessageSerializer.serialize(data);
+        String storageUrl;
+        Optional<String> maybeApiKey;
+        synchronized (config) {
+            storageUrl = config.getStorageUrl();
+            maybeApiKey = config.getApiKey();
+        }
+
+        if (!maybeApiKey.isPresent()) {
+            LOGGER.fine("Missing mapmeter apikey. NOT sending messages.");
+            return;
+        }
+
+        String apiKey = maybeApiKey.get();
+
+        HttpClient client = new HttpClient();
+        PostMethod postMethod = new PostMethod(storageUrl);
+
+        JSONObject json = consoleMessageSerializer.serialize(apiKey, data);
+        String jsonPayload = json.toString();
 
         StringRequestEntity requestEntity = null;
         try {
-            requestEntity = new StringRequestEntity(json.toString(), "application/json", "UTF-8");
+            requestEntity = new StringRequestEntity(jsonPayload, "application/json", "UTF-8");
         } catch (UnsupportedEncodingException e) {
             Throwables.propagate(e);
         }
         postMethod.setRequestEntity(requestEntity);
 
-        if (LOGGER.isLoggable(Level.FINE)) {
-            LOGGER.fine(json.toString());
-        }
+        LOGGER.fine(jsonPayload);
 
         // send message
         try {
@@ -62,24 +79,22 @@ public class HttpMessageTransport implements ConsoleMessageTransport {
             // additionally, we may have a status code to signal that we should queue up messages
             // until the controller is ready to receive them again
             if (statusCode != HttpStatus.SC_OK) {
-                LOGGER.warning("Did not receive ok response: " + statusCode + " from: " + url);
+                LOGGER.severe("Error response from: " + storageUrl + " - " + statusCode);
             }
         } catch (HttpException e) {
-            logCommunicationError(e);
+            logCommunicationError(e, storageUrl);
         } catch (IOException e) {
-            logCommunicationError(e);
+            logCommunicationError(e, storageUrl);
         } finally {
             postMethod.releaseConnection();
         }
     }
 
-    private void logCommunicationError(Exception e) {
-        LOGGER.warning("Error communicating with: " + url);
+    private void logCommunicationError(Exception e, String url) {
+        LOGGER.severe("Error sending messages to: " + url);
+        LOGGER.severe(e.getLocalizedMessage());
         if (LOGGER.isLoggable(Level.INFO)) {
-            StringWriter out = new StringWriter();
-            PrintWriter writer = new PrintWriter(out);
-            e.printStackTrace(writer);
-            LOGGER.info(out.toString());
+            LOGGER.info(Throwables.getStackTraceAsString(e));
         }
     }
 

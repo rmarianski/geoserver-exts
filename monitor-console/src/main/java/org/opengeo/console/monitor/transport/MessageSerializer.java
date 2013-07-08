@@ -15,15 +15,9 @@ import org.opengis.geometry.BoundingBox;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 
-public class ConsoleMessageSerializer {
+public class MessageSerializer {
 
-    private final String apiKey;
-
-    public ConsoleMessageSerializer(String apiKey) {
-        this.apiKey = apiKey;
-    }
-
-    public JSONObject serialize(Collection<ConsoleRequestData> data) {
+    public JSONObject serialize(String apiKey, Collection<ConsoleRequestData> data) {
         JSONObject json = new JSONObject();
         json.element("api", apiKey);
         json.element("messages", serializeMessages(data));
