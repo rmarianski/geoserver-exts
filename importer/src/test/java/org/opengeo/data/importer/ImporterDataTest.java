@@ -497,7 +497,7 @@ public class ImporterDataTest extends ImporterTestSupport {
     }
 
     public void testImportCSV() throws Exception {
-        File dir = unpack("shape/locations.zip");
+        File dir = unpack("csv/locations.zip");
         ImportContext context = importer.createContext(new SpatialFile(new File(dir,
                 "locations.csv")));
         assertEquals(1, context.getTasks().size());
@@ -524,7 +524,7 @@ public class ImporterDataTest extends ImporterTestSupport {
     }
 
     public void testImportCSVIndirect() throws Exception {
-        File dir = unpack("shape/locations.zip");
+        File dir = unpack("csv/locations.zip");
         String wsName = getCatalog().getDefaultWorkspace().getName();
         DataStoreInfo h2DataStore = createH2DataStore(wsName, "csvindirecttest");
         SpatialFile importData = new SpatialFile(new File(dir, "locations.csv"));
@@ -572,7 +572,7 @@ public class ImporterDataTest extends ImporterTestSupport {
     }
 
     public void testImportKMLIndirect() throws Exception {
-        File dir = unpack("shape/samplekml.zip");
+        File dir = unpack("kml/sample.zip");
         String wsName = getCatalog().getDefaultWorkspace().getName();
         DataStoreInfo h2DataStore = createH2DataStore(wsName, "kmltest");
         SpatialFile importData = new SpatialFile(new File(dir, "sample.kml"));
