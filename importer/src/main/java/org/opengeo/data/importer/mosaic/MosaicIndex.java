@@ -18,7 +18,7 @@ import org.geotools.data.Transaction;
 import org.geotools.data.directory.DirectoryDataStore;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
-import org.geotools.data.shapefile.ShpFileType;
+import org.geotools.data.shapefile.files.ShpFileType;
 import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.Envelope2D;
