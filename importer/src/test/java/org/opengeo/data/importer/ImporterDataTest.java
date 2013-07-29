@@ -626,7 +626,6 @@ public class ImporterDataTest extends ImporterTestSupport {
                 return "EmissiveCampania".equals(input.getLayer().getResource().getName());
             }
         });
-        task = context.getTasks().get(2);
         assertEquals(ImportTask.State.BAD_FORMAT, task.getState());
         assertTrue(task.getData() instanceof SpatialFile);
         assertEquals("GeoTIFF", task.getData().getFormat().getName());
