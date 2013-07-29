@@ -27,6 +27,8 @@ import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.FeatureType;
 import org.opengis.feature.type.GeometryDescriptor;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Point;
 
@@ -597,21 +599,35 @@ public class ImporterDataTest extends ImporterTestSupport {
         assertEquals(3, context.getTasks().size());
         assertTrue(context.getData() instanceof Directory);
 
-        ImportTask task = context.getTasks().get(0);
+        ImportTask task = Iterables.find(context.getTasks(), new Predicate<ImportTask>() {
+            @Override
+            public boolean apply(ImportTask input) {
+                return "archsites".equals(input.getLayer().getResource().getName());
+            }
+        });
         assertEquals(ImportTask.State.READY, task.getState());
-        assertEquals("archsites", task.getLayer().getResource().getName());
         assertTrue(task.getData() instanceof SpatialFile);
         assertEquals("Shapefile", task.getData().getFormat().getName());
         
-        task = context.getTasks().get(1);
+        task = Iterables.find(context.getTasks(), new Predicate<ImportTask>() {
+            @Override
+            public boolean apply(ImportTask input) {
+                return "bugsites".equals(input.getLayer().getResource().getName());
+            }
+        });
         assertEquals(ImportTask.State.READY, task.getState());
-        assertEquals("bugsites", task.getLayer().getResource().getName());
+        
         assertTrue(task.getData() instanceof SpatialFile);
         assertEquals("Shapefile", task.getData().getFormat().getName());
         
+        task = Iterables.find(context.getTasks(), new Predicate<ImportTask>() {
+            @Override
+            public boolean apply(ImportTask input) {
+                return "EmissiveCampania".equals(input.getLayer().getResource().getName());
+            }
+        });
         task = context.getTasks().get(2);
         assertEquals(ImportTask.State.BAD_FORMAT, task.getState());
-        assertEquals("EmissiveCampania", task.getLayer().getResource().getName());
         assertTrue(task.getData() instanceof SpatialFile);
         assertEquals("GeoTIFF", task.getData().getFormat().getName());
     }
