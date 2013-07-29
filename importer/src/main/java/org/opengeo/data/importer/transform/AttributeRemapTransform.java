@@ -3,7 +3,7 @@ package org.opengeo.data.importer.transform;
 import org.geotools.data.DataStore;
 import org.geotools.feature.AttributeTypeBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
-import org.opengeo.data.importer.ImportItem;
+import org.opengeo.data.importer.ImportTask;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
@@ -48,7 +48,7 @@ public class AttributeRemapTransform extends AbstractVectorTransform implements 
         this.type = type;
     }
 
-    public SimpleFeatureType apply(ImportItem item, DataStore dataStore,
+    public SimpleFeatureType apply(ImportTask task, DataStore dataStore,
             SimpleFeatureType featureType) throws Exception {
         //remap the type
         SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
@@ -70,7 +70,7 @@ public class AttributeRemapTransform extends AbstractVectorTransform implements 
         return builder.buildFeatureType();
     }
 
-    public SimpleFeature apply(ImportItem item, DataStore dataStore, SimpleFeature oldFeature, 
+    public SimpleFeature apply(ImportTask task, DataStore dataStore, SimpleFeature oldFeature, 
         SimpleFeature feature) throws Exception {
         return feature;
     }

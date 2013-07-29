@@ -72,7 +72,7 @@ public class FeatureDataConverter {
     }
 
     public SimpleFeatureType convertType(SimpleFeatureType featureType, VectorFormat format, 
-        ImportData data, ImportItem item) {
+        ImportData data, ImportTask task) {
 
         SimpleFeatureTypeBuilder typeBuilder = new SimpleFeatureTypeBuilder();
         typeBuilder.setName(convertTypeName(featureType.getTypeName()));
@@ -124,7 +124,7 @@ public class FeatureDataConverter {
     public static FeatureDataConverter TO_SHAPEFILE = new FeatureDataConverter() {
         @Override
         public SimpleFeatureType convertType(SimpleFeatureType featureType, VectorFormat format, 
-            ImportData data, ImportItem item) {
+            ImportData data, ImportTask item) {
 
             //for shapefile we always ensure the geometry is the first type, and we have to deal
             // with the max field name length of 10
@@ -186,7 +186,7 @@ public class FeatureDataConverter {
 
         @Override
         public SimpleFeatureType convertType(SimpleFeatureType featureType, VectorFormat format,
-                ImportData data, ImportItem item) {
+                ImportData data, ImportTask item) {
             SimpleFeatureType converted = featureType;
             String featureTypeName = convertTypeName(featureType.getTypeName());
             // trim the length of the name
@@ -217,7 +217,8 @@ public class FeatureDataConverter {
             }
         };
 
-        public SimpleFeatureType convertType(SimpleFeatureType featureType, VectorFormat format, ImportData data, ImportItem item) {
+        public SimpleFeatureType convertType(SimpleFeatureType featureType, VectorFormat format, 
+            ImportData data, ImportTask task) {
             SimpleFeatureTypeBuilder typeBuilder = new SimpleFeatureTypeBuilder();
             AttributeTypeBuilder attributeBuilder = new AttributeTypeBuilder();
             typeBuilder.setName(ensureOracleSafe(featureType.getTypeName()));

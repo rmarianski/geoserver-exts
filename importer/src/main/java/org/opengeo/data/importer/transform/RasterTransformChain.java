@@ -1,7 +1,7 @@
 package org.opengeo.data.importer.transform;
 
 import org.opengeo.data.importer.ImportData;
-import org.opengeo.data.importer.ImportItem;
+import org.opengeo.data.importer.ImportTask;
 
 /**
  * @todo implement me
@@ -10,14 +10,14 @@ import org.opengeo.data.importer.ImportItem;
 public class RasterTransformChain extends TransformChain<RasterTransform> {
 
     @Override
-    public void pre(ImportItem item, ImportData data) throws Exception {
+    public void pre(ImportTask task, ImportData data) throws Exception {
         if (transforms.size() > 0) {
             throw new RuntimeException("Not implemented");
         }
     }
 
     @Override
-    public void post(ImportItem item, ImportData data) throws Exception {
+    public void post(ImportTask task, ImportData data) throws Exception {
     }
     
 }

@@ -13,6 +13,7 @@ import org.geoserver.rest.format.StreamDataFormat;
 import org.opengeo.data.importer.Directory;
 import org.opengeo.data.importer.ImportContext;
 import org.opengeo.data.importer.ImportData;
+import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.Importer;
 import org.opengeo.data.importer.rest.ImportResource.ImportContextJSONFormat;
 import org.restlet.data.MediaType;
@@ -40,7 +41,17 @@ public class DataResource extends BaseResource {
             formatGet = new ImportDataJSONFormat();
         }
 
-        getResponse().setEntity(formatGet.toRepresentation(lookupContext().getData()));
+        ImportData data = null;
+
+        ImportTask task = task(true);
+        if (task != null) {
+            data = task.getData();
+        }
+        else {
+            data = context().getData();
+        }
+
+        getResponse().setEntity(formatGet.toRepresentation(data));
     }
 
     public class ImportDataJSONFormat extends StreamDataFormat {
@@ -51,13 +62,12 @@ public class DataResource extends BaseResource {
 
         @Override
         protected Object read(InputStream in) throws IOException {
-            
-            return new ImportJSONIO(importer).data(in);
+            return newReader(in).data();
         }
 
         @Override
         protected void write(Object object, OutputStream out) throws IOException {
-            new ImportJSONIO(importer).data((ImportData)object, getPageInfo(), out);
+            newWriter(out).data((ImportData)object, task(true) != null ? task() : context(), expand(1));
         }
     
     }

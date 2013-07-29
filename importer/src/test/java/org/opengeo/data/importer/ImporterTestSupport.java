@@ -119,12 +119,17 @@ public abstract class ImporterTestSupport extends GeoServerTestSupport {
     
     private String createSRSJSON(String srs) {
         return "{" + 
+                  "\"layer\":   {" + 
+                     "\"srs\": \"" + srs + "\"" +
+                   "}" + 
+              "}";
+        /*return "{" + 
           "\"resource\": {" + 
             "\"featureType\":   {" + 
                "\"srs\": \"" + srs + "\"" +
              "}" + 
            "}" + 
-        "}";
+        "}";*/
     }
     
     protected MockHttpServletResponse setSRSRequest(String url, String srs) throws Exception {

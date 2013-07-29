@@ -45,12 +45,9 @@ public abstract class ImporterDbTestBase extends ImporterDbTestSupport {
         Database db = new Database(getConnectionParams());
     
         ImportContext context = importer.createContext(db);
-        assertEquals(ImportContext.State.READY, context.getState());
+        assertEquals(ImportContext.State.PENDING, context.getState());
 
         assertEquals(1, context.getTasks().size());
-        
-        ImportTask task = context.getTasks().get(0);
-        assertEquals(1, task.getItems().size());
     
         importer.run(context);
         runChecks("gs:" + tableName("widgets"));
@@ -76,7 +73,6 @@ public abstract class ImporterDbTestBase extends ImporterDbTestSupport {
         
         ImportTask task = context.getTasks().get(0);
         assertEquals(ImportTask.State.READY, task.getState());
-        assertEquals(1, task.getItems().size());
         
         importer.run(context);
         assertEquals(ImportContext.State.COMPLETE, context.getState());
@@ -100,11 +96,10 @@ public abstract class ImporterDbTestBase extends ImporterDbTestSupport {
         unpack("shape/bugsites_esri_prj.tar.gz", dir);
     
         ImportContext context = importer.createContext(new Directory(dir), ds);
-        assertEquals(1, context.getTasks().size());
+        assertEquals(2, context.getTasks().size());
         
-        ImportTask task = context.getTasks().get(0);
-        assertEquals(ImportTask.State.READY, task.getState());
-        assertEquals(2, task.getItems().size());
+        assertEquals(ImportTask.State.READY, context.getTasks().get(0).getState());
+        assertEquals(ImportTask.State.READY, context.getTasks().get(1).getState());
     
         importer.run(context);
         assertEquals(ImportContext.State.COMPLETE, context.getState());

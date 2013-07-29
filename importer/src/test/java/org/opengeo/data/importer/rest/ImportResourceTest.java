@@ -66,41 +66,44 @@ public class ImportResourceTest extends ImporterTestSupport {
 
     public void testGetImport() throws Exception {
         JSONObject json = (JSONObject) getAsJSON("/rest/imports/0");
-
         assertNotNull(json.get("import"));
         
         JSONObject imprt = json.optJSONObject("import");
         assertEquals(0, imprt.getInt("id"));
         
         JSONArray tasks = imprt.getJSONArray("tasks");
-        assertEquals(1, tasks.size());
+        assertEquals(2, tasks.size());
 
-        JSONObject task = tasks.getJSONObject(0);
-        assertEquals("READY", task.get("state"));
+        assertEquals("READY", tasks.getJSONObject(0).get("state"));
+        assertEquals("READY", tasks.getJSONObject(1).get("state"));
+    }
+    
+    public void testGetImportExpandChildren() throws Exception {
+        JSONObject json = (JSONObject) getAsJSON("/rest/imports/0?expand=2");
 
-        JSONObject source = task.getJSONObject("source");
+        JSONObject source = json.getJSONObject("import").getJSONObject("data");
         assertEquals("directory", source.getString("type"));
         assertEquals("Shapefile", source.getString("format"));
         
         ImportContext context = importer.getContext(0);
-        assertEquals(((Directory)context.getTasks().get(0).getData()).getFile().getPath(), 
+        assertEquals(((Directory)context.getData()).getFile().getPath(), 
             source.getString("location"));
         
         JSONArray files = source.getJSONArray("files");
         assertEquals(2, files.size());
         
-        JSONArray items = task.getJSONArray("items");
-        assertEquals(2, items.size());
+        JSONArray tasks = json.getJSONObject("import").getJSONArray("tasks");
+        assertEquals(2, tasks.size());
         
-        JSONObject item = items.getJSONObject(0);
-        assertEquals("READY", item.getString("state"));
+        JSONObject t = tasks.getJSONObject(0);
+        assertEquals("READY", t.getString("state"));
         
-        item = items.getJSONObject(1);
-        assertEquals("READY", item.getString("state"));
+        t = tasks.getJSONObject(1);
+        assertEquals("READY", t.getString("state"));
     }
     
     public void testGetImport2() throws Exception {
-        JSONObject json = (JSONObject) getAsJSON("/rest/imports/1");
+        JSONObject json = (JSONObject) getAsJSON("/rest/imports/1?expand=3");
         assertNotNull(json.get("import"));
         
         JSONObject imprt = json.optJSONObject("import");
@@ -112,7 +115,7 @@ public class ImportResourceTest extends ImporterTestSupport {
         JSONObject task = tasks.getJSONObject(0);
         assertEquals("READY", task.get("state"));
 
-        JSONObject source = task.getJSONObject("source");
+        JSONObject source = imprt.getJSONArray("tasks").getJSONObject(0).getJSONObject("data");
         assertEquals("file", source.getString("type"));
         assertEquals("GeoTIFF", source.getString("format"));
         
@@ -121,16 +124,10 @@ public class ImportResourceTest extends ImporterTestSupport {
             source.getString("location"));
 
         assertEquals("EmissiveCampania.tif", source.getString("file"));
-
-        JSONArray items = task.getJSONArray("items");
-        assertEquals(1, items.size());
-        
-        JSONObject item = items.getJSONObject(0);
-        assertEquals("READY", item.getString("state"));
     }
 
     public void testGetImport3() throws Exception {
-        JSONObject json = (JSONObject) getAsJSON("/rest/imports/2");
+        JSONObject json = (JSONObject) getAsJSON("/rest/imports/2?expand=2");
         assertNotNull(json.get("import"));
         
         JSONObject imprt = json.optJSONObject("import");
@@ -140,18 +137,12 @@ public class ImportResourceTest extends ImporterTestSupport {
         assertEquals(1, tasks.size());
 
         JSONObject task = tasks.getJSONObject(0);
-        assertEquals("INCOMPLETE", task.get("state"));
+        assertEquals("NO_CRS", task.get("state"));
 
-        JSONObject source = task.getJSONObject("source");
+        JSONObject source = task.getJSONObject("data");
         assertEquals("file", source.getString("type"));
         assertEquals("Shapefile", source.getString("format"));
         assertEquals("archsites.shp", source.getString("file"));
-
-        JSONArray items = task.getJSONArray("items");
-        assertEquals(1, items.size());
-        
-        JSONObject item = items.getJSONObject(0);
-        assertEquals("NO_CRS", item.getString("state"));
     }
 
     public void testGetImportDatabase() throws Exception {
@@ -162,11 +153,11 @@ public class ImportResourceTest extends ImporterTestSupport {
         params.put(H2DataStoreFactory.DATABASE.key, new File(dir, "cookbook").getAbsolutePath());
         importer.createContext(new Database(params));
 
-        JSONObject json = (JSONObject) getAsJSON("/rest/imports/3");
+        JSONObject json = (JSONObject) getAsJSON("/rest/imports/3?expand=2");
+        
         assertNotNull(json.get("import"));
 
-        JSONObject source = json.getJSONObject("import").getJSONArray("tasks").getJSONObject(0)
-            .getJSONObject("source");
+        JSONObject source = json.getJSONObject("import").getJSONObject("data");
         assertEquals("database", source.getString("type"));
         assertEquals("H2", source.getString("format"));
 

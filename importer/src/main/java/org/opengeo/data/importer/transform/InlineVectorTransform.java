@@ -1,7 +1,7 @@
 package org.opengeo.data.importer.transform;
 
 import org.geotools.data.DataStore;
-import org.opengeo.data.importer.ImportItem;
+import org.opengeo.data.importer.ImportTask;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
@@ -16,7 +16,7 @@ import org.opengis.feature.simple.SimpleFeatureType;
  */
 public interface InlineVectorTransform extends VectorTransform {
 
-    SimpleFeatureType apply(ImportItem item, DataStore dataStore, SimpleFeatureType featureType) 
+    SimpleFeatureType apply(ImportTask task, DataStore dataStore, SimpleFeatureType featureType) 
         throws Exception;
 
     /**
@@ -28,6 +28,6 @@ public interface InlineVectorTransform extends VectorTransform {
      * @return null to discontinue processing
      * @throws Exception 
      */
-    SimpleFeature apply(ImportItem item, DataStore dataStore, SimpleFeature oldFeature, SimpleFeature feature) 
+    SimpleFeature apply(ImportTask task, DataStore dataStore, SimpleFeature oldFeature, SimpleFeature feature) 
         throws Exception;
 }

@@ -28,8 +28,8 @@ public class DataResourceTest extends ImporterTestSupport {
     }
 
     public void testGetFiles() throws Exception {
-        JSONArray json = (JSONArray) getAsJSON("/rest/imports/0/data/files");
-        assertEquals(2, json.size());
+        JSONObject json = (JSONObject) getAsJSON("/rest/imports/0/data/files");
+        assertEquals(2, json.getJSONArray("files").size());
     }
 
     public void testGetFile() throws Exception {
@@ -44,12 +44,12 @@ public class DataResourceTest extends ImporterTestSupport {
         assertEquals(200, response.getStatusCode());
 
         response = deleteAsServletResponse("/rest/imports/0/data/files/archsites.shp");
-        assertEquals(200, response.getStatusCode());
+        assertEquals(204, response.getStatusCode());
         
         response = getAsServletResponse("/rest/imports/0/data/files/archsites.shp");
         assertEquals(404, response.getStatusCode());
 
-        JSONArray arr = (JSONArray) getAsJSON("/rest/imports/0/data/files");
+        JSONArray arr = ((JSONObject)getAsJSON("/rest/imports/0/data/files")).getJSONArray("files");
         assertEquals(1, arr.size());
     }
 

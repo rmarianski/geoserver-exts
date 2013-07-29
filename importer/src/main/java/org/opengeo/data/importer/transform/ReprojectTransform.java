@@ -5,7 +5,7 @@ import org.geotools.data.DataStore;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
-import org.opengeo.data.importer.ImportItem;
+import org.opengeo.data.importer.ImportTask;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -45,11 +45,11 @@ public class ReprojectTransform extends AbstractVectorTransform implements Inlin
         this.target = target;
     }
 
-    public SimpleFeatureType apply(ImportItem item, DataStore dataStore,
+    public SimpleFeatureType apply(ImportTask task, DataStore dataStore,
             SimpleFeatureType featureType) throws Exception {
 
         //update the layer metadata
-        ResourceInfo r = item.getLayer().getResource();
+        ResourceInfo r = task.getLayer().getResource();
         r.setNativeCRS(target);
         r.setSRS(CRS.lookupIdentifier(target, true));
         if (r.getNativeBoundingBox() != null) {
@@ -59,7 +59,7 @@ public class ReprojectTransform extends AbstractVectorTransform implements Inlin
         return SimpleFeatureTypeBuilder.retype(featureType, target);
     }
 
-    public SimpleFeature apply(ImportItem item, DataStore dataStore, SimpleFeature oldFeature, SimpleFeature feature)
+    public SimpleFeature apply(ImportTask task, DataStore dataStore, SimpleFeature oldFeature, SimpleFeature feature)
             throws Exception {
         if (transform == null) {
             //compute the reprojection transform

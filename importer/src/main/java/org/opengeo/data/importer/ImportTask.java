@@ -3,11 +3,17 @@ package org.opengeo.data.importer;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
 
 import org.geoserver.catalog.Catalog;
+import org.geoserver.catalog.LayerInfo;
 import org.geoserver.catalog.StoreInfo;
 import org.opengeo.data.importer.job.ProgressMonitor;
+import org.opengeo.data.importer.transform.TransformChain;
 
 import static org.opengeo.data.importer.ImporterUtils.*;
 
@@ -22,7 +28,7 @@ public class ImportTask implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static enum State {
-        PENDING, READY, RUNNING, INCOMPLETE, COMPLETE
+        PENDING, READY, RUNNING, NO_CRS, NO_BOUNDS, NO_FORMAT, BAD_FORMAT, ERROR, CANCELED, COMPLETE
     }
 
     /**
@@ -45,11 +51,6 @@ public class ImportTask implements Serializable {
      */
     StoreInfo store;
 
-    /**
-     * Resources created during this import 
-     */
-    List<ImportItem> items = new ArrayList<ImportItem>();
-
     /** 
      * state
      */
@@ -64,8 +65,47 @@ public class ImportTask implements Serializable {
      * flag signalling direct/indirect import
      */
     boolean direct;
-    
+
+    /**
+     * how data should be applied to the target, during ingest/indirecet import
+     */
     UpdateMode updateMode;
+
+    /**
+     * The original layer name assigned to the task
+     */
+    String originalLayerName;
+
+    /**
+     * the layer/resource
+     */
+    LayerInfo layer;
+
+    /**
+     * Any error associated with the resource
+     */
+    Exception error;
+
+    /** 
+     * transform to apply to this import item 
+     */
+    TransformChain transform;
+
+    /**
+     * messages logged during proessing
+     */
+    List<LogRecord> messages = new ArrayList<LogRecord>();
+
+    /**
+     * various metadata 
+     */
+    transient Map<Object,Object> metadata;
+
+    /**
+     * used to track progress
+     */
+    transient volatile int totalToProcess;
+    transient volatile int numberProcessed;
 
     public ImportTask() {
     }
@@ -122,62 +162,90 @@ public class ImportTask implements Serializable {
         this.direct = direct;
     }
 
-    public List<ImportItem> getItems() {
-        return Collections.unmodifiableList(items);
+    public LayerInfo getLayer() {
+        return layer;
     }
 
-    public void addItem(ImportItem item) {
-        item.setId(itemid++);
-        item.setTask(this);
-        this.items.add(item);
+    public void setLayer(LayerInfo layer) {
+        this.layer = layer;
     }
 
-    public void removeItem(ImportItem item) {
-        this.items.remove(item);
+    public Exception getError() {
+        return error;
     }
 
-    public ImportItem item(long id) {
-        for (ImportItem item : items) {
-            if (id == item.getId()) {
-                return item;
-            }
+    public void setError(Exception error) {
+        this.error = error;
+    }
+
+    public TransformChain getTransform() {
+        return transform;
+    }
+
+    public void setTransform(TransformChain transform) {
+        this.transform = transform;
+    }
+
+    public Map<Object, Object> getMetadata() {
+        if (metadata == null) {
+            metadata = new HashMap<Object, Object>();
         }
-        return null;
+        return metadata;
+    }
+    
+    public void clearMessages() {
+        if (messages != null) {
+            messages.clear();
+        }
     }
 
-    /**
-     * @deprecated
-     */
+    public void addMessage(Level level,String msg) {
+        if (messages == null) {
+            messages = new ArrayList<LogRecord>();
+        }
+        messages.add(new LogRecord(level, msg));
+    }
+    
+    public List<LogRecord> getMessages() {
+        List<LogRecord> retval;
+        if (messages == null) {
+            retval = Collections.emptyList();
+        } else {
+            retval = Collections.unmodifiableList(messages);
+        }
+        return retval;
+    }
+
+    public String getOriginalLayerName() {
+        return originalLayerName == null ? layer.getResource().getNativeName() : originalLayerName;
+    }
+
+    public void setOriginalLayerName(String originalLayerName) {
+        this.originalLayerName = originalLayerName;
+    }
+    
+    public int getNumberProcessed() {
+        return numberProcessed;
+    }
+
+    public void setNumberProcessed(int numberProcessed) {
+        this.numberProcessed = numberProcessed;
+    }
+
+    public int getTotalToProcess() {
+        return totalToProcess;
+    }
+
+    public void setTotalToProcess(int totalToProcess) {
+        this.totalToProcess = totalToProcess;
+    }
+
     public UpdateMode getUpdateMode() {
         return updateMode;
     }
 
-    /**
-     * @deprecated
-     */
     public void setUpdateMode(UpdateMode updateMode) {
         this.updateMode = updateMode;
-    }
-    
-    public void updateState() {
-        State newState = State.COMPLETE;
-     O: for (ImportItem item : items) {
-           switch(item.getState()) {
-               case PENDING:
-               case RUNNING:
-               case ERROR:
-               case CANCELED:
-               case NO_CRS:
-               case NO_BOUNDS:
-                   newState = State.INCOMPLETE;
-                   break O;
-               case COMPLETE:
-                   continue;
-               case READY:
-                   newState = State.READY; 
-           }
-        }
-        state = newState;
     }
 
     public void reattach(Catalog catalog) {
@@ -186,11 +254,11 @@ public class ImportTask implements Serializable {
     
     public void reattach(Catalog catalog, boolean lookupByName) {
         store = resolve(store, catalog, lookupByName);
+        layer = resolve(layer, catalog, lookupByName);
+    }
 
-        for (ImportItem item : items) {
-            item.setTask(this);
-            item.reattach(catalog, lookupByName);
-        }
+    public boolean readyForImport() {
+        return state == State.READY || state == State.CANCELED;
     }
 
     public ProgressMonitor progress() {
@@ -223,12 +291,5 @@ public class ImportTask implements Serializable {
         if (id != other.id)
             return false;
         return true;
-    }
-
-    private Object readResolve() {
-        if (items == null) {
-            items = new ArrayList();
-        }
-        return this;
     }
 }

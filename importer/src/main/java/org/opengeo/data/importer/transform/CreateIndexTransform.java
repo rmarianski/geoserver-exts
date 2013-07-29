@@ -9,7 +9,7 @@ import org.geotools.data.DataAccess;
 import org.geotools.data.Transaction;
 import org.geotools.jdbc.JDBCDataStore;
 import org.opengeo.data.importer.ImportData;
-import org.opengeo.data.importer.ImportItem;
+import org.opengeo.data.importer.ImportTask;
 
 /**
  *
@@ -33,17 +33,17 @@ public class CreateIndexTransform extends AbstractVectorTransform implements Pos
         this.field = field;
     }
     
-    public void apply(ImportItem item, ImportData data) throws Exception {
-        DataStoreInfo storeInfo = (DataStoreInfo) item.getTask().getStore();
+    public void apply(ImportTask task, ImportData data) throws Exception {
+        DataStoreInfo storeInfo = (DataStoreInfo) task.getStore();
         DataAccess store = storeInfo.getDataStore(null);
         if (store instanceof JDBCDataStore) {
-            createIndex( item, (JDBCDataStore) store);
+            createIndex( task, (JDBCDataStore) store);
         } else {
-            item.addImportMessage(Level.WARNING, "Cannot create index on non database target. Not a big deal.");
+            task.addMessage(Level.WARNING, "Cannot create index on non database target. Not a big deal.");
         }
     }
     
-    private void createIndex(ImportItem item, JDBCDataStore store) throws Exception {
+    private void createIndex(ImportTask item, JDBCDataStore store) throws Exception {
         Connection conn = null;
         Statement stmt = null;
         Exception error = null;

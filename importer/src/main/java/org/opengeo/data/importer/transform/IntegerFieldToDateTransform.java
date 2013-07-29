@@ -8,7 +8,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 import org.geotools.data.DataStore;
-import org.opengeo.data.importer.ImportItem;
+import org.opengeo.data.importer.ImportTask;
 import org.opengis.feature.simple.SimpleFeature;
 
 /**
@@ -33,7 +33,7 @@ public class IntegerFieldToDateTransform extends AttributeRemapTransform {
     }
     
     @Override
-    public SimpleFeature apply(ImportItem item, DataStore dataStore, SimpleFeature oldFeature,
+    public SimpleFeature apply(ImportTask task, DataStore dataStore, SimpleFeature oldFeature,
             SimpleFeature feature) throws Exception {
         Object val = feature.getAttribute(field);
         Date parsed = null;

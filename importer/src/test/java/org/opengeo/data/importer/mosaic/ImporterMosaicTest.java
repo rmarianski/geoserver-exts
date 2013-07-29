@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.custommonkey.xmlunit.XMLAssert;
 import org.geoserver.catalog.DimensionInfo;
@@ -70,11 +69,10 @@ public class ImporterMosaicTest extends ImporterTestSupport {
 
         ImportContext context = importer.createContext(m);
         assertEquals(1, context.getTasks().size());
-        assertEquals(1, context.getTasks().get(0).getItems().size());
-
+        
         importer.run(context);
 
-        LayerInfo l = context.getTasks().get(0).getItems().get(0).getLayer();
+        LayerInfo l = context.getTasks().get(0).getLayer();
         ResourceInfo r = l.getResource();
         assertTrue(r.getMetadata().containsKey("time"));
 
@@ -96,11 +94,10 @@ public class ImporterMosaicTest extends ImporterTestSupport {
 
         ImportContext context = importer.createContext(m);
         assertEquals(1, context.getTasks().size());
-        assertEquals(1, context.getTasks().get(0).getItems().size());
 
         importer.run(context);
 
-        LayerInfo l = context.getTasks().get(0).getItems().get(0).getLayer();
+        LayerInfo l = context.getTasks().get(0).getLayer();
         ResourceInfo r = l.getResource();
         assertTrue(r.getMetadata().containsKey("time"));
 

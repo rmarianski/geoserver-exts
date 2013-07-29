@@ -8,7 +8,7 @@ import java.util.logging.Logger;
 import org.geotools.data.DataStore;
 import org.geotools.util.logging.Logging;
 import org.opengeo.data.importer.ImportData;
-import org.opengeo.data.importer.ImportItem;
+import org.opengeo.data.importer.ImportTask;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
@@ -29,7 +29,7 @@ public class VectorTransformChain extends TransformChain<VectorTransform> {
         super(transforms);
     }
     
-    public void pre(ImportItem item, ImportData data) throws Exception {
+    public void pre(ImportTask item, ImportData data) throws Exception {
         for (PreVectorTransform tx : filter(transforms, PreVectorTransform.class)) {
             try {
                 tx.apply(item, data);
@@ -39,13 +39,13 @@ public class VectorTransformChain extends TransformChain<VectorTransform> {
         }
     }
 
-    public SimpleFeatureType inline(ImportItem item, DataStore dataStore, SimpleFeatureType featureType) 
+    public SimpleFeatureType inline(ImportTask task, DataStore dataStore, SimpleFeatureType featureType) 
         throws Exception {
         
         for (InlineVectorTransform tx : filter(transforms, InlineVectorTransform.class)) {
             try {
                 tx.init();
-                featureType = tx.apply(item, dataStore, featureType);
+                featureType = tx.apply(task, dataStore, featureType);
             } catch (Exception e) {
                 error(tx, e);
             }
@@ -54,12 +54,12 @@ public class VectorTransformChain extends TransformChain<VectorTransform> {
         return featureType;
     }
 
-    public SimpleFeature inline(ImportItem item, DataStore dataStore, SimpleFeature oldFeature, 
+    public SimpleFeature inline(ImportTask task, DataStore dataStore, SimpleFeature oldFeature, 
         SimpleFeature feature) throws Exception {
         
         for (InlineVectorTransform tx : filter(transforms, InlineVectorTransform.class)) {
             try {
-                feature = tx.apply(item, dataStore, oldFeature, feature);
+                feature = tx.apply(task, dataStore, oldFeature, feature);
                 if (feature == null) {
                     break;
                 }
@@ -71,10 +71,10 @@ public class VectorTransformChain extends TransformChain<VectorTransform> {
         return feature;
     }
 
-    public void post(ImportItem item, ImportData data) throws Exception {
+    public void post(ImportTask task, ImportData data) throws Exception {
         for (PostVectorTransform tx : filter(transforms, PostVectorTransform.class)) {
             try {
-                tx.apply(item, data);
+                tx.apply(task, data);
             } catch (Exception e) {
                 error(tx, e);
             }

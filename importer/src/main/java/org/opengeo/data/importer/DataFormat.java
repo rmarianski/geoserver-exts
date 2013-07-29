@@ -107,5 +107,6 @@ public abstract class DataFormat implements Serializable {
     public abstract StoreInfo createStore(ImportData data, WorkspaceInfo workspace, Catalog catalog) 
         throws IOException;
 
-    public abstract List<ImportItem> list(ImportData data, Catalog catalog, ProgressMonitor monitor) throws IOException;
+    public abstract List<ImportTask> list(ImportData data, Catalog catalog, ProgressMonitor monitor) 
+        throws IOException;
 }

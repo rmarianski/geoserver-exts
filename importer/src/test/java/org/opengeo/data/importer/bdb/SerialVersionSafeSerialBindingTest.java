@@ -8,7 +8,6 @@ import org.geoserver.catalog.DataStoreInfo;
 import org.geoserver.catalog.WorkspaceInfo;
 import org.opengeo.data.importer.Directory;
 import org.opengeo.data.importer.ImportContext;
-import org.opengeo.data.importer.ImportItem;
 import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.ImporterTestSupport;
 
@@ -48,14 +47,12 @@ public class SerialVersionSafeSerialBindingTest extends ImporterTestSupport {
         assertNotNull(task.getStore().getId());
         assertNotNull(task.getStore().getWorkspace());
 
-        assertEquals(1, task.getItems().size());
-        ImportItem item = task.getItems().get(0);
-        assertNotNull(item.getLayer());
-        assertNotNull(item.getLayer().getResource());
-        assertNull(item.getLayer().getId());
-        assertNull(item.getLayer().getResource().getId());
+        assertNotNull(task.getLayer());
+        assertNotNull(task.getLayer().getResource());
+        assertNull(task.getLayer().getId());
+        assertNull(task.getLayer().getResource().getId());
 
-        assertNotNull(item.getLayer().getResource().getStore());
-        assertNotNull(item.getLayer().getResource().getStore().getId());
+        assertNotNull(task.getLayer().getResource().getStore());
+        assertNotNull(task.getLayer().getResource().getStore().getId());
     }
 }

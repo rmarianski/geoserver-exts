@@ -1,7 +1,7 @@
 package org.opengeo.data.importer.transform;
 
 import org.opengeo.data.importer.ImportData;
-import org.opengeo.data.importer.ImportItem;
+import org.opengeo.data.importer.ImportTask;
 
 /**
  * Vector transform that is performed after an import has been completed.
@@ -10,5 +10,5 @@ import org.opengeo.data.importer.ImportItem;
  */
 public interface PostVectorTransform extends VectorTransform {
 
-    void apply(ImportItem item, ImportData data) throws Exception;
+    void apply(ImportTask task, ImportData data) throws Exception;
 }

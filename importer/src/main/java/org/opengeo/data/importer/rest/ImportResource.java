@@ -9,16 +9,12 @@ import java.util.List;
 
 import org.geoserver.catalog.StoreInfo;
 import org.geoserver.catalog.WorkspaceInfo;
-import org.geoserver.config.util.XStreamPersister;
-import org.geoserver.config.util.XStreamPersisterFactory;
-import org.geoserver.rest.AbstractResource;
 import org.geoserver.rest.PageInfo;
 import org.geoserver.rest.RestletException;
 import org.geoserver.rest.format.DataFormat;
 import org.geoserver.rest.format.StreamDataFormat;
 import org.opengeo.data.importer.ImportContext;
 import org.opengeo.data.importer.ImportFilter;
-import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.Importer;
 import org.restlet.data.Form;
 import org.restlet.data.MediaType;
@@ -34,13 +30,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
  * @author Justin Deoliveira, OpenGeo
  *
  */
-public class ImportResource extends AbstractResource {
+public class ImportResource extends BaseResource {
 
-    Importer importer;
     Object importContext; // ImportContext or Iterator<ImportContext>
 
     public ImportResource(Importer importer) {
-        this.importer = importer;
+        super(importer);
     }
 
     @Override
@@ -134,6 +129,9 @@ public class ImportResource extends AbstractResource {
                 }
 
                 context.setData(newContext.getData());
+                if (newContext.getData() != null) {
+                    importer.init(context, true);
+                }
             }
 
             context.reattach(importer.getCatalog(), true);
@@ -265,25 +263,25 @@ public class ImportResource extends AbstractResource {
 
         @Override
         protected Object read(InputStream in) throws IOException {
-            ImportJSONIO json = new ImportJSONIO(importer);
-            return json.context(in);
+            return newReader(in).context();
         }
 
         @Override
         protected void write(Object object, OutputStream out) throws IOException {
-            ImportJSONIO json = new ImportJSONIO(importer);
-
+            
             PageInfo pageInfo = getPageInfo();
             // @hack lop off query if there is one or resulting URIs look silly
             int queryIdx = pageInfo.getPagePath().indexOf('?');
             if (queryIdx > 0) {
                 pageInfo.setPagePath(pageInfo.getPagePath().substring(0, queryIdx));
             }
+
+            ImportJSONWriter json = newWriter(out);
             if (object instanceof ImportContext) {
-                json.context((ImportContext) object, pageInfo, out);
+                json.context((ImportContext) object, true, expand(1));
             }
             else {
-                json.contexts((Iterator<ImportContext>)object, pageInfo, out);
+                json.contexts((Iterator<ImportContext>)object, expand(0));
             }
         }
     }

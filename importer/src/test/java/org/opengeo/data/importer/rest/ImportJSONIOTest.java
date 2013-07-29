@@ -1,13 +1,17 @@
 package org.opengeo.data.importer.rest;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+
 import org.geoserver.catalog.StoreInfo;
 import org.geoserver.rest.PageInfo;
-import static org.junit.Assert.*;
 import org.opengeo.data.importer.Directory;
-import org.opengeo.data.importer.ImportItem;
 import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.ImporterTestSupport;
 import org.opengeo.data.importer.transform.DateFormatTransform;
@@ -18,8 +22,8 @@ import org.opengeo.data.importer.transform.TransformChain;
  * @author Ian Schneider <ischneider@opengeo.org>
  */
 public class ImportJSONIOTest extends ImporterTestSupport {
-    private ImportJSONIO importio;
-    private PageInfo info;
+    private ImportJSONWriter writer;
+
     private ByteArrayOutputStream buf;
 
     @Override
@@ -28,15 +32,23 @@ public class ImportJSONIOTest extends ImporterTestSupport {
 
         File dir = unpack("shape/archsites_epsg_prj.zip");
         importer.createContext(new Directory(dir));
-        importio = new ImportJSONIO(importer);
-
-        info = new PageInfo();
+        
+        PageInfo info = new PageInfo();
         info.setBasePath("basePath");
         info.setBaseURL("baseURL");
         info.setPagePath("pagePath");
         info.setRootPath("rootPath");
 
         newBuffer();
+        writer = new ImportJSONWriter(importer, info, buf);
+    }
+
+    private ImportJSONReader reader() throws IOException {
+        return new ImportJSONReader(importer, stream(buffer()));
+    }
+
+    private ImportJSONReader reader(JSONObject obj) {
+        return new ImportJSONReader(importer, obj);
     }
 
     private void newBuffer() {
@@ -53,7 +65,7 @@ public class ImportJSONIOTest extends ImporterTestSupport {
 
     public void testSettingTargetStore() throws IOException {
         ImportTask task = importer.getContext(0).getTasks().get(0);
-        importio.task(task, info, buf);
+        writer.task(task, true, 1);
 
         // update with new target
         JSONObject json = buffer();
@@ -66,7 +78,7 @@ public class ImportJSONIOTest extends ImporterTestSupport {
         target.put("dataStore", dataStore);
         json.getJSONObject("task").put("target", target);
 
-        ImportTask parsed = importio.task(stream(json));
+        ImportTask parsed = reader(json).task();
         StoreInfo store = parsed.getStore();
         assertNotNull(store);
         assertEquals("foobar", store.getName());
@@ -74,23 +86,27 @@ public class ImportJSONIOTest extends ImporterTestSupport {
     }
 
     public void testAddingDateTransform() throws IOException {
-        ImportItem task = importer.getContext(0).getTasks().get(0).getItems().get(0);
-        importio.item(task, info, buf);
+        ImportTask task = importer.getContext(0).getTasks().get(0);
+        writer.task(task, true, 1);
         
         // update with transform
-        JSONObject json = buffer().getJSONObject("item");
-        JSONObject tchain = json.getJSONObject("transformChain");
-        JSONArray transforms = new JSONArray();
+        JSONObject json = buffer();
+
+        JSONArray transforms = 
+            json.getJSONObject("task").getJSONObject("transformChain").getJSONArray("transforms");
         JSONObject dateTransform = new JSONObject();
         dateTransform.put("type", "dateFormatTransform");
         dateTransform.put("field", "foobar");
         dateTransform.put("format", "yyyy-MM-dd");
         transforms.add(dateTransform);
-        tchain.put("transforms", transforms);
 
-        ImportItem item = importio.item(stream(json));
-        assertNotNull(item);
-        TransformChain chain = item.getTransform();
+        //hack, remove href
+        json.getJSONObject("task").getJSONObject("target").remove("href");
+
+        task = reader(json).task();
+        assertNotNull(task);
+
+        TransformChain chain = task.getTransform();
         assertNotNull(chain);
         assertEquals(1, chain.getTransforms().size());
         DateFormatTransform dft = (DateFormatTransform) chain.getTransforms().get(0);

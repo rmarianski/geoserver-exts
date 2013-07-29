@@ -1,8 +1,7 @@
 package org.opengeo.data.importer;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Simple filter used to constrain the tasks/items process during an import. 
@@ -11,23 +10,13 @@ import java.util.Map;
  */
 public class BasicImportFilter implements ImportFilter {
 
-    Map<ImportTask,List<ImportItem>> map = new HashMap<ImportTask, List<ImportItem>>(); 
+    Set<ImportTask> set = new HashSet<ImportTask>();  
 
-    public void add(ImportTask task, List<ImportItem> items) {
-        List<ImportItem> l = map.get(task);
-        if (l == null) {
-            map.put(task, items);
-        }
-        else {
-            l.addAll(items);
-        }
+    public void add(ImportTask task) {
+        set.add(task);
     }
 
     public boolean include(ImportTask task) {
-        return map.containsKey(task);
-    }
-
-    public boolean include(ImportItem item) {
-        return include(item.getTask()) && map.get(item.getTask()).contains(item);
+        return set.contains(task);
     }
 }

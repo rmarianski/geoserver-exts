@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import org.opengeo.data.importer.ImportData;
-import org.opengeo.data.importer.ImportItem;
+import org.opengeo.data.importer.ImportTask;
 
 /**
  * Chain of transformations to apply during the import process.
@@ -39,6 +39,10 @@ public abstract class TransformChain<T extends ImportTransform> implements Seria
         transforms.add(tx);
     }
 
+    public <X extends T> boolean remove(X tx) {
+        return transforms.remove(tx);
+    }
+
     public <X extends T> X get(Class<X> type) {
         for (T tx : transforms) {
             if (type.equals(tx.getClass())) {
@@ -66,8 +70,8 @@ public abstract class TransformChain<T extends ImportTransform> implements Seria
         }
     }
     
-    public abstract void pre(ImportItem item, ImportData data) throws Exception;
-    public abstract void post(ImportItem item, ImportData data) throws Exception;
+    public abstract void pre(ImportTask task, ImportData data) throws Exception;
+    public abstract void post(ImportTask task, ImportData data) throws Exception;
 
     private Object readResolve() {
         if (transforms == null) {

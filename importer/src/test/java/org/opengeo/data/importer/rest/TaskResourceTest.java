@@ -27,20 +27,23 @@ import org.geoserver.catalog.impl.DataStoreInfoImpl;
 import org.geoserver.data.util.IOUtils;
 import org.geoserver.security.impl.GeoServerRole;
 import org.geotools.data.Transaction;
+import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.jdbc.JDBCDataStore;
 import org.opengeo.data.importer.DataFormat;
 import org.opengeo.data.importer.Directory;
 import org.opengeo.data.importer.GridFormat;
 import org.opengeo.data.importer.ImportContext;
 import org.opengeo.data.importer.ImportData;
-import org.opengeo.data.importer.ImportItem;
 import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.ImporterTestSupport;
 import org.opengeo.data.importer.SpatialFile;
 import org.opengeo.data.importer.VFSWorker;
+import org.opengeo.data.importer.ImportContext.State;
+import org.opengeo.data.importer.ImporterTestSupport.JSONObjectBuilder;
 import org.opengeo.data.importer.transform.CreateIndexTransform;
 import org.restlet.data.Form;
 import org.restlet.data.MediaType;
+import org.restlet.data.Status;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -210,7 +213,7 @@ public class TaskResourceTest extends ImporterTestSupport {
         Integer id = upload("shape/locations.zip", false);
         setSRSRequest("/rest/imports/"+ id + "/tasks/0/items/0", "EPSG:4326");
         ImportContext context = importer.getContext(id);
-        context.getTasks().get(0).getItems().get(0).getTransform().add(new AttributesToPointGeometryTransform("LAT","LON"));
+        context.getTasks().get(0).getTransform().add(new AttributesToPointGeometryTransform("LAT","LON"));
         completeAndVerifyUpload(id, false, "locations");
         FeatureTypeInfo featureTypeByName = importer.getCatalog().getFeatureTypeByName("locations");
         assertEquals("ReferencedEnvelope[-123.365556 : 151.211111, -33.925278 : 48.428611]",featureTypeByName.getNativeBoundingBox().toString());
@@ -242,7 +245,7 @@ public class TaskResourceTest extends ImporterTestSupport {
         // @todo formalize and extract this test
         if (addIndex) {
             context = importer.getContext(id);
-            context.getTasks().get(0).getItems().get(0).getTransform().add(new CreateIndexTransform("CAT_ID"));
+            context.getTasks().get(0).getTransform().add(new CreateIndexTransform("CAT_ID"));
             importer.changed(context);
         }
         
@@ -262,7 +265,7 @@ public class TaskResourceTest extends ImporterTestSupport {
         // @todo why is generated type name possibly getting a '0' appended to it when we drop the table???
         assertTrue(type.getString("name").startsWith(expectedTypeName));
         
-        File archive = importer.getArchiveFile(context.getTasks().get(0));
+        File archive = importer.getArchiveFile(context);
         assertTrue(archive.exists());
         
         // @todo do it again and ensure feature type is created
@@ -298,15 +301,19 @@ public class TaskResourceTest extends ImporterTestSupport {
 
         String[] split = resp.getHeader("Location").split("/");
         Integer id = Integer.parseInt(split[split.length-1]);
+        
         ImportContext context = importer.getContext(id);
 
         File dir = unpack("shape/archsites_epsg_prj.zip");
+        unpack("shape/bugsites_esri_prj.tar.gz", dir);
+        
         new File(dir, "extra.file").createNewFile();
         File[] files = dir.listFiles();
         Part[] parts = new Part[files.length];
         for (int i = 0; i < files.length; i++) {
             parts[i] = new FilePart(files[i].getName(), files[i]);
         }
+
         MultipartRequestEntity multipart =
             new MultipartRequestEntity(parts, new PostMethod().getParams());
 
@@ -404,11 +411,6 @@ public class TaskResourceTest extends ImporterTestSupport {
 
         DataFormat format = importData.getFormat();
         assertTrue(format instanceof GridFormat);
-
-        List<ImportItem> items = task.getItems();
-        assertEquals(1, items.size());
-        ImportItem importItem = items.get(0);
-        assertEquals(ImportItem.State.READY, importItem.getState());
     }
 
     public void testPostGeotiffBz2() throws Exception {
@@ -443,5 +445,139 @@ public class TaskResourceTest extends ImporterTestSupport {
 
         FileInputStream fis = new FileInputStream(tiff);
         uploadGeotiffAndVerify(tifname, fis, "image/tiff");
+    }
+
+    public void testGetTarget() throws Exception {
+        JSONObject json = ((JSONObject) getAsJSON("/rest/imports/0/tasks/0")).getJSONObject("task");
+
+        JSONObject target = json.getJSONObject("target");
+        assertTrue(target.has("href"));
+        assertTrue(target.getString("href").endsWith("/rest/imports/0/tasks/0/target"));
+        assertTrue(target.has("dataStore"));
+
+        target = target.getJSONObject("dataStore");
+        assertTrue(target.has("name"));
+        
+        json = (JSONObject) getAsJSON("/rest/imports/0/tasks/0/target");
+        assertNotNull(json.get("dataStore"));
+    }
+
+    public void testPutTarget() throws Exception {
+        JSONObject json = (JSONObject) getAsJSON("/rest/imports/0/tasks/0/target");
+        assertEquals("archsites", json.getJSONObject("dataStore").getString("name"));
+
+        String update = "{\"dataStore\": { \"type\": \"foo\" }}";
+        put("/rest/imports/0/tasks/0/target", update, MediaType.APPLICATION_JSON.toString());
+
+        json = (JSONObject) getAsJSON("/rest/imports/0/tasks/0/target");
+        assertEquals("foo", json.getJSONObject("dataStore").getString("type"));
+    }
+
+    public void testPutTargetExisting() throws Exception {
+        createH2DataStore(getCatalog().getDefaultWorkspace().getName(), "foo");
+
+        String update = "{\"dataStore\": { \"name\": \"foo\" }}";
+        put("/rest/imports/0/tasks/0/target", update, MediaType.APPLICATION_JSON.toString());
+
+        JSONObject json = (JSONObject) getAsJSON("/rest/imports/0/tasks/0/target");
+        assertEquals("foo", json.getJSONObject("dataStore").getString("name"));
+        assertEquals("H2", json.getJSONObject("dataStore").getString("type"));
+    }
+
+    public void testPutItemSRS() throws Exception {
+        File dir = unpack("shape/archsites_no_crs.zip");
+        importer.createContext(new SpatialFile(new File(dir, "archsites.shp")));
+
+        JSONObject json = (JSONObject) getAsJSON("/rest/imports/1/tasks/0");
+        JSONObject task = json.getJSONObject("task");
+        assertEquals("NO_CRS", task.get("state"));
+        assertFalse(task.getJSONObject("layer").containsKey("srs"));
+
+        // verify invalid SRS handling
+        MockHttpServletResponse resp = setSRSRequest("/rest/imports/1/tasks/0","26713");
+        verifyInvalidCRSErrorResponse(resp);
+        resp = setSRSRequest("/rest/imports/1/tasks/0","EPSG:9838275");
+        verifyInvalidCRSErrorResponse(resp);
+        
+        setSRSRequest("/rest/imports/1/tasks/0","EPSG:26713");
+        
+        ImportContext context = importer.getContext(1);
+        ReferencedEnvelope latLonBoundingBox = 
+            context.getTasks().get(0).getLayer().getResource().getLatLonBoundingBox();
+        assertFalse("expected not empty bbox",latLonBoundingBox.isEmpty());
+
+        json = (JSONObject) getAsJSON("/rest/imports/1/tasks/0?expand=2");
+        task = json.getJSONObject("task");
+        assertEquals("READY", task.get("state"));
+        
+        assertEquals("EPSG:26713", 
+            task.getJSONObject("layer").getString("srs"));
+        State state = context.getState();
+        assertEquals("Invalid context state", State.PENDING, state);
+    }
+    
+    private void verifyInvalidCRSErrorResponse(MockHttpServletResponse resp) {
+        assertEquals(Status.CLIENT_ERROR_BAD_REQUEST.getCode(), resp.getStatusCode());
+        JSONObject errorResponse = JSONObject.fromObject(resp.getOutputStreamContent());
+        JSONArray errors = errorResponse.getJSONArray("errors");
+        assertTrue(errors.get(0).toString().startsWith("Invalid SRS"));
+    }
+
+    /**
+     * Ideally, many variations of error handling could be tested here.
+     * (For performance - otherwise too much tear-down/setup)
+     * @throws Exception
+     */
+    public void testErrorHandling() throws Exception {
+        JSONObject json = (JSONObject) getAsJSON("/rest/imports/0/tasks/0");
+
+        JSONObjectBuilder badDateFormatTransform = new JSONObjectBuilder();
+        badDateFormatTransform.
+            object().
+                key("task").object().
+                    key("transformChain").object().
+                        key("type").value("VectorTransformChain").
+                        key("transforms").array().
+                            object().
+                                key("field").value("datefield").
+                                key("type").value("DateFormatTransform").
+                                key("format").value("xxx").
+                            endObject().
+                        endArray().
+                    endObject().
+                endObject().
+            endObject();
+        
+        MockHttpServletResponse resp = 
+            putAsServletResponse("/rest/imports/0/tasks/0", badDateFormatTransform.buildObject().toString(), "application/json");
+        assertErrorResponse(resp, "Invalid date parsing format");
+    }
+
+    public void testDeleteTask2() throws Exception {
+        MockHttpServletResponse response = deleteAsServletResponse("/rest/imports/0/tasks/0");
+        assertEquals(204, response.getStatusCode());
+
+        JSONObject json = (JSONObject) getAsJSON("/rest/imports/0/tasks");
+
+        JSONArray items = json.getJSONArray("tasks");
+        assertEquals(1, items.size());
+        assertEquals(1, items.getJSONObject(0).getInt("id"));
+    }
+
+    public void testGetLayer() throws Exception {
+        String path = "/rest/imports/0/tasks/0";
+        JSONObject json = ((JSONObject) getAsJSON(path)).getJSONObject("task");
+        
+        assertTrue(json.has("layer"));
+        JSONObject layer = json.getJSONObject("layer");
+        assertTrue(layer.has("name"));
+        assertTrue(layer.has("href"));
+        assertTrue(layer.getString("href").endsWith(path+"/layer"));
+
+        json = (JSONObject) getAsJSON(path+"/layer");
+
+        assertTrue(layer.has("name"));
+        assertTrue(layer.has("href"));
+        assertTrue(layer.getString("href").endsWith(path+"/layer"));
     }
 }

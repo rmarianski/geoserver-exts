@@ -38,12 +38,19 @@
   <bean id="importTaskFinder" class="org.geoserver.rest.BeanResourceFinder">
       <constructor-arg value="importTaskResource"/>
   </bean>
-  
-  <bean id="importItemResource" class="org.opengeo.data.importer.rest.ItemResource">
+
+  <bean id="taskTargetResource" class="org.opengeo.data.importer.rest.TaskTargetResource">
     <constructor-arg ref="importer"/>
   </bean>
-  <bean id="importItemFinder" class="org.geoserver.rest.BeanResourceFinder">
-      <constructor-arg value="importItemResource"/>
+  <bean id="taskTargetFinder" class="org.geoserver.rest.BeanResourceFinder">
+    <constructor-arg value="taskTargetResource"/>
+  </bean>
+
+  <bean id="layerResource" class="org.opengeo.data.importer.rest.LayerResource">
+    <constructor-arg ref="importer"/>
+  </bean>
+  <bean id="layerFinder" class="org.geoserver.rest.BeanResourceFinder">
+      <constructor-arg value="layerResource"/>
   </bean>
 
   <bean id="importDataResource" class="org.opengeo.data.importer.rest.DataResource">
@@ -60,6 +67,14 @@
       <constructor-arg value="dirResource"/>
   </bean>
 
+  <bean id="txResource" class="org.opengeo.data.importer.rest.TransformResource">
+    <constructor-arg ref="importer"/>
+  </bean>
+  <bean id="txFinder" class="org.geoserver.rest.BeanResourceFinder">
+      <constructor-arg value="txResource"/>
+  </bean>
+
+  
   <bean id="importRestMapping" class="org.geoserver.rest.RESTMapping">
     <property name="routes">
       <map>
@@ -83,6 +98,12 @@
         </entry>
         <entry>
           <key>
+            <value>/imports/{import}/tasks/{task}/data</value>
+          </key>
+          <value>importDataFinder</value>
+        </entry>
+        <entry>
+          <key>
             <value>/imports/{import}/data/files</value>
           </key>
           <value>dirFinder</value>
@@ -90,6 +111,18 @@
         <entry>
           <key>
             <value>/imports/{import}/data/files/{file}</value>
+          </key>
+          <value>dirFinder</value>
+        </entry>
+        <entry>
+          <key>
+            <value>/imports/{import}/tasks/{task}/data/files</value>
+          </key>
+          <value>dirFinder</value>
+        </entry>
+        <entry>
+          <key>
+            <value>/imports/{import}/tasks/{task}/data/files/{file}</value>
           </key>
           <value>dirFinder</value>
         </entry>
@@ -107,21 +140,33 @@
         </entry>
         <entry>
           <key>
-            <value>/imports/{import}/tasks/{task}/items</value>
+            <value>/imports/{import}/tasks/{task}/target</value>
           </key>
-          <value>importItemFinder</value>
+          <value>taskTargetFinder</value>
         </entry>
         <entry>
           <key>
-            <value>/imports/{import}/tasks/{task}/items/{item}</value>
+            <value>/imports/{import}/tasks/{task}/progress</value>
           </key>
-          <value>importItemFinder</value>
+          <value>importTaskFinder</value>
         </entry>
         <entry>
           <key>
-            <value>/imports/{import}/tasks/{task}/items/{item}/progress</value>
+            <value>/imports/{import}/tasks/{task}/layer</value>
           </key>
-          <value>importItemFinder</value>
+          <value>layerFinder</value>
+        </entry>
+        <entry>
+          <key>
+            <value>/imports/{import}/tasks/{task}/transforms</value>
+          </key>
+          <value>txFinder</value>
+        </entry>
+        <entry>
+          <key>
+            <value>/imports/{import}/tasks/{task}/transforms/{transform}</value>
+          </key>
+          <value>txFinder</value>
         </entry>
       </map>
     </property>

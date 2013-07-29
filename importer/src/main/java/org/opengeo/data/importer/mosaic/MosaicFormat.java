@@ -14,7 +14,7 @@ import org.geotools.data.DataUtilities;
 import org.geotools.gce.imagemosaic.ImageMosaicFormat;
 import org.opengeo.data.importer.GridFormat;
 import org.opengeo.data.importer.ImportData;
-import org.opengeo.data.importer.ImportItem;
+import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.job.ProgressMonitor;
 
 public class MosaicFormat extends GridFormat {
@@ -34,25 +34,25 @@ public class MosaicFormat extends GridFormat {
     }
 
     @Override
-    public List<ImportItem> list(ImportData data, Catalog catalog, ProgressMonitor monitor) throws IOException {
+    public List<ImportTask> list(ImportData data, Catalog catalog, ProgressMonitor monitor) throws IOException {
         
-        List<ImportItem> items = super.list(data, catalog, monitor);
+        List<ImportTask> tasks = super.list(data, catalog, monitor);
 
         Mosaic m = (Mosaic) data;
         if (m.getTimeMode() != TimeMode.NONE) {
             //set up the time dimension object
-            for (ImportItem item : items) {
+            for (ImportTask task : tasks) {
                 DimensionInfo dim = new DimensionInfoImpl();
                 dim.setEnabled(true);
                 dim.setAttribute("time");
                 dim.setPresentation(DimensionPresentation.LIST);
                 dim.setUnits("ISO8601"); //TODO: is there an enumeration for this?
 
-                ResourceInfo r = item.getLayer().getResource();
+                ResourceInfo r = task.getLayer().getResource();
                 r.getMetadata().put(ResourceInfo.TIME, dim);
             }
         }
         
-        return items;
+        return tasks;
     }
 }

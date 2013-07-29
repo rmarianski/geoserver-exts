@@ -26,7 +26,7 @@ public class ImportContext implements Serializable {
     private static final long serialVersionUID = 8790675013874051197L;
 
     public static enum State {
-        PENDING, READY, RUNNING, INCOMPLETE, COMPLETE, CANCELLED;
+        PENDING, RUNNING, COMPLETE;
     }
 
     /** identifier */
@@ -77,9 +77,11 @@ public class ImportContext implements Serializable {
 
     /** 
      * flag to control whether imported files (indirect) should be archived after import
-     * TODO: false is a better default for this, change it and give mapstory/IS a heads up.
+     * JD: this used to be true by default, now false since by default importing a shapefile
+     * directly from the local file system would result in the shapefile, and its parent directory 
+     * being deleted
      */
-    boolean archive = true;
+    boolean archive = false;
 
     volatile ProgressMonitor progress;
 
@@ -161,14 +163,14 @@ public class ImportContext implements Serializable {
         return Collections.unmodifiableList(tasks);
     }
 
-    public void removeTask(ImportTask task) {
-        tasks.remove(task);
-    }
-
     public void addTask(ImportTask task) {
         task.setId(taskid++);
         task.setContext(this);
         this.tasks.add(task);
+    }
+
+    public void removeTask(ImportTask task) {
+        this.tasks.remove(task);
     }
 
     public ImportTask task(long id) {
@@ -184,15 +186,14 @@ public class ImportContext implements Serializable {
         State newState = tasks.isEmpty() ? State.PENDING : State.COMPLETE;
      O: for (ImportTask task : tasks) {
             switch(task.getState()) {
-                case PENDING:
-                case RUNNING:
-                case INCOMPLETE:
-                    newState = State.INCOMPLETE;
-                    break O;
-                case COMPLETE:
-                    continue;
-                case READY:
-                    newState = State.READY; 
+            case COMPLETE:
+                continue;
+            case RUNNING:
+                newState = State.RUNNING;
+                break O;
+            default: 
+                newState = State.PENDING;
+                break O;
             }
         }
         state = newState;

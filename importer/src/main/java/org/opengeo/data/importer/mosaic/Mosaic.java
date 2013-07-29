@@ -75,15 +75,17 @@ public class Mosaic extends Directory {
             }
         }));
 
-        DataFormat format = format();
-        if (format == null) {
-            throw new IllegalArgumentException("Unable to determine format for mosaic files");
+        if (!files.isEmpty()) {
+            DataFormat format = format();
+            if (format == null) {
+                throw new IllegalArgumentException("Unable to determine format for mosaic files");
+            }
+    
+            if (!(format instanceof RasterFormat)) {
+                throw new IllegalArgumentException("Mosaic directory must contain only raster files");
+            }
         }
-
-        if (!(format instanceof RasterFormat)) {
-            throw new IllegalArgumentException("Mosaic directory must contain only raster files");
-        }
-
+        
         setFormat(new MosaicFormat());
     }
 

@@ -7,7 +7,7 @@ import java.util.logging.Level;
 import org.geotools.data.DataStore;
 import org.opengeo.data.importer.DatePattern;
 import org.opengeo.data.importer.Dates;
-import org.opengeo.data.importer.ImportItem;
+import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.ValidationException;
 import org.opengis.feature.simple.SimpleFeature;
 
@@ -58,13 +58,13 @@ public class DateFormatTransform extends AttributeRemapTransform {
     }
 
     @Override
-    public SimpleFeature apply(ImportItem item, DataStore dataStore, SimpleFeature oldFeature,
+    public SimpleFeature apply(ImportTask task, DataStore dataStore, SimpleFeature oldFeature,
             SimpleFeature feature) throws Exception {
         Object val = feature.getAttribute(field);
         if (val != null) {
             Date parsed = parseDate(val.toString());
             if (parsed == null) {
-                item.addImportMessage(Level.WARNING, "Invalid date '" + val + "' specified for " + feature.getID());
+                task.addMessage(Level.WARNING, "Invalid date '" + val + "' specified for " + feature.getID());
                 feature = null;
             } else {
                 feature.setAttribute(field, parsed);

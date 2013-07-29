@@ -27,21 +27,21 @@ import org.geoserver.catalog.AttributeTypeInfo;
 import org.geoserver.catalog.FeatureTypeInfo;
 import org.geoserver.web.GeoServerSecuredPage;
 import org.geoserver.web.wicket.CRSPanel;
-import org.opengeo.data.importer.ImportItem;
+import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.transform.AttributeRemapTransform;
 import org.opengeo.data.importer.transform.DateFormatTransform;
 import org.opengeo.data.importer.transform.NumberFormatTransform;
 import org.opengeo.data.importer.transform.ReprojectTransform;
 import org.opengeo.data.importer.transform.TransformChain;
 
-public class ImportItemAdvancedPage extends GeoServerSecuredPage {
+public class ImportTaskAdvancedPage extends GeoServerSecuredPage {
 
     CheckBox reprojectCheckBox;
     ReprojectionPanel reprojectPanel;
     AttributeRemappingPanel remapPanel;
     
-    public ImportItemAdvancedPage(final IModel<ImportItem> model) {
-        ImportItem item = model.getObject();
+    public ImportTaskAdvancedPage(final IModel<ImportTask> model) {
+        ImportTask item = model.getObject();
         //item.getTransform().get
 
         Form form = new Form("form");
@@ -76,8 +76,8 @@ public class ImportItemAdvancedPage extends GeoServerSecuredPage {
         form.add(new AjaxSubmitLink("save") {
             @Override
             protected void onSubmit(AjaxRequestTarget target, Form<?> form) {
-                ImportItem item = model.getObject();
-                TransformChain txChain = item.getTransform();
+                ImportTask task = model.getObject();
+                TransformChain txChain = task.getTransform();
 
                 //reprojection
                 txChain.removeAll(ReprojectTransform.class);
@@ -90,17 +90,17 @@ public class ImportItemAdvancedPage extends GeoServerSecuredPage {
                 txChain.removeAll(AttributeRemapTransform.class);
                 txChain.getTransforms().addAll(remapPanel.remaps);
 
-                ImporterWebUtils.importer().changed(item);
+                ImporterWebUtils.importer().changed(task);
 
-                PageParameters pp = new PageParameters("id="+item.getTask().getContext().getId());
+                PageParameters pp = new PageParameters("id="+task.getContext().getId());
                 setResponsePage(ImportPage.class, pp);
             }
         });
         form.add(new AjaxLink("cancel") {
             @Override
             public void onClick(AjaxRequestTarget target) {
-                ImportItem item = model.getObject();
-                PageParameters pp = new PageParameters("id="+item.getTask().getContext().getId());
+                ImportTask task = model.getObject();
+                PageParameters pp = new PageParameters("id="+task.getContext().getId());
                 setResponsePage(ImportPage.class, pp);
             }
         });
@@ -130,7 +130,7 @@ public class ImportItemAdvancedPage extends GeoServerSecuredPage {
         List<AttributeRemapTransform> remaps;
         ListView<AttributeRemapTransform> remapList; 
         
-        public AttributeRemappingPanel(String id, IModel<ImportItem> itemModel) {
+        public AttributeRemappingPanel(String id, IModel<ImportTask> itemModel) {
             super(id, itemModel);
             setOutputMarkupId(true);
 
@@ -221,10 +221,10 @@ public class ImportItemAdvancedPage extends GeoServerSecuredPage {
             remapList.setOutputMarkupId(true);
             remapContainer.add(remapList);
 
-            add(new AjaxLink<ImportItem>("add", itemModel) {
+            add(new AjaxLink<ImportTask>("add", itemModel) {
                 @Override
                 public void onClick(AjaxRequestTarget target) {
-                    ImportItem item = getModelObject();
+                    ImportTask task = getModelObject();
                     remaps.add(new AttributeRemapTransform(null, null));
                     target.addComponent(remapContainer);
                 }

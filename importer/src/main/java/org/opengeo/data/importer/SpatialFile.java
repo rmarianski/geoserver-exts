@@ -74,7 +74,11 @@ public class SpatialFile extends FileData {
             if (!f.getName().startsWith(baseName)) {
                 continue;
             }
-            
+
+            if (!f.isFile()) {
+                continue;
+            }
+
             String ext = f.getName().substring(baseName.length());
             // once the basename is stripped, extension(s) should be present
             if (ext.charAt(0) == '.') {

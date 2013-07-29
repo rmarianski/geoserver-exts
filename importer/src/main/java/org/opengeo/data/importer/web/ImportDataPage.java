@@ -9,40 +9,34 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.wicket.Application;
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.Component;
 import org.apache.wicket.PageParameters;
 import org.apache.wicket.ResourceReference;
-import org.apache.wicket.WicketRuntimeException;
+import org.apache.wicket.SharedResources;
 import org.apache.wicket.ajax.AbstractAjaxTimerBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.ajax.markup.html.form.AjaxSubmitLink;
-import org.apache.wicket.behavior.AttributeAppender;
 import org.apache.wicket.behavior.SimpleAttributeModifier;
 import org.apache.wicket.markup.ComponentTag;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.DropDownChoice;
 import org.apache.wicket.markup.html.form.Form;
-import org.apache.wicket.markup.html.form.Radio;
 import org.apache.wicket.markup.html.form.RadioGroup;
 import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.markup.html.image.Image;
 import org.apache.wicket.markup.html.link.ExternalLink;
-import org.apache.wicket.markup.html.link.Link;
 import org.apache.wicket.markup.html.list.ListItem;
-import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
-import org.apache.wicket.model.StringResourceModel;
 import org.apache.wicket.util.time.Duration;
 import org.geoserver.catalog.Catalog;
 import org.geoserver.catalog.NamespaceInfo;
@@ -52,25 +46,19 @@ import org.geoserver.web.GeoServerApplication;
 import org.geoserver.web.GeoServerSecuredPage;
 import org.geoserver.web.data.store.StoreChoiceRenderer;
 import org.geoserver.web.data.store.StoreModel;
-import org.geoserver.web.data.store.StoresModel;
 import org.geoserver.web.data.workspace.WorkspaceChoiceRenderer;
 import org.geoserver.web.data.workspace.WorkspaceDetachableModel;
 import org.geoserver.web.data.workspace.WorkspacesModel;
 import org.geoserver.web.wicket.GeoServerDialog;
 import org.geoserver.web.wicket.GeoServerDialog.DialogDelegate;
-import org.geoserver.web.wicket.HelpLink;
 import org.geoserver.web.wicket.ParamResourceModel;
-import org.geoserver.web.wicket.SimpleAjaxLink;
 import org.geotools.data.DataStoreFactorySpi;
-import org.geotools.util.DefaultProgressListener;
 import org.geotools.util.logging.Logging;
 import org.opengeo.data.importer.ImportContext;
 import org.opengeo.data.importer.ImportData;
-import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.Importer;
 import org.opengeo.data.importer.job.ProgressMonitor;
 import org.opengeo.data.importer.job.Task;
-import org.opengis.util.ProgressListener;
 
 /**
  * First page of the import wizard.
@@ -80,7 +68,7 @@ import org.opengis.util.ProgressListener;
  */
 @SuppressWarnings("serial")
 public class ImportDataPage extends GeoServerSecuredPage {
-
+    
     static Logger LOGGER = Logging.getLogger(ImportDataPage.class);
 
     AjaxRadioPanel<Source> sourceList;
@@ -233,17 +221,7 @@ public class ImportDataPage extends GeoServerSecuredPage {
                                    
                                    //check the import for actual things to do
                                    boolean proceed = !imp.getTasks().isEmpty();
-                                   if (proceed) {
-                                       //check that all the tasks are non-empty
-                                       proceed = false;
-                                       for (ImportTask task : imp.getTasks()) {
-                                           if (!task.getItems().isEmpty()) {
-                                               proceed = true;
-                                               break;
-                                           }
-                                       }
-                                   }
-
+                                  
                                    if (proceed) {
                                        imp.setArchive(false);
                                        importer.changed(imp);
@@ -261,6 +239,7 @@ public class ImportDataPage extends GeoServerSecuredPage {
                            }
                            catch(Exception e) {
                                error(e);
+                               LOGGER.log(Level.WARNING, "", e);
                            }
                            finally {
                                stop();
@@ -346,9 +325,28 @@ public class ImportDataPage extends GeoServerSecuredPage {
         });
         removeImportLink.setOutputMarkupId(true).setEnabled(false);
         
+        AjaxLink jobLink = new AjaxLink("jobs") {
+            @Override
+            public void onClick(AjaxRequestTarget target) {
+                dialog.showOkCancel(target, new DialogDelegate() {
+                    @Override
+                    protected boolean onSubmit(AjaxRequestTarget target, Component contents) {
+                        return true;
+                    }
+                    
+                    @Override
+                    protected Component getContents(String id) {
+                        return new JobQueuePanel(id);
+                    }
+                });
+            }
+        };
+        jobLink.setVisible(ImporterWebUtils.isDevMode());
+        form.add(jobLink);
+        
         add(dialog = new GeoServerDialog("dialog"));
-        dialog.setInitialWidth(400);
-        dialog.setInitialHeight(150);
+        dialog.setInitialWidth(600);
+        dialog.setInitialHeight(400);
         dialog.setMinimalHeight(150);
 
         updateSourcePanel(Source.SPATIAL_FILES, null);

@@ -25,7 +25,7 @@ import org.geotools.util.logging.Logging;
 import org.opengeo.data.importer.Directory;
 import org.opengeo.data.importer.FileData;
 import org.opengeo.data.importer.ImportData;
-import org.opengeo.data.importer.ImportItem;
+import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.VectorFormat;
 import org.opengeo.data.importer.job.ProgressMonitor;
 import org.opengis.feature.Feature;
@@ -44,7 +44,7 @@ public class GeoJSONFormat extends VectorFormat {
     static Logger LOG = Logging.getLogger(GeoJSONFormat.class);
 
     @Override
-    public FeatureReader read(ImportData data, ImportItem item) throws IOException {
+    public FeatureReader read(ImportData data, ImportTask item) throws IOException {
         final FeatureType featureType = 
             (FeatureType) item.getMetadata().get(FeatureType.class);
         final FeatureIterator it = new FeatureJSON().streamFeatureCollection(file(data, item));
@@ -73,14 +73,14 @@ public class GeoJSONFormat extends VectorFormat {
             }
         };
     }
-    
+
     @Override
-    public void dispose(FeatureReader reader, ImportItem item) throws IOException {
+    public void dispose(FeatureReader reader, ImportTask item) throws IOException {
         reader.close();
     }
     
     @Override
-    public int getFeatureCount(ImportData data, ImportItem item) throws IOException {
+    public int getFeatureCount(ImportData data, ImportTask item) throws IOException {
         return -1;
     }
     
@@ -124,22 +124,22 @@ public class GeoJSONFormat extends VectorFormat {
     }
     
     @Override
-    public List<ImportItem> list(ImportData data, Catalog catalog, ProgressMonitor monitor) 
+    public List<ImportTask> list(ImportData data, Catalog catalog, ProgressMonitor monitor) 
         throws IOException {
 
         if (data instanceof Directory) {
-            List<ImportItem> items = new ArrayList<ImportItem>();
+            List<ImportTask> tasks = new ArrayList<ImportTask>();
             for (FileData file : ((Directory)data).getFiles()) {
-                items.add(item(file, catalog));
+                tasks.add(task(file, catalog));
             }
-            return items;
+            return tasks;
         }
         else {
-            return Arrays.asList(item(data, catalog));
+            return Arrays.asList(task(data, catalog));
         }
     }
 
-    ImportItem item(ImportData data, Catalog catalog) throws IOException {
+    ImportTask task(ImportData data, Catalog catalog) throws IOException {
         File file = maybeFile(data).get();
         
         // grab first feature to check its crs
@@ -191,13 +191,15 @@ public class GeoJSONFormat extends VectorFormat {
         LayerInfo layer = catalog.getFactory().createLayer();
         layer.setResource(ft);
 
-        ImportItem item = new ImportItem(layer);
-        item.getMetadata().put(FeatureType.class, featureType);
+        ImportTask task = new ImportTask(data);
+        task.setLayer(layer);
 
-        return item;
+        task.getMetadata().put(FeatureType.class, featureType);
+
+        return task;
     }
 
-    File file(ImportData data, final ImportItem item) {
+    File file(ImportData data, final ImportTask item) {
         if (data instanceof Directory) {
             return Iterables.find(((Directory) data).getFiles(), new Predicate<FileData>() {
                 @Override

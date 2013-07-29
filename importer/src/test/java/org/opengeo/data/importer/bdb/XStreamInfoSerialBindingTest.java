@@ -12,7 +12,6 @@ import org.geoserver.config.util.XStreamPersister;
 import org.geoserver.config.util.XStreamPersisterFactory;
 import org.opengeo.data.importer.Directory;
 import org.opengeo.data.importer.ImportContext;
-import org.opengeo.data.importer.ImportItem;
 import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.ImporterTestSupport;
 import org.w3c.dom.Document;
@@ -25,7 +24,7 @@ public class XStreamInfoSerialBindingTest extends ImporterTestSupport {
         File dir = unpack("shape/archsites_epsg_prj.zip");
         ImportContext context = importer.createContext(new Directory(dir));
 
-        XStreamPersister xp = importer.createXStreamPersister();
+        XStreamPersister xp = importer.createXStreamPersisterXML();
         XStreamInfoSerialBinding<ImportContext> binding = 
                 new XStreamInfoSerialBinding<ImportContext>(xp, ImportContext.class);
         binding.setCompress(false);
@@ -56,8 +55,7 @@ public class XStreamInfoSerialBindingTest extends ImporterTestSupport {
         assertNull(task.getStore().getId());
         assertNotNull(task.getStore().getName());
 
-        ImportItem item = task.getItems().get(0);
-        assertNotNull(item.getLayer());
+        assertNotNull(task.getLayer());
         //assertNotNull(item.getLayer().getResource());
     }
 
@@ -88,12 +86,11 @@ public class XStreamInfoSerialBindingTest extends ImporterTestSupport {
 
         ds = cat.getDataStore(ds.getId());
         ImportContext context = importer.createContext(new Directory(dir), ds);
-        assertEquals(1, context.getTasks().size());
+        assertEquals(2, context.getTasks().size());
 
         XStreamPersister xp = new XStreamPersisterFactory().createXMLPersister();
         xp.getXStream().omitField(ImportTask.class, "context");
-        xp.getXStream().omitField(ImportItem.class, "task");
-        
+
         XStreamInfoSerialBinding<ImportContext> binding = 
                 new XStreamInfoSerialBinding<ImportContext>(xp, ImportContext.class);
         binding.setCompress(false);

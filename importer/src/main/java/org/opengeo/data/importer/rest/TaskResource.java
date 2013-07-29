@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
@@ -14,26 +13,27 @@ import java.util.logging.Level;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.geoserver.catalog.CatalogBuilder;
-import org.geoserver.catalog.DataStoreInfo;
-import org.geoserver.catalog.StoreInfo;
-import org.geoserver.catalog.impl.StoreInfoImpl;
 import org.geoserver.rest.RestletException;
 import org.geoserver.rest.format.DataFormat;
 import org.geoserver.rest.format.StreamDataFormat;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.opengeo.data.importer.Directory;
+import org.opengeo.data.importer.FileData;
 import org.opengeo.data.importer.ImportContext;
 import org.opengeo.data.importer.ImportData;
-import org.opengeo.data.importer.ImportItem;
 import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.Importer;
 import org.opengeo.data.importer.ValidationException;
+import org.opengeo.data.importer.transform.TransformChain;
 import org.restlet.data.Form;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
 import org.restlet.data.Status;
 import org.restlet.ext.fileupload.RestletFileUpload;
+import org.restlet.ext.json.JsonRepresentation;
+import org.restlet.resource.Representation;
 
 /**
  * REST resource for /imports/<import>/tasks[/<id>]
@@ -54,26 +54,18 @@ public class TaskResource extends BaseResource {
 
     @Override
     public void handleGet() {
-        Object obj = lookupTask(true);
-        if (obj instanceof ImportTask) {
-            getResponse().setEntity(getFormatGet().toRepresentation((ImportTask)obj));
+        if (getRequest().getResourceRef().getLastSegment().equals("progress")) {
+            getResponse().setEntity(createProgressRepresentation());
         }
         else {
-            getResponse().setEntity(getFormatGet().toRepresentation((List<ImportTask>)obj));
+            Object obj = lookupTask(true);
+            if (obj instanceof ImportTask) {
+                getResponse().setEntity(getFormatGet().toRepresentation((ImportTask)obj));
+            }
+            else {
+                getResponse().setEntity(getFormatGet().toRepresentation((List<ImportTask>)obj));
+            }
         }
-    }
-
-    @Override
-    public boolean allowDelete() {
-        return getAttribute("task") != null;
-    }
-
-    @Override
-    public void handleDelete() {
-        ImportTask task = (ImportTask) lookupTask(false);
-        task.getContext().removeTask(task);
-        importer.changed(task.getContext());
-        getResponse().setStatus(Status.SUCCESS_NO_CONTENT);
     }
 
     public boolean allowPost() {
@@ -87,7 +79,7 @@ public class TaskResource extends BaseResource {
         //file posted from form
         MediaType mimeType = getRequest().getEntity().getMediaType(); 
         if (MediaType.MULTIPART_FORM_DATA.equals(mimeType, true)) {
-            data = handleMultiPartFormUpload(lookupContext());
+            data = handleMultiPartFormUpload(context());
         }
         else if (MediaType.APPLICATION_WWW_FORM.equals(mimeType, true)) {
             data = handleFormPost();
@@ -101,14 +93,14 @@ public class TaskResource extends BaseResource {
     }
 
     private void acceptData(ImportData data) {
-        ImportContext context = lookupContext();
+        ImportContext context = context();
         List<ImportTask> newTasks = null;
         try {
             newTasks = importer.update(context, data);
             //importer.prep(context);
             //context.updated();
         } catch (ValidationException ve) {
-            throw ImportJSONIO.badRequest(ve.getMessage());
+            throw ImportJSONWriter.badRequest(ve.getMessage());
         } catch (IOException e) {
             throw new RestletException("Error updating context", Status.SERVER_ERROR_INTERNAL, e);
         }
@@ -191,41 +183,53 @@ public class TaskResource extends BaseResource {
         if (getRequest().getEntity().getMediaType().equals(MediaType.APPLICATION_JSON)) {
             handleTaskPut();
         } else {
-            acceptData(handleFileUpload(lookupContext()));
+            acceptData(handleFileUpload(context()));
         }
     }
 
+    public boolean allowDelete() {
+        return getAttribute("task") != null;
+    };
+
+    @Override
+    public void handleDelete() {
+        ImportTask task = (ImportTask) lookupTask(false);
+        task.getContext().removeTask(task);
+        importer.changed(task.getContext());
+        getResponse().setStatus(Status.SUCCESS_NO_CONTENT);
+    }
+
+    
     Object lookupTask(boolean allowAll) {
-        ImportContext context = lookupContext();
+        ImportTask task = task(allowAll);
 
-        String t = getAttribute("task");
-        if (t != null) {
-            int id = Integer.parseInt(t);
-            if (id >= context.getTasks().size()) {
-                throw new RestletException("No such task: " + id + " for import: " + context.getId(),
-                    Status.CLIENT_ERROR_NOT_FOUND);
-            }
-
-            return context.getTasks().get(id);
-        }
-        else {
+        if (task == null) {
             if (allowAll) {
-                return context.getTasks();
+                return context().getTasks();
             }
-            throw new RestletException("No task specified", Status.CLIENT_ERROR_BAD_REQUEST);
+            throw new RestletException("No task specified", Status.CLIENT_ERROR_BAD_REQUEST);        
         }
+        return task;
     }
 
-    void handleTaskPut() {        
-        ImportTask task = (ImportTask) getFormatPostOrPut().toObject(getRequest().getEntity());
+    void handleTaskPut() {
         ImportTask orig = (ImportTask) lookupTask(false);
-        
+        ImportTask task;
+        try {
+            task = (ImportTask) getFormatPostOrPut().toObject(getRequest().getEntity());
+        } catch (ValidationException ve) {
+            getLogger().log(Level.WARNING, null, ve);
+            throw ImportJSONWriter.badRequest(ve.getMessage());
+        }
+
         boolean change = false;
         if (task.getStore() != null) {
-            updateStoreInfo(orig, task.getStore());
+            //JD: moved to TaskTargetResource, but handle here for backward compatability
+            TaskTargetResource.updateStoreInfo(orig, task.getStore(), importer);
             change = true;
         }
         if (task.getData() != null) {
+            //TODO: move this to data endpoint
             orig.getData().setCharsetEncoding(task.getData().getCharsetEncoding());
             change = true;
         }
@@ -233,7 +237,19 @@ public class TaskResource extends BaseResource {
             orig.setUpdateMode(task.getUpdateMode());
             change = true;
         }
-        
+
+        if (task.getLayer() != null) {
+            change = true;
+            //now handled by LayerResource, but handle here for backwards compatability
+            LayerResource.updateLayer(orig, task.getLayer(), importer);
+        }
+
+        TransformChain chain = task.getTransform();
+        if (chain != null) {
+            orig.setTransform(chain);
+            change = true;
+        }
+
         if (!change) {
             throw new RestletException("Unknown representation", Status.CLIENT_ERROR_BAD_REQUEST);
         } else {
@@ -242,37 +258,6 @@ public class TaskResource extends BaseResource {
         }
     }
     
-    void updateStoreInfo(ImportTask orig, StoreInfo update) {
-        // allow an existing store to be referenced as the target
-        StoreInfo newTargetRequested = (StoreInfo) update;
-        StoreInfo existing = orig.getStore();
-        
-        if (existing == null) {
-            assert existing != null : "Expected existing store";
-        }
-        Class storeType = existing instanceof DataStoreInfo
-                ? DataStoreInfo.class : null;
-        if (storeType == null) {
-            assert storeType != null : "Cannot handle " + existing.getClass();
-        }
-        
-        StoreInfo requestedExisting = importer.getCatalog().getStoreByName(
-                newTargetRequested.getWorkspace(), 
-                newTargetRequested.getName(), 
-                storeType);
-        
-        if (requestedExisting != null && storeType == DataStoreInfo.class) {
-            CatalogBuilder cb = new CatalogBuilder(importer.getCatalog());
-            DataStoreInfo clone = cb.buildDataStore(requestedExisting.getName());
-            cb.updateDataStore(clone, (DataStoreInfo) requestedExisting);
-            ((StoreInfoImpl) clone).setId(requestedExisting.getId());
-            orig.setStore(clone);
-            orig.setDirect(false);
-        } else {
-            throw new RestletException("Can only set target to existing datastore", Status.CLIENT_ERROR_BAD_REQUEST);
-        }
-    }
-
     private ImportData handleFormPost() {
         Form form = getRequest().getEntityAsForm();
         String url = form.getFirstValue("url", null);
@@ -289,26 +274,48 @@ public class TaskResource extends BaseResource {
         if (location == null || !location.getProtocol().equalsIgnoreCase("file")) {
             throw new RestletException("Invalid url in request", Status.CLIENT_ERROR_BAD_REQUEST);
         }
-        File file;
+        FileData file;
         try {
-            file = new File(location.toURI().getPath());
-        } catch (URISyntaxException ex) {
+            file = FileData.createFromFile(new File(location.toURI().getPath()));
+        } catch (Exception ex) {
             throw new RuntimeException("Unexpected exception", ex);
         }
-        
-        Directory dir;
-        if (file.isDirectory()) {
-            dir = new Directory(file);
-        } else {
-            dir = new Directory(file.getParentFile());
+
+        if (file instanceof Directory) {
             try {
-                dir.unpack(file);
+                file.prepare();
             } catch (IOException ioe) {
-                getLogger().log(Level.WARNING, "Error unpacking " + file.getAbsolutePath(), ioe);
-                throw new RestletException("Possible invalid file", Status.SERVER_ERROR_INTERNAL);
+                String msg = "Error processing file: " + file.getFile().getAbsolutePath();
+                getLogger().log(Level.WARNING, msg, ioe);
+                throw new RestletException(msg, Status.SERVER_ERROR_INTERNAL);
             }
         }
-        return dir;
+
+        return file;
+    }
+
+    private Representation createProgressRepresentation() {
+        JSONObject progress = new JSONObject();
+        long imprt = Long.parseLong(getAttribute("import"));
+        ImportTask inProgress = importer.getCurrentlyProcessingTask(imprt);
+        try {
+            if (inProgress != null) {
+                progress.put("progress", inProgress.getNumberProcessed());
+                progress.put("total", inProgress.getTotalToProcess());
+                progress.put("state", inProgress.getState().toString());
+            } else {
+                ImportTask task = (ImportTask) lookupTask(false);
+                progress.put("state", task.getState().toString());
+                if (task.getState() == ImportTask.State.ERROR) {
+                    if (task.getError() != null) {
+                        progress.put("message", task.getError().getMessage());
+                    }
+                }
+            }
+        } catch (JSONException jex) {
+            throw new RestletException("Internal Error", Status.SERVER_ERROR_INTERNAL, jex);
+        }
+        return new JsonRepresentation(progress);
     }
 
     class ImportTaskJSONFormat extends StreamDataFormat {
@@ -319,21 +326,19 @@ public class TaskResource extends BaseResource {
 
         @Override
         protected Object read(InputStream in) throws IOException {
-            ImportJSONIO json = new ImportJSONIO(importer);
-            
-            return json.task(in);
+            return newReader(in).task();
         }
 
         @Override
         protected void write(Object object, OutputStream out) throws IOException {
-            ImportJSONIO json = new ImportJSONIO(importer);
+            ImportJSONWriter json = newWriter(out);
 
             if (object instanceof ImportTask) {
                 ImportTask task = (ImportTask) object;
-                json.task(task, getPageInfo(), out);
+                json.task(task, true, expand(1));
             }
             else {
-                json.tasks((List<ImportTask>)object, getPageInfo(), out);
+                json.tasks((List<ImportTask>)object, true, expand(0));
             }
         }
 

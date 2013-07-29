@@ -13,6 +13,9 @@ import org.geotools.jdbc.JDBCDataStoreFactory;
 import org.opengeo.data.importer.job.ProgressMonitor;
 import org.vfny.geoserver.util.DataStoreUtils;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
+
 public class Database extends ImportData {
 
     /**
@@ -66,16 +69,20 @@ public class Database extends ImportData {
             throw new IOException("Unable to create data store from specified parameters");
         }
 
+        format = DataFormat.lookup(parameters);
+
         try {
             for (String typeName : store.getTypeNames()) {
-                tables.add(new Table(typeName, this));
+                Table tbl = new Table(typeName, this);
+                tbl.setFormat(format);
+                tables.add(tbl);
             }
         }
         finally {
             //TODO: cache the datastore for subsquent calls
             store.dispose();
         }
-        format = DataFormat.lookup(parameters);
+        
     }
 
     @Override
@@ -104,6 +111,16 @@ public class Database extends ImportData {
         }
     }
 
+    @Override
+    public Table part(final String name) {
+        return Iterables.find(tables, new Predicate<Table>() {
+            @Override
+            public boolean apply(Table input) {
+                return name.equals(input.getName());
+            }
+        });
+    }
+    
     private Object readResolve() {
         tables = tables != null ? tables : new ArrayList();
         return this;

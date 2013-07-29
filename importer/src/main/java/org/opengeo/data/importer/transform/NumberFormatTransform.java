@@ -2,7 +2,7 @@ package org.opengeo.data.importer.transform;
 
 import org.geotools.data.DataStore;
 import org.geotools.util.Converters;
-import org.opengeo.data.importer.ImportItem;
+import org.opengeo.data.importer.ImportTask;
 import org.opengis.feature.simple.SimpleFeature;
 
 public class NumberFormatTransform extends AttributeRemapTransform {
@@ -12,7 +12,7 @@ public class NumberFormatTransform extends AttributeRemapTransform {
     }
 
     @Override
-    public SimpleFeature apply(ImportItem item, DataStore dataStore, SimpleFeature oldFeature, 
+    public SimpleFeature apply(ImportTask task, DataStore dataStore, SimpleFeature oldFeature, 
         SimpleFeature feature) throws Exception {
         Object val = feature.getAttribute(field);
         if (val != null) {

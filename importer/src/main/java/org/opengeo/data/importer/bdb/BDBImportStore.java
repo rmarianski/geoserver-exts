@@ -379,7 +379,7 @@ public class BDBImportStore implements ImportStore {
         @Override
         protected EntryBinding<ImportContext> createImportBinding(Importer importer) {
             return new XStreamInfoSerialBinding<ImportContext>(
-                importer.createXStreamPersister(), ImportContext.class);
+                importer.createXStreamPersisterXML(), ImportContext.class);
         }
     
     }

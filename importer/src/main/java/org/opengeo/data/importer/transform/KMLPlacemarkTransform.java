@@ -11,7 +11,7 @@ import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.kml.Folder;
 import org.opengeo.data.importer.FeatureDataConverter;
-import org.opengeo.data.importer.ImportItem;
+import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.format.KMLFileFormat;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
@@ -86,13 +86,13 @@ public class KMLPlacemarkTransform extends AbstractVectorTransform implements In
     }
 
     @Override
-    public SimpleFeatureType apply(ImportItem item, DataStore dataStore,
+    public SimpleFeatureType apply(ImportTask task, DataStore dataStore,
             SimpleFeatureType featureType) throws Exception {
         return convertFeatureType(featureType);
     }
 
     @Override
-    public SimpleFeature apply(ImportItem item, DataStore dataStore, SimpleFeature oldFeature,
+    public SimpleFeature apply(ImportTask task, DataStore dataStore, SimpleFeature oldFeature,
             SimpleFeature feature) throws Exception {
         SimpleFeatureType targetFeatureType = feature.getFeatureType();
         SimpleFeature newFeature = convertFeature(oldFeature, targetFeatureType);

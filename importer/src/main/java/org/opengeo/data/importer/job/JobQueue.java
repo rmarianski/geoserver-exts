@@ -34,6 +34,13 @@ public class JobQueue {
             }
             return super.newTaskFor(callable);
         };
+        
+        protected void beforeExecute(Thread t, Runnable r) {
+            if (t != null && r instanceof Task) {
+                ((Task)r).started();
+            }
+        };
+        
         protected void afterExecute(Runnable r, Throwable t) {
             if (t != null && r instanceof Task) {
                 ((Task)r).setError(t);
@@ -61,14 +68,21 @@ public class JobQueue {
 
     public Long submit(Job<?> task) {
         Long jobid = counter.getAndIncrement();
-        jobs.put(jobid, (Task) pool.submit(task));
+        Task t = (Task) pool.submit(task);
+        t.setId(jobid);
+
+        jobs.put(jobid, t);
         return jobid;
     }
 
-    public Task<?> getFuture(Long jobid) {
+    public Task<?> getTask(Long jobid) {
         Task<?> t = jobs.get(jobid);
         t.recieve();
         return t;
+    }
+
+    public List<Task<?>> getTasks() {
+        return new ArrayList<Task<?>>(jobs.values());
     }
 
     public void shutdown() {

@@ -74,7 +74,7 @@ public class BDBImportStoreTest extends ImporterTestSupport {
 
         store.add(context);
         assertNotNull(context.getId());
-        assertNotNull(context.getTasks().get(0).getItems().get(0).getLayer());
+        assertNotNull(context.getTasks().get(0).getLayer());
 
         ImportContext context2 = store.get(context.getId());
         assertNotNull(context2);
@@ -95,7 +95,7 @@ public class BDBImportStoreTest extends ImporterTestSupport {
             assertNotNull(context2.getTasks().get(i).getStore());
             assertNotNull(context2.getTasks().get(i).getStore().getCatalog());
         }
-        assertNotNull(context2.getTasks().get(0).getItems().get(0).getLayer());
+        assertNotNull(context2.getTasks().get(0).getLayer());
     }
 
     public void testSave() throws Exception {
@@ -104,12 +104,12 @@ public class BDBImportStoreTest extends ImporterTestSupport {
         ImportContext context = store.get(0);
         assertNotNull(context);
 
-        assertEquals(ImportContext.State.READY, context.getState());
+        assertEquals(ImportContext.State.PENDING, context.getState());
         context.setState(ImportContext.State.COMPLETE);
 
         ImportContext context2 = store.get(0);
         assertNotNull(context2);
-        assertEquals(ImportContext.State.READY, context2.getState());
+        assertEquals(ImportContext.State.PENDING, context2.getState());
 
         store.save(context);
         context2 = store.get(0);

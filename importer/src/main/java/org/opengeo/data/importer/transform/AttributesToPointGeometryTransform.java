@@ -2,7 +2,7 @@ package org.opengeo.data.importer.transform;
 
 import org.geotools.data.DataStore;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
-import org.opengeo.data.importer.ImportItem;
+import org.opengeo.data.importer.ImportTask;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.GeometryDescriptor;
@@ -40,7 +40,7 @@ public class AttributesToPointGeometryTransform extends AbstractVectorTransform 
     }
 
     @Override
-    public SimpleFeatureType apply(ImportItem item, DataStore dataStore,
+    public SimpleFeatureType apply(ImportTask task, DataStore dataStore,
             SimpleFeatureType featureType) throws Exception {
         SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
         builder.init(featureType);
@@ -65,7 +65,7 @@ public class AttributesToPointGeometryTransform extends AbstractVectorTransform 
     }
 
     @Override
-    public SimpleFeature apply(ImportItem item, DataStore dataStore, SimpleFeature oldFeature,
+    public SimpleFeature apply(ImportTask task, DataStore dataStore, SimpleFeature oldFeature,
             SimpleFeature feature) throws Exception {
         Object latObject = oldFeature.getAttribute(latField);
         Object lngObject = oldFeature.getAttribute(lngField);

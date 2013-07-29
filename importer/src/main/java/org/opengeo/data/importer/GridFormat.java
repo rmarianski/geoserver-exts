@@ -72,11 +72,11 @@ public class GridFormat extends RasterFormat {
     }
 
     @Override
-    public List<ImportItem> list(ImportData data, Catalog catalog, ProgressMonitor monitor) 
+    public List<ImportTask> list(ImportData data, Catalog catalog, ProgressMonitor monitor) 
             throws IOException {
         AbstractGridCoverage2DReader reader = gridReader(data);
         
-        List<ImportItem> resources = new ArrayList<ImportItem>();
+        List<ImportTask> tasks = new ArrayList<ImportTask>();
         if (reader != null) {
             CatalogBuilder cb = new CatalogBuilder(catalog);
 
@@ -92,16 +92,20 @@ public class GridFormat extends RasterFormat {
                 cb.setupBounds(coverage, reader);
 
                 LayerInfo layer = cb.buildLayer((ResourceInfo)coverage);
-                resources.add(new ImportItem(layer));
+
+                ImportTask task = new ImportTask(data);
+                task.setLayer(layer);
+                tasks.add(task);
+
             } catch (OperationNotFoundException onfe) {
-                throw new ValidationException("It appears we cannot process the"
-                        + " coordinate reference system of your data. The specific"
+                throw new ValidationException("Unable to process "
+                        + " coordinate reference system of data. The specific"
                         + " problem is : " + onfe.getMessage(), onfe);
             } catch (Exception e) {
                 throw (IOException) new IOException(). initCause(e);
             }
         }
-        return resources;
+        return tasks;
     }
 
     public AbstractGridCoverage2DReader gridReader(ImportData data) throws IOException {

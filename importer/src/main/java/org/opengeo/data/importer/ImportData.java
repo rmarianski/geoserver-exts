@@ -82,7 +82,16 @@ public abstract class ImportData implements Serializable{
     public void cleanup() throws IOException {
         // do nothing
     }
-    
+
+    /**
+     * For data types that contain multiple other types, like directories, databases, etc...
+     *  this method should return the sub part, or simply return itself for data types (liek files)
+     *  that can't be broken up.   
+     */
+    public ImportData part(String name) {
+        return this;
+    }
+
     /**
      * A dummy transfer object to hold properties but has no functionality.
      */

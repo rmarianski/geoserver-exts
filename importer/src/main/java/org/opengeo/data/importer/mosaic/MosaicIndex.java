@@ -88,7 +88,8 @@ public class MosaicIndex {
 
         Collection<Granule> granules = mosaic.granules();
         if (granules.isEmpty()) {
-            throw new IOException("No granules in mosaic");
+            LOGGER.warning("No granules in mosaic, nothing to write");
+            return;
         }
 
         Granule first = Iterators.find(granules.iterator(), new Predicate<Granule>() {

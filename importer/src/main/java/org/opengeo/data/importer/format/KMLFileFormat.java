@@ -30,7 +30,7 @@ import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import org.opengeo.data.importer.FileData;
 import org.opengeo.data.importer.ImportData;
-import org.opengeo.data.importer.ImportItem;
+import org.opengeo.data.importer.ImportTask;
 import org.opengeo.data.importer.VectorFormat;
 import org.opengeo.data.importer.job.ProgressMonitor;
 import org.opengeo.data.importer.transform.KMLPlacemarkTransform;
@@ -64,17 +64,17 @@ public class KMLFileFormat extends VectorFormat {
 
     @SuppressWarnings("rawtypes")
     @Override
-    public FeatureReader read(ImportData data, ImportItem item) throws IOException {
+    public FeatureReader read(ImportData data, ImportTask task) throws IOException {
         File file = getFileFromData(data);
 
         // we need to get the feature type, to use for the particular parse through the file
         // since we put it on the metadata from the list method, we first check if that's still available
-        SimpleFeatureType ft = (SimpleFeatureType) item.getMetadata().get(FeatureType.class);
+        SimpleFeatureType ft = (SimpleFeatureType) task.getMetadata().get(FeatureType.class);
         if (ft == null) {
             // if the type is not available, we can generate one from the resource
             // we aren't able to ask for the feature type from the resource directly,
             // because we don't have a backing store
-            FeatureTypeInfo fti = (FeatureTypeInfo) item.getLayer().getResource();
+            FeatureTypeInfo fti = (FeatureTypeInfo) task.getLayer().getResource();
             SimpleFeatureTypeBuilder ftb = new SimpleFeatureTypeBuilder();
             ftb.setName(fti.getName());
             List<AttributeTypeInfo> attributes = fti.getAttributes();
@@ -106,13 +106,13 @@ public class KMLFileFormat extends VectorFormat {
     }
 
     @Override
-    public void dispose(@SuppressWarnings("rawtypes") FeatureReader reader, ImportItem item)
+    public void dispose(@SuppressWarnings("rawtypes") FeatureReader reader, ImportTask task)
             throws IOException {
         reader.close();
     }
 
     @Override
-    public int getFeatureCount(ImportData data, ImportItem item) throws IOException {
+    public int getFeatureCount(ImportData data, ImportTask task) throws IOException {
         // we don't have a fast way to get the count
         // instead of parsing through the entire file
         return -1;
@@ -237,7 +237,7 @@ public class KMLFileFormat extends VectorFormat {
     }
 
     @Override
-    public List<ImportItem> list(ImportData data, Catalog catalog, ProgressMonitor monitor)
+    public List<ImportTask> list(ImportData data, Catalog catalog, ProgressMonitor monitor)
             throws IOException {
         File file = getFileFromData(data);
         CatalogBuilder cb = new CatalogBuilder(catalog);
@@ -245,7 +245,7 @@ public class KMLFileFormat extends VectorFormat {
         CatalogFactory factory = catalog.getFactory();
 
         Collection<SimpleFeatureType> featureTypes = parseFeatureTypes(baseName, file);
-        List<ImportItem> result = new ArrayList<ImportItem>(featureTypes.size());
+        List<ImportTask> result = new ArrayList<ImportTask>(featureTypes.size());
         for (SimpleFeatureType featureType : featureTypes) {
             String name = featureType.getName().getLocalPart();
             FeatureTypeInfo ftinfo = factory.createFeatureType();
@@ -276,9 +276,10 @@ public class KMLFileFormat extends VectorFormat {
                 metadata.put("importschemanames", (Serializable) userData.get("schemanames"));
             }
 
-            ImportItem item = new ImportItem(layer);
-            item.getMetadata().put(FeatureType.class, featureType);
-            result.add(item);
+            ImportTask task = new ImportTask(data);
+            task.setLayer(layer);
+            task.getMetadata().put(FeatureType.class, featureType);
+            result.add(task);
         }
         return Collections.unmodifiableList(result);
     }

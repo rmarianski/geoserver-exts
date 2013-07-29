@@ -121,12 +121,14 @@ public class DirectoryResource extends BaseResource {
                 if (obj.has("timestamp")) {
                     String ts = obj.getString("timestamp");
                     try {
-                        g.setTimestamp(ImportJSONIO.DATE_FORMAT.parse(ts));
+                        g.setTimestamp(ImportJSONWriter.DATE_FORMAT.parse(ts));
                     } catch (ParseException e) {
                         throw new RestletException("Could not parse timestamp: " + ts + ", must be " 
-                            + "format: " + ImportJSONIO.DATE_FORMAT.toPattern(), 
+                            + "format: " + ImportJSONWriter.DATE_FORMAT.toPattern(), 
                             Status.CLIENT_ERROR_BAD_REQUEST);
                     }
+
+                    getResponse().setEntity(getFormatGet().toRepresentation(g));
                 }
             }
         }
@@ -143,7 +145,7 @@ public class DirectoryResource extends BaseResource {
         FileData file = lookupFile();
 
         if (dir.getFiles().remove(file)) {
-            getResponse().setStatus(Status.SUCCESS_OK);
+            getResponse().setStatus(Status.SUCCESS_NO_CONTENT);
         }
         else {
             throw new RestletException("Unable to remove file: " + file.getName(), 
@@ -153,7 +155,7 @@ public class DirectoryResource extends BaseResource {
     };
 
     Directory lookupDirectory() {
-        ImportContext context = lookupContext();
+        ImportContext context = context();
         if (!(context.getData() instanceof Directory)) {
             throw new RestletException("Data is not a directory", Status.CLIENT_ERROR_BAD_REQUEST);    
         }
@@ -191,26 +193,30 @@ public class DirectoryResource extends BaseResource {
 
         @Override
         protected Object read(InputStream in) throws IOException {
-            return new ImportJSONIO(importer).parse(in);
-            //return new ImportJSONIO(importer).directory(in);
+            return newReader(in).object();
         }
 
         @Override
         protected void write(Object object, OutputStream out) throws IOException {
-            ImportJSONIO io = new ImportJSONIO(importer);
+            ImportJSONWriter io = newWriter(out);
+
+            Object parent = task(true);
+            if (parent == null) {
+                parent = context();
+            }
 
             if (object instanceof Directory) {
                 Directory d = (Directory) object;
                 String path = getRequest().getResourceRef().getPath();
                 if (path.matches(".*/files/?")) {
-                    io.files(d, out);
+                    io.files(d, parent, true, expand(1));
                 }
                 else {
-                    io.directory(d, getPageInfo(), out);
+                    io.directory(d, parent, expand(1));
                 }
             }
             else {
-                io.file((FileData)object, getPageInfo(), out);
+                io.file((FileData)object, parent, expand(1), true);
             }
         }
     }

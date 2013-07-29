@@ -47,12 +47,11 @@ public class ImportTransformTest extends ImporterTestSupport {
 
         ImportContext context = importer.createContext(file, store);
         assertEquals(1, context.getTasks().size());
-        assertEquals(1, context.getTasks().get(0).getItems().size());
         
         context.setTargetStore(store);
 
-        ImportItem item = context.getTasks().get(0).getItems().get(0);
-        item.getTransform().add(new NumberFormatTransform("cat", Integer.class));
+        ImportTask task = context.getTasks().get(0);
+        task.getTransform().add(new NumberFormatTransform("cat", Integer.class));
         importer.run(context);
 
         assertEquals(ImportContext.State.COMPLETE, context.getState());
@@ -86,14 +85,13 @@ public class ImportTransformTest extends ImporterTestSupport {
 
         ImportContext context = importer.createContext(file, store);
         assertEquals(1, context.getTasks().size());
-        assertEquals(1, context.getTasks().get(0).getItems().size());
         
         context.setTargetStore(store);
 
-        ImportItem item = context.getTasks().get(0).getItems().get(0);
+        ImportTask task = context.getTasks().get(0);
         // this is a silly test - CAT_ID ranges from 1-25 and is not supposed to be a date
         // java date handling doesn't like dates in year 1
-        item.getTransform().add(new IntegerFieldToDateTransform("CAT_ID"));
+        task.getTransform().add(new IntegerFieldToDateTransform("CAT_ID"));
         importer.run(context);
 
         assertEquals(ImportContext.State.COMPLETE, context.getState());
@@ -135,12 +133,11 @@ public class ImportTransformTest extends ImporterTestSupport {
 
         ImportContext context = importer.createContext(file, store);
         assertEquals(1, context.getTasks().size());
-        assertEquals(1, context.getTasks().get(0).getItems().size());
         
         context.setTargetStore(store);
 
-        ImportItem item = context.getTasks().get(0).getItems().get(0);
-        item.getTransform().add(new DateFormatTransform("timestamp", "yyyy-MM-dd HH:mm:ss.S"));
+        ImportTask task = context.getTasks().get(0);
+        task.getTransform().add(new DateFormatTransform("timestamp", "yyyy-MM-dd HH:mm:ss.S"));
         
         importer.run(context);
 
@@ -178,7 +175,7 @@ public class ImportTransformTest extends ImporterTestSupport {
 
         assertEquals(ImportContext.State.COMPLETE, context.getState());
 
-        LayerInfo l1 = context.getTasks().get(0).getItems().get(0).getLayer();
+        LayerInfo l1 = context.getTasks().get(0).getLayer();
         assertTrue(CRS.equalsIgnoreMetadata(CRS.decode("EPSG:26713"), l1.getResource().getNativeCRS()));
         assertEquals("EPSG:26713", l1.getResource().getSRS());
         
@@ -188,13 +185,13 @@ public class ImportTransformTest extends ImporterTestSupport {
         file.prepare();
 
         context = importer.createContext(file, store);
-        ImportItem item = context.getTasks().get(0).getItems().get(0);
+        ImportTask item = context.getTasks().get(0);
         item.getTransform().add(new ReprojectTransform(CRS.decode("EPSG:4326")));
         importer.run(context);
 
         assertEquals(ImportContext.State.COMPLETE, context.getState());
         
-        LayerInfo l2 = context.getTasks().get(0).getItems().get(0).getLayer();
+        LayerInfo l2 = context.getTasks().get(0).getLayer();
         assertTrue(CRS.equalsIgnoreMetadata(CRS.decode("EPSG:4326"), l2.getResource().getNativeCRS()));
         assertEquals("EPSG:4326", l2.getResource().getSRS());
         

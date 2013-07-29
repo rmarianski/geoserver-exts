@@ -90,7 +90,7 @@ public class DataStoreFormat extends VectorFormat {
     }
 
     @Override
-    public List<ImportItem> list(ImportData data, Catalog catalog, ProgressMonitor monitor) throws IOException {
+    public List<ImportTask> list(ImportData data, Catalog catalog, ProgressMonitor monitor) throws IOException {
         DataStore dataStore = createDataStore(data);
         try {
             CatalogBuilder cb = new CatalogBuilder(catalog);
@@ -99,7 +99,7 @@ public class DataStoreFormat extends VectorFormat {
             DataStoreInfo store = cb.buildDataStore("dummy");
             cb.setStore(store);
             
-            List<ImportItem> resources = new ArrayList<ImportItem>();
+            List<ImportTask> tasks = new ArrayList<ImportTask>();
             for (String typeName : dataStore.getTypeNames()) {
                 if (monitor.isCanceled()) {
                     break;
@@ -128,57 +128,58 @@ public class DataStoreFormat extends VectorFormat {
     
                     LayerInfo layer = cb.buildLayer((ResourceInfo)featureType);
     
-                    ImportItem item = new ImportItem(layer);
-                    item.getMetadata().put(FeatureType.class, schema);
+                    ImportTask task = new ImportTask(data.part(typeName));
+                    task.setLayer(layer);
+                    task.getMetadata().put(FeatureType.class, schema);
     
-                    resources.add(item);
+                    tasks.add(task);
                 }
                 catch(Exception e) {
                     LOGGER.log(Level.WARNING, "Error occured loading " + typeName, e);
                 }
             }
-            
 
-            return resources;
+            return tasks;
         }
         finally {
             dataStore.dispose();
         }
     }
     
-    private DataStore getDataStore(ImportData data, ImportItem item) throws IOException {
-        DataStore dataStore = (DataStore) item.getMetadata().get(DataStore.class);
+    private DataStore getDataStore(ImportData data, ImportTask task) throws IOException {
+        DataStore dataStore = (DataStore) task.getMetadata().get(DataStore.class);
         if (dataStore == null) {
             dataStore = createDataStore(data);
 
             //store in order to later dispose
             //TODO: come up with a better scheme for caching the datastore
-            item.getMetadata().put(DataStore.class, dataStore);
+            task.getMetadata().put(DataStore.class, dataStore);
         }
         return dataStore;
     }
 
     @Override
-    public FeatureReader read(ImportData data, ImportItem item) throws IOException {
-        FeatureReader reader = getDataStore(data, item).getFeatureReader(
-            new Query(item.getOriginalName()), Transaction.AUTO_COMMIT);
+    public FeatureReader read(ImportData data, ImportTask task) throws IOException {
+        FeatureReader reader = getDataStore(data, task).getFeatureReader(
+            new Query(task.getOriginalLayerName()), Transaction.AUTO_COMMIT);
         return reader;
     }
 
     @Override
-    public void dispose(FeatureReader reader, ImportItem item) throws IOException {
+    public void dispose(FeatureReader reader, ImportTask task) throws IOException {
         reader.close();
 
-        if (item.getMetadata().containsKey(DataStore.class)) {
-            DataStore dataStore = (DataStore) item.getMetadata().get(DataStore.class);
+        if (task.getMetadata().containsKey(DataStore.class)) {
+            DataStore dataStore = (DataStore) task.getMetadata().get(DataStore.class);
             dataStore.dispose();
-            item.getMetadata().remove(DataStore.class);
+            task.getMetadata().remove(DataStore.class);
         }
     }
 
     @Override
-    public int getFeatureCount(ImportData data, ImportItem item) throws IOException {
-        SimpleFeatureSource featureSource = getDataStore(data, item).getFeatureSource(item.getOriginalName());
+    public int getFeatureCount(ImportData data, ImportTask task) throws IOException {
+        SimpleFeatureSource featureSource = 
+            getDataStore(data, task).getFeatureSource(task.getOriginalLayerName());
         return featureSource.getCount(Query.ALL);
     }
     
