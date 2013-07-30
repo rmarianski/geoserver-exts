@@ -10,9 +10,9 @@
     <version>2.4-SNAPSHOT</version>
   </parent>
 
-  <groupId>org.opengeo.geoserver</groupId>
+  <groupId>org.geoserver</groupId>
   <artifactId>importer</artifactId>
-  <packaging>jar</packaging>
+  <packaging>pom</packaging>
   <name>GeoServer Data Importer</name>
 
   <dependencies>
@@ -20,111 +20,6 @@
       <groupId>org.geoserver</groupId>
       <artifactId>main</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.geoserver.web</groupId>
-      <artifactId>web-demo</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.geoserver.web</groupId>
-      <artifactId>web-core</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <!-- org.geoserver.rest.uploader dependencies -->
-    <dependency>
-      <groupId>org.geoserver</groupId>
-      <artifactId>restconfig</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.restlet</groupId>
-      <artifactId>org.restlet.ext.fileupload</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.restlet</groupId>
-      <artifactId>org.restlet.ext.json</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>commons-fileupload</groupId>
-      <artifactId>commons-fileupload</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>commons-vfs</groupId>
-      <artifactId>commons-vfs</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.sleepycat</groupId>
-      <artifactId>je</artifactId>
-      <version>4.1.10</version>
-    </dependency>
-    <dependency>
-      <groupId>com.ning</groupId>
-      <artifactId>compress-lzf</artifactId>
-      <version>0.9.1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.ocpsoft.prettytime</groupId>
-      <artifactId>prettytime</artifactId>
-      <version>1.0.8.Final</version>
-    </dependency>
-    <dependency>
-      <groupId>org.geotools</groupId>
-      <artifactId>gt-shapefile</artifactId>
-      <version>${gt.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.geotools.jdbc</groupId>
-      <artifactId>gt-jdbc-h2</artifactId>
-      <version>${gt.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.geotools.jdbc</groupId>
-      <artifactId>gt-jdbc-oracle</artifactId>
-      <version>${gt.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.geotools.jdbc</groupId>
-      <artifactId>gt-jdbc-sqlserver</artifactId>
-      <version>${gt.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.geotools</groupId>
-      <artifactId>gt-arcsde</artifactId>
-      <version>${gt.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.geotools.xsd</groupId>
-      <artifactId>gt-xsd-kml</artifactId>
-      <version>${gt.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.geotools</groupId>
-      <artifactId>gt-geojson</artifactId>
-      <version>${gt.version}</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-        <groupId>org.opengeo.data.csv</groupId>
-        <artifactId>csv</artifactId>
-        <version>${project.version}</version>
-        <scope>test</scope>
-    </dependency>
-
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-epsg-hsql</artifactId>
@@ -135,6 +30,16 @@
       <groupId>org.geoserver</groupId>
       <artifactId>main</artifactId>
       <classifier>tests</classifier>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geoserver</groupId>
+      <artifactId>wfs</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geoserver</groupId>
+      <artifactId>wms</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -166,21 +71,6 @@
   </dependencies>
 
   <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-
     <testResources>
       <testResource>
         <directory>${basedir}/src/test/resources</directory>
@@ -191,27 +81,12 @@
     </testResources>
   </build>
 
-  <profiles>
-    <profile>
-      <id>oracle</id>
-      <dependencies>
-        <dependency>
-          <groupId>com.oracle</groupId>
-          <artifactId>ojdbc14</artifactId>
-          <version>10.2.0.3.0</version>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>sqlserver</id>
-      <dependencies>
-        <dependency>
-          <groupId>com.microsoft</groupId>
-          <artifactId>sqljdbc</artifactId>
-          <version>4.0</version>
-        </dependency>
-      </dependencies>
-    </profile>
-  </profiles>
+  <modules>
+    <module>core</module>
+    <module>rest</module>
+    <module>bdb</module>
+    <module>web</module>
+  </modules>
 
 </project>
+

@@ -292,6 +292,16 @@
         <version>${gs.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.geoserver</groupId>
+        <artifactId>wfs</artifactId>
+        <version>${gs.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.geoserver</groupId>
+        <artifactId>wms</artifactId>
+        <version>${gs.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.geoserver.extension</groupId>
         <artifactId>web-wps</artifactId>
         <version>${gs.version}</version>
@@ -470,7 +480,6 @@
   </distributionManagement>
 
   <modules>
-    <module>csv</module>
     <module>importer</module>
     <module>monitor-console</module>
     <module>printng</module>
