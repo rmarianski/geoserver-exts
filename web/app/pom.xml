@@ -31,8 +31,13 @@
   </dependency>
 
   <dependency>
-   <groupId>org.opengeo.geoserver</groupId>
-   <artifactId>importer</artifactId>
+   <groupId>org.geoserver.importer</groupId>
+   <artifactId>importer-web</artifactId>
+   <version>${gs.version}</version>
+  </dependency>
+  <dependency>
+   <groupId>org.geoserver.importer</groupId>
+   <artifactId>importer-rest</artifactId>
    <version>${gs.version}</version>
   </dependency>
   <dependency>
