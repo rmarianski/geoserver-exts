@@ -10,7 +10,7 @@
     <version>2.4-SNAPSHOT</version>
   </parent>
 
-  <groupId>org.opengeo.console</groupId>
+  <groupId>org.opengeo.geoserver</groupId>
   <artifactId>mapmeter</artifactId>
   <packaging>jar</packaging>
   <name>Mapmeter Extension</name>
