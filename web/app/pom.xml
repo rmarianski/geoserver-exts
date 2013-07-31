@@ -95,8 +95,8 @@
   <plugins>
    <plugin>
     <inherited>true</inherited>
-    <groupId>org.apache.maven.plugins</groupId>
     <artifactId>maven-war-plugin</artifactId>
+    <version>2.3</version>
     <configuration>
      <warName>geoserver</warName>
      <webappDirectory>${project.build.directory}/geoserver</webappDirectory>
