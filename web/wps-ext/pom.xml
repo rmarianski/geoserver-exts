@@ -9,7 +9,7 @@
  </parent>
 
  <groupId>org.opengeo.geoserver</groupId>
- <artifactId>web-wps</artifactId>
+ <artifactId>web-wps-ext</artifactId>
  <packaging>jar</packaging>
  <name>OpenGeo WPS GUI Extensions</name>
 

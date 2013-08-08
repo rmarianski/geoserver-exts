@@ -42,7 +42,7 @@
   </dependency>
   <dependency>
    <groupId>org.opengeo.geoserver</groupId>
-   <artifactId>web-wps</artifactId>
+   <artifactId>web-wps-ext</artifactId>
    <version>${gs.version}</version>
   </dependency>
   <dependency>
