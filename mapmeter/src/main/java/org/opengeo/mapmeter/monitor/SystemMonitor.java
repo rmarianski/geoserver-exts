@@ -1,4 +1,4 @@
-package org.opengeo.console.monitor;
+package org.opengeo.mapmeter.monitor;
 
 public interface SystemMonitor {
 

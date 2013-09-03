@@ -1,4 +1,4 @@
-package org.opengeo.console.monitor;
+package org.opengeo.mapmeter.monitor;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;

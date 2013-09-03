@@ -1,14 +1,14 @@
-package org.opengeo.console.monitor;
+package org.opengeo.mapmeter.monitor;
 
 import com.google.common.base.Optional;
 
-public class ConsoleData {
+public class MapmeterData {
 
     private final boolean isCacheHit;
 
     private final Optional<String> cacheMissReason;
 
-    public ConsoleData(boolean isCacheHit, Optional<String> cacheMissReason) {
+    public MapmeterData(boolean isCacheHit, Optional<String> cacheMissReason) {
         this.isCacheHit = isCacheHit;
         this.cacheMissReason = cacheMissReason;
     }

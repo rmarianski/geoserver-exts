@@ -1,4 +1,4 @@
-package org.opengeo.console.monitor.transport;
+package org.opengeo.mapmeter.monitor.transport;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -14,8 +14,8 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.geotools.util.logging.Logging;
-import org.opengeo.console.monitor.ConsoleRequestData;
-import org.opengeo.console.monitor.config.MessageTransportConfig;
+import org.opengeo.mapmeter.monitor.MapmeterRequestData;
+import org.opengeo.mapmeter.monitor.config.MessageTransportConfig;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
@@ -26,20 +26,20 @@ public class HttpMessageTransport implements MessageTransport {
 
     private final MessageTransportConfig config;
 
-    private final MessageSerializer consoleMessageSerializer;
+    private final MessageSerializer mapmeterMessageSerializer;
 
     public HttpMessageTransport(MessageTransportConfig config) {
         if (!config.getApiKey().isPresent()) {
             LOGGER.warning("Missing mapmeter apikey. Will NOT send messages with no apikey.");
         }
         this.config = config;
-        consoleMessageSerializer = new MessageSerializer();
+        mapmeterMessageSerializer = new MessageSerializer();
     }
 
     // send request data via http post
     // if sending fails, log failure and just drop message
     @Override
-    public void transport(Collection<ConsoleRequestData> data) {
+    public void transport(Collection<MapmeterRequestData> data) {
 
         String storageUrl;
         Optional<String> maybeApiKey;
@@ -58,7 +58,7 @@ public class HttpMessageTransport implements MessageTransport {
         HttpClient client = new HttpClient();
         PostMethod postMethod = new PostMethod(storageUrl);
 
-        JSONObject json = consoleMessageSerializer.serialize(apiKey, data);
+        JSONObject json = mapmeterMessageSerializer.serialize(apiKey, data);
         String jsonPayload = json.toString();
 
         StringRequestEntity requestEntity = null;

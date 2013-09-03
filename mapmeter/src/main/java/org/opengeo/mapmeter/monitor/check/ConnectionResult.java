@@ -1,4 +1,4 @@
-package org.opengeo.console.monitor.check;
+package org.opengeo.mapmeter.monitor.check;
 
 import com.google.common.base.Optional;
 

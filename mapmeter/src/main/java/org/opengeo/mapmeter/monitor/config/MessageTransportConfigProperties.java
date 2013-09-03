@@ -1,4 +1,4 @@
-package org.opengeo.console.monitor.config;
+package org.opengeo.mapmeter.monitor.config;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

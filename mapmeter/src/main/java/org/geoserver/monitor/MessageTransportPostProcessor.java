@@ -6,27 +6,27 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.geoserver.platform.ExtensionPriority;
-import org.opengeo.console.monitor.ConsoleRequestData;
-import org.opengeo.console.monitor.ConsoleRequestDataFactory;
-import org.opengeo.console.monitor.transport.MessageTransport;
+import org.opengeo.mapmeter.monitor.MapmeterRequestData;
+import org.opengeo.mapmeter.monitor.MapmeterRequestDataFactory;
+import org.opengeo.mapmeter.monitor.transport.MessageTransport;
 
 public class MessageTransportPostProcessor implements RequestPostProcessor, ExtensionPriority {
 
     private final MessageTransport transporter;
 
-    private final ConsoleRequestDataFactory consoleRequestDataFactory;
+    private final MapmeterRequestDataFactory mapmeterRequestDataFactory;
 
     public MessageTransportPostProcessor(MessageTransport transporter,
-            ConsoleRequestDataFactory consoleRequestDataFactory) {
+            MapmeterRequestDataFactory mapmeterRequestDataFactory) {
         this.transporter = transporter;
-        this.consoleRequestDataFactory = consoleRequestDataFactory;
+        this.mapmeterRequestDataFactory = mapmeterRequestDataFactory;
     }
 
     @Override
     public void run(RequestData data, HttpServletRequest request, HttpServletResponse response)
             throws Exception {
-        ConsoleRequestData consoleRequestData = consoleRequestDataFactory.create(data);
-        transporter.transport(Collections.singletonList(consoleRequestData));
+        MapmeterRequestData mapmeterRequestData = mapmeterRequestDataFactory.create(data);
+        transporter.transport(Collections.singletonList(mapmeterRequestData));
     }
 
     @Override

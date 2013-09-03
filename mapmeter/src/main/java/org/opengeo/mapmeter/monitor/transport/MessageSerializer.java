@@ -1,4 +1,4 @@
-package org.opengeo.console.monitor.transport;
+package org.opengeo.mapmeter.monitor.transport;
 
 import java.util.Collection;
 import java.util.List;
@@ -7,9 +7,9 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import org.geoserver.monitor.RequestData;
-import org.opengeo.console.monitor.ConsoleData;
-import org.opengeo.console.monitor.ConsoleRequestData;
-import org.opengeo.console.monitor.SystemStatSnapshot;
+import org.opengeo.mapmeter.monitor.MapmeterData;
+import org.opengeo.mapmeter.monitor.MapmeterRequestData;
+import org.opengeo.mapmeter.monitor.SystemStatSnapshot;
 import org.opengis.geometry.BoundingBox;
 
 import com.google.common.base.Optional;
@@ -17,17 +17,17 @@ import com.google.common.collect.ImmutableList;
 
 public class MessageSerializer {
 
-    public JSONObject serialize(String apiKey, Collection<ConsoleRequestData> data) {
+    public JSONObject serialize(String apiKey, Collection<MapmeterRequestData> data) {
         JSONObject json = new JSONObject();
         json.element("api", apiKey);
         json.element("messages", serializeMessages(data));
         return json;
     }
 
-    private JSONArray serializeMessages(Collection<ConsoleRequestData> data) {
+    private JSONArray serializeMessages(Collection<MapmeterRequestData> data) {
         JSONArray jsonArray = new JSONArray();
-        for (ConsoleRequestData consoleRequestData : data) {
-            jsonArray.add(serializeConsoleRequestData(consoleRequestData));
+        for (MapmeterRequestData mapmeterRequestData : data) {
+            jsonArray.add(serializeMapmeterRequestData(mapmeterRequestData));
         }
         return jsonArray;
     }
@@ -40,11 +40,11 @@ public class MessageSerializer {
         return url;
     }
 
-    public JSONObject serializeConsoleRequestData(ConsoleRequestData consoleRequestData) {
+    private JSONObject serializeMapmeterRequestData(MapmeterRequestData mapmeterRequestData) {
         JSONObject json = new JSONObject();
-        RequestData requestData = consoleRequestData.getRequestData();
-        Optional<ConsoleData> optionalConsoleData = consoleRequestData.getConsoleData();
-        SystemStatSnapshot systemStatSnapshot = consoleRequestData.getSystemStatSnapshot();
+        RequestData requestData = mapmeterRequestData.getRequestData();
+        Optional<MapmeterData> optionalMapmeterData = mapmeterRequestData.getMapmeterData();
+        SystemStatSnapshot systemStatSnapshot = mapmeterRequestData.getSystemStatSnapshot();
 
         json.element("id", requestData.internalid);
 
@@ -118,13 +118,13 @@ public class MessageSerializer {
         }
 
         // track gwc cache hits
-        if (optionalConsoleData.isPresent()) {
-            ConsoleData consoleData = optionalConsoleData.get();
+        if (optionalMapmeterData.isPresent()) {
+            MapmeterData mapmeterData = optionalMapmeterData.get();
 
-            boolean cacheHit = consoleData.isCacheHit();
+            boolean cacheHit = mapmeterData.isCacheHit();
             json.element("cache_hit", cacheHit);
 
-            Optional<String> cacheMissReason = consoleData.getCacheMissReason();
+            Optional<String> cacheMissReason = mapmeterData.getCacheMissReason();
             if (cacheMissReason.isPresent()) {
                 json.element("cache_miss_reason", cacheMissReason.get());
             }

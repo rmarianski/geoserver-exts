@@ -1,4 +1,4 @@
-package org.opengeo.console.monitor.check;
+package org.opengeo.mapmeter.monitor.check;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,7 +18,7 @@ import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.params.HttpClientParams;
 import org.geotools.util.logging.Logging;
-import org.opengeo.console.monitor.config.MessageTransportConfig;
+import org.opengeo.mapmeter.monitor.config.MessageTransportConfig;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;

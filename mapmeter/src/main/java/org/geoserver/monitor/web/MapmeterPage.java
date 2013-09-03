@@ -17,24 +17,24 @@ import org.apache.wicket.model.Model;
 import org.geoserver.web.GeoServerApplication;
 import org.geoserver.web.GeoServerSecuredPage;
 import org.geotools.util.logging.Logging;
-import org.opengeo.console.monitor.check.ConnectionChecker;
-import org.opengeo.console.monitor.check.ConnectionResult;
-import org.opengeo.console.monitor.config.MessageTransportConfig;
+import org.opengeo.mapmeter.monitor.check.ConnectionChecker;
+import org.opengeo.mapmeter.monitor.check.ConnectionResult;
+import org.opengeo.mapmeter.monitor.config.MessageTransportConfig;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 
-public class ConsolePage extends GeoServerSecuredPage {
+public class MapmeterPage extends GeoServerSecuredPage {
 
     private static final long serialVersionUID = 1L;
 
-    private static final Logger LOGGER = Logging.getLogger(ConsolePage.class);
+    private static final Logger LOGGER = Logging.getLogger(MapmeterPage.class);
 
     private final transient MessageTransportConfig messageTransportConfig;
 
     private final transient ConnectionChecker connectionChecker;
 
-    public ConsolePage() {
+    public MapmeterPage() {
         GeoServerApplication geoServerApplication = getGeoServerApplication();
         this.messageTransportConfig = geoServerApplication.getBeanOfType(MessageTransportConfig.class);
         if (messageTransportConfig == null) {

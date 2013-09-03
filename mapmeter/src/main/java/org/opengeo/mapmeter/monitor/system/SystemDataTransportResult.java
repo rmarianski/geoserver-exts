@@ -1,4 +1,4 @@
-package org.opengeo.console.monitor.system;
+package org.opengeo.mapmeter.monitor.system;
 
 import com.google.common.base.Optional;
 

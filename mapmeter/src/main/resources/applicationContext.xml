@@ -12,22 +12,22 @@
         <constructor-arg ref="resourceLoader" index="0" />
     </bean>
 
-    <bean id="consoleTransporterPostProcessor" class="org.geoserver.monitor.MessageTransportPostProcessor">
-      <constructor-arg ref="consoleMonitorTransport" index="0"/>
-      <constructor-arg ref="consoleRequestDataFactory" index="1"/>
+    <bean id="mapmeterTransporterPostProcessor" class="org.geoserver.monitor.MessageTransportPostProcessor">
+      <constructor-arg ref="mapmeterMonitorTransport" index="0"/>
+      <constructor-arg ref="mapmeterRequestDataFactory" index="1"/>
     </bean>
 
-    <bean id="consoleMonitorTransport" class="org.opengeo.console.monitor.transport.QueuedMessageTransport">
-      <constructor-arg ref="consoleMonitorHttpTransport" index="0"/>
+    <bean id="mapmeterMonitorTransport" class="org.opengeo.mapmeter.monitor.transport.QueuedMessageTransport">
+      <constructor-arg ref="mapmeterMonitorHttpTransport" index="0"/>
       <!-- Seconds delay between transports -->
       <constructor-arg value="3" index="1"/>
     </bean>
 
-    <bean id="consoleMonitorHttpTransport" class="org.opengeo.console.monitor.transport.HttpMessageTransport" >
-      <constructor-arg ref="consoleMessageHttpTransportConfig" index="0" />
+    <bean id="mapmeterMonitorHttpTransport" class="org.opengeo.mapmeter.monitor.transport.HttpMessageTransport" >
+      <constructor-arg ref="mapmeterMessageHttpTransportConfig" index="0" />
     </bean>
 
-    <bean id="consoleMessageHttpTransportConfig" class="org.opengeo.console.monitor.config.MessageTransportConfigProperties">
+    <bean id="mapmeterMessageHttpTransportConfig" class="org.opengeo.mapmeter.monitor.config.MessageTransportConfigProperties">
       <constructor-arg value="monitoring" index="0"/>
       <constructor-arg value="controller.properties" index="1"/>
       <constructor-arg value="https://app.mapmeter.com/controller/v1/message/store" index="2"/>
@@ -36,52 +36,52 @@
       <constructor-arg ref="resourceLoader" index="5"/>
     </bean>
 
-    <bean id="consoleRequestDataMapping" class="java.util.concurrent.ConcurrentHashMap"></bean>
+    <bean id="mapmeterRequestDataMapping" class="java.util.concurrent.ConcurrentHashMap"></bean>
 
-    <bean id="consoleGwcStatistician" class="org.geoserver.monitor.gwc.GwcStatistician"></bean>
+    <bean id="mapmeterGwcStatistician" class="org.geoserver.monitor.gwc.GwcStatistician"></bean>
 
-    <bean id="consoleMonitorOwsCallback" class="org.geoserver.monitor.ows.MonitorConsoleCallback">
+    <bean id="mapmeterMonitorOwsCallback" class="org.geoserver.monitor.ows.MonitorMapmeterCallback">
       <constructor-arg ref="monitor" index="0" />
-      <constructor-arg ref="consoleRequestDataMapping" index="1" />
-      <constructor-arg ref="consoleGwcStatistician" index="2" />
+      <constructor-arg ref="mapmeterRequestDataMapping" index="1" />
+      <constructor-arg ref="mapmeterGwcStatistician" index="2" />
     </bean>
 
-    <bean id="consoleRequestDataFactory" class="org.opengeo.console.monitor.ConsoleRequestDataFactory">
-      <constructor-arg ref="consoleJmxSystemMonitor" index="0"/>
-      <constructor-arg ref="consoleRequestDataMapping" index="1"/>
+    <bean id="mapmeterRequestDataFactory" class="org.opengeo.mapmeter.monitor.MapmeterRequestDataFactory">
+      <constructor-arg ref="mapmeterJmxSystemMonitor" index="0"/>
+      <constructor-arg ref="mapmeterRequestDataMapping" index="1"/>
     </bean>
 
-    <bean id="consoleJmxSystemMonitor" class="org.opengeo.console.monitor.JmxSystemMonitor" />
+    <bean id="mapmeterJmxSystemMonitor" class="org.opengeo.mapmeter.monitor.JmxSystemMonitor" />
 
-    <bean id="consoleConnectionChecker" class="org.opengeo.console.monitor.check.HttpConnectionChecker">
-      <constructor-arg ref="consoleMessageHttpTransportConfig" index="0" />
+    <bean id="mapmeterConnectionChecker" class="org.opengeo.mapmeter.monitor.check.HttpConnectionChecker">
+      <constructor-arg ref="mapmeterMessageHttpTransportConfig" index="0" />
       <!-- Connection timeout in milliseconds -->
       <constructor-arg value="30000" index="1" />
     </bean>
 
-    <bean id="mapmeterSystemDataSupplier" class="org.opengeo.console.monitor.system.SystemDataSupplier">
-      <constructor-arg ref="consoleMessageHttpTransportConfig" index="0"></constructor-arg>
+    <bean id="mapmeterSystemDataSupplier" class="org.opengeo.mapmeter.monitor.system.SystemDataSupplier">
+      <constructor-arg ref="mapmeterMessageHttpTransportConfig" index="0"></constructor-arg>
       <constructor-arg ref="manifestLoader" index="1"></constructor-arg>
     </bean>
 
-    <bean id="mapmeterSystemDataTransport" class="org.opengeo.console.monitor.system.SystemDataTransport">
+    <bean id="mapmeterSystemDataTransport" class="org.opengeo.mapmeter.monitor.system.SystemDataTransport">
       <constructor-arg ref="mapmeterSystemDataSerializer" index="0"></constructor-arg>
-      <constructor-arg ref="consoleMessageHttpTransportConfig" index="1"></constructor-arg>
+      <constructor-arg ref="mapmeterMessageHttpTransportConfig" index="1"></constructor-arg>
     </bean>
 
-    <bean id="mapmeterSystemDataSerializer" class="org.opengeo.console.monitor.system.SystemDataSerializer">
+    <bean id="mapmeterSystemDataSerializer" class="org.opengeo.mapmeter.monitor.system.SystemDataSerializer">
     </bean>
 
-    <bean id="mapmeterInitializer" class="org.opengeo.console.monitor.system.MapmeterInitializer">
+    <bean id="mapmeterInitializer" class="org.opengeo.mapmeter.monitor.system.MapmeterInitializer">
       <constructor-arg ref="mapmeterSystemDataSupplier" index="0"></constructor-arg>
       <constructor-arg ref="mapmeterSystemDataTransport" index="1"></constructor-arg>
     </bean>
 
-    <bean class="org.geoserver.web.MenuPageInfo" id="consoleMenuPageLink">
-    <property name="id" value="consoleMenuPageId"/>
-    <property name="titleKey" value="ConsolePage.title"/>
-    <property name="descriptionKey" value="ConsolePage.description"/>
-    <property name="componentClass" value="org.geoserver.monitor.web.ConsolePage"/>
+    <bean class="org.geoserver.web.MenuPageInfo" id="mapmeterMenuPageLink">
+    <property name="id" value="mapmeterMenuPageId"/>
+    <property name="titleKey" value="MapmeterPage.title"/>
+    <property name="descriptionKey" value="MapmeterPage.description"/>
+    <property name="componentClass" value="org.geoserver.monitor.web.MapmeterPage"/>
 <!--     <property name="icon" value="imgs/some-image.png"/> -->
     <property name="category" ref="monitorCategory"/>
     <property name="order" value="50"/>

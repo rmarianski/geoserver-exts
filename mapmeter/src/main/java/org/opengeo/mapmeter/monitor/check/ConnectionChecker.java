@@ -1,4 +1,4 @@
-package org.opengeo.console.monitor.check;
+package org.opengeo.mapmeter.monitor.check;
 
 public interface ConnectionChecker {
 

@@ -1,4 +1,4 @@
-package org.opengeo.console.monitor.system;
+package org.opengeo.mapmeter.monitor.system;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;

@@ -1,11 +1,11 @@
-package org.opengeo.console.monitor.system;
+package org.opengeo.mapmeter.monitor.system;
 
 import java.io.UnsupportedEncodingException;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
-import org.opengeo.console.monitor.config.MessageTransportConfig;
+import org.opengeo.mapmeter.monitor.config.MessageTransportConfig;
 
 public class SystemDataTransport {
 

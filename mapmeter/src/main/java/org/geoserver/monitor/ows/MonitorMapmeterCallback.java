@@ -12,23 +12,23 @@ import org.geoserver.ows.Response;
 import org.geoserver.platform.Operation;
 import org.geoserver.platform.Service;
 import org.geoserver.platform.ServiceException;
-import org.opengeo.console.monitor.ConsoleData;
+import org.opengeo.mapmeter.monitor.MapmeterData;
 
 import com.google.common.base.Optional;
 
-public class MonitorConsoleCallback implements DispatcherCallback {
+public class MonitorMapmeterCallback implements DispatcherCallback {
 
-    private final ConcurrentHashMap<Long, ConsoleData> consoleRequestDataMapping;
+    private final ConcurrentHashMap<Long, MapmeterData> mapmeterRequestDataMapping;
 
     private final GwcStatistician gwcStatistician;
 
     private final Monitor monitor;
 
-    public MonitorConsoleCallback(Monitor monitor,
-            ConcurrentHashMap<Long, ConsoleData> consoleRequestDataMapping,
+    public MonitorMapmeterCallback(Monitor monitor,
+            ConcurrentHashMap<Long, MapmeterData> mapmeterRequestDataMapping,
             GwcStatistician gwcStatistician) {
         this.monitor = monitor;
-        this.consoleRequestDataMapping = consoleRequestDataMapping;
+        this.mapmeterRequestDataMapping = mapmeterRequestDataMapping;
         this.gwcStatistician = gwcStatistician;
     }
 
@@ -64,13 +64,13 @@ public class MonitorConsoleCallback implements DispatcherCallback {
         // compute gwc stats
         GwcStatistics gwcStats = gwcStatistician.getGwcStats(Optional.fromNullable(operation),
                 result);
-        ConsoleData consoleData = new ConsoleData(gwcStats.isCacheHit(), gwcStats.getMissReason());
+        MapmeterData mapmeterData = new MapmeterData(gwcStats.isCacheHit(), gwcStats.getMissReason());
 
         // store data into a map keyed off the request data id
-        // this map is used later to lookup the console data for the requestdata from the post processor
+        // this map is used later to lookup the mapmeter data for the requestdata from the post processor
         // note that this assumes that the id can uniquely identify a request data object
         long id = current.getId();
-        consoleRequestDataMapping.put(id, consoleData);
+        mapmeterRequestDataMapping.put(id, mapmeterData);
 
         return response;
     }

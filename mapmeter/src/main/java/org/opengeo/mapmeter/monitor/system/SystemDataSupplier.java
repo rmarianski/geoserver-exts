@@ -1,4 +1,4 @@
-package org.opengeo.console.monitor.system;
+package org.opengeo.mapmeter.monitor.system;
 
 import java.util.Map;
 import java.util.Map.Entry;
@@ -7,7 +7,7 @@ import java.util.Set;
 import org.geoserver.ManifestLoader;
 import org.geoserver.ManifestLoader.AboutModel;
 import org.geoserver.ManifestLoader.AboutModel.ManifestModel;
-import org.opengeo.console.monitor.config.MessageTransportConfig;
+import org.opengeo.mapmeter.monitor.config.MessageTransportConfig;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Supplier;
