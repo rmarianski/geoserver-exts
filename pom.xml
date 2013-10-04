@@ -477,7 +477,6 @@
 
   <modules>
     <module>cluster</module>
-    <module>importer</module>
     <module>metrics</module>
     <module>mapmeter</module>
     <module>printng</module>
