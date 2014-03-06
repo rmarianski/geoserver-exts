@@ -34,6 +34,24 @@
       <groupId>org.geogit</groupId>
       <artifactId>geogit-geotools</artifactId>
       <version>${geogit.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.geotools.jdbc</groupId>
+          <artifactId>gt-jdbc-postgis</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.geotools.jdbc</groupId>
+          <artifactId>gt-jdbc-sqlserver</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.geotools.jdbc</groupId>
+          <artifactId>gt-jdbc-oracle</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.neo4j</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.geogit</groupId>
@@ -44,21 +62,25 @@
       <groupId>org.geoserver</groupId>
       <artifactId>main</artifactId>
       <version>${gs.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.geoserver</groupId>
       <artifactId>ows</artifactId>
       <version>${gs.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.geoserver</groupId>
       <artifactId>rest</artifactId>
       <version>${gs.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.geoserver</groupId>
       <artifactId>wfs</artifactId>
       <version>${gs.version}</version>
+      <scope>provided</scope>
     </dependency>
     
     <dependency>
@@ -101,4 +123,99 @@
     </dependency>
   </dependencies>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.2</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <!-- exclude non used classes? -->
+              <minimizeJar>false</minimizeJar>
+              <!--filters>
+                <filter>
+                   <artifact>org.geogit:*</artifact>
+                   <includes>
+                       <include>**</include>
+                   </includes>
+                </filter>
+              </filters-->
+              <shadedArtifactAttached>true</shadedArtifactAttached>
+              <shadedClassifierName>shaded-plugin</shadedClassifierName> <!-- Any name that makes sense -->
+              <transformers>
+                <!-- 
+                  Merge the contents of META-INF/services files named the same from different jars
+                 -->
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              </transformers>
+              <artifactSet>
+                <!-- 
+                <includes>
+                  <include>org.geogit:*</include>
+                  <include>com.google.guava:guava</include>
+                  <include>com.google.inject.extensions:guice-multibindings</include>
+                  <include>com.ning:compress-lzf</include>
+                  <include>com.google.code.findbugs:jsr305</include>
+                  <include>com.sleepycat:je</include>
+                </includes>
+                 -->
+                <excludes>
+                  <exclude>org.geotools:*</exclude>
+                  <exclude>org.geotools.jdbc:*</exclude>
+                  <exclude>org.geoserver:*</exclude>
+                  <exclude>junit:junit</exclude>
+                  <exclude>log4j:log4j:jar:</exclude>
+                  <exclude>javax.servlet:servlet-api</exclude>
+                  <exclude>com.google.code.findbugs:jsr305</exclude> <!-- javax.annotation, not needed at runtime -->
+                  <exclude>net.sourceforge.findbugs:jsr305</exclude>
+                  <exclude>postgresql:postgresql</exclude>
+                  <exclude>javax.media:jai_core</exclude>
+                  <exclude>org.scala-lang:scala-library</exclude>
+                  <exclude>com.beust:jcommander</exclude>
+                  <exclude>jline:jline</exclude>
+                  <exclude>stax:stax-api</exclude>
+                  <exclude>xml-apis:xml-apis</exclude>
+                  <exclude>commons-collections:commons-collections</exclude>
+                  <exclude>commons-logging:commons-logging</exclude>
+                  <exclude>commons-beanutils:commons-beanutils</exclude>
+                  <exclude>commons-digester:commons-digester</exclude>
+                  <exclude>commons-dbcp:commons-dbcp</exclude>
+                  <exclude>commons-lang:commons-lang</exclude>
+                  <exclude>hsqldb:hsqldb</exclude>
+                  <exclude>net.java.dev.jsr-275</exclude>
+                  <exclude>java3d:vecmath</exclude>
+                  <exclude>jdom:jdom</exclude>
+                  <exclude>com.vividsolutions:jts</exclude>
+                  <exclude>jgridshift:jgridshift</exclude>
+                  <exclude>org.neo4j:*</exclude>
+                </excludes>
+              </artifactSet>
+              <relocations>
+                <relocation>
+                  <pattern>com.google.common</pattern>
+                  <shadedPattern>shaded.com.google.common</shadedPattern>
+                  <!-- 
+                  <excludes>
+                    <exclude>org.codehaus.plexus.util.xml.Xpp3Dom</exclude>
+                    <exclude>org.codehaus.plexus.util.xml.pull.*</exclude>
+                  </excludes>
+                  -->
+                </relocation>
+                <relocation>
+                  <pattern>org.slf4j</pattern>
+                  <shadedPattern>shaded.org.slf4j</shadedPattern>
+                </relocation>
+              </relocations>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>
