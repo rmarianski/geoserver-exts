@@ -4,7 +4,7 @@
  */
 package org.geogit.rest.repository;
 
-import static org.geogit.rest.repository.GeogitResourceUtils.findGeogitStores;
+import static org.geogit.rest.repository.RESTUtils.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -14,6 +14,7 @@ import org.geoserver.catalog.DataStoreInfo;
 import org.geoserver.rest.MapResource;
 import org.geoserver.rest.format.DataFormat;
 import org.geoserver.rest.format.FreemarkerFormat;
+import org.geoserver.rest.format.MapJSONFormat;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
@@ -34,6 +35,8 @@ public class RepositoryListResource extends MapResource {
         formats.add(new FreemarkerFormat(RepositoryListResource.class.getSimpleName() + ".ftl",
                 getClass(), MediaType.TEXT_HTML));
 
+        formats.add(new MapJSONFormat());
+
         return formats;
     }
 
@@ -49,7 +52,9 @@ public class RepositoryListResource extends MapResource {
 
     private List<String> getRepoNames() {
         Request request = getRequest();
-        List<DataStoreInfo> geogitStores = findGeogitStores(request);
+        CatalogRepositoryProvider repoFinder = (CatalogRepositoryProvider) repositoryProvider(request);
+
+        List<DataStoreInfo> geogitStores = repoFinder.findGeogitStores(request);
 
         List<String> repoNames = Lists.newArrayListWithCapacity(geogitStores.size());
         for (DataStoreInfo info : geogitStores) {

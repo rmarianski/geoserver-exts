@@ -38,25 +38,26 @@ import org.geoserver.catalog.NamespaceInfo;
 import org.geoserver.catalog.ProjectionPolicy;
 import org.geoserver.catalog.WorkspaceInfo;
 import org.geoserver.data.test.SystemTestData;
+import org.geoserver.test.TestSetup;
+import org.geoserver.test.TestSetupFrequency;
 import org.geoserver.wfs.WFSTestSupport;
 import org.geotools.data.DataAccess;
 import org.geotools.data.FeatureSource;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
-import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.Test;
 import org.opengis.feature.Feature;
 import org.opengis.feature.type.FeatureType;
 import org.opengis.filter.Filter;
 import org.w3c.dom.Document;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.util.Modules;
 
+@TestSetup(run = TestSetupFrequency.REPEAT)
 public class WFSIntegrationTest extends WFSTestSupport {
 
     /** HTTP_GEOGIT_ORG */
@@ -66,32 +67,7 @@ public class WFSIntegrationTest extends WFSTestSupport {
 
     private static final String STORE = "geogitstore";
 
-    private static RepositoryTestCase helper;
-
-    @Before
-    public void revert() throws Exception {
-        // revertLayer(CiteTestData.ROAD_SEGMENTS);
-    }
-
-    @AfterClass
-    public static void oneTimeTearDown() throws Exception {
-        if (helper != null) {
-            helper.tearDown();
-            helper.repositoryTempFolder.delete();
-        }
-    }
-
-    @Override
-    protected void setUpTestData(SystemTestData testData) throws Exception {
-        // oevrride to avoid creating all the default feature types but call testData.setUp() only
-        // instead
-        testData.setUp();
-    }
-
-    @Override
-    protected void setUpNamespaces(Map<String, String> namespaces) {
-        namespaces.put(WORKSPACE, NAMESPACE);
-    }
+    private RepositoryTestCase helper;
 
     @Override
     protected void setUpInternal(SystemTestData testData) throws Exception {
@@ -111,6 +87,26 @@ public class WFSIntegrationTest extends WFSTestSupport {
         };
         helper.repositoryTempFolder.create();
         helper.setUp();
+    }
+
+    @Override
+    protected void onTearDown(SystemTestData testData) throws Exception {
+        if (helper != null) {
+            helper.tearDown();
+            helper.repositoryTempFolder.delete();
+        }
+    }
+
+    @Override
+    protected void setUpTestData(SystemTestData testData) throws Exception {
+        // oevrride to avoid creating all the default feature types but call testData.setUp() only
+        // instead
+        testData.setUp();
+    }
+
+    @Override
+    protected void setUpNamespaces(Map<String, String> namespaces) {
+        namespaces.put(WORKSPACE, NAMESPACE);
     }
 
     private void configureGeogitDataStore() throws Exception {
@@ -376,7 +372,6 @@ public class WFSIntegrationTest extends WFSTestSupport {
 
     @Test
     public void testCommitsSurviveShutDown() throws Exception {
-        RepositoryTestCase helper = WFSIntegrationTest.helper;
         GeoGIT geogit = helper.getGeogit();
 
         insert();
@@ -386,7 +381,7 @@ public class WFSIntegrationTest extends WFSTestSupport {
 
         File repoDir = helper.repositoryTempFolder.getRoot();
         // shut down server
-        super.doTearDownClass();
+        destroyGeoServer();
 
         geogit = new GeoGIT(repoDir);
         try {

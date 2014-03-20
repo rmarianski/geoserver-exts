@@ -1,13 +1,13 @@
-/* Copyright (c) 2013 OpenPlans. All rights reserved.
+/* Copyright (c) 2014 OpenPlans. All rights reserved.
  * This code is licensed under the GNU GPL 2.0 license, available at the root
  * application directory.
  */
-
 package org.geogit.rest.repository;
+
+import static org.geogit.rest.repository.RESTUtils.getStringAttribute;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 import javax.annotation.Nullable;
 
@@ -19,7 +19,6 @@ import org.geoserver.catalog.DataStoreInfo;
 import org.geoserver.catalog.Predicates;
 import org.geoserver.catalog.util.CloseableIterator;
 import org.geoserver.rest.RestletException;
-import org.geoserver.rest.util.RESTUtils;
 import org.geotools.data.DataAccess;
 import org.opengis.feature.Feature;
 import org.opengis.feature.type.FeatureType;
@@ -27,22 +26,29 @@ import org.restlet.data.Request;
 import org.restlet.data.Status;
 
 import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 
-class GeogitResourceUtils {
+/**
+ * {@link RepositoryProvider} that looks up the coresponding {@link GeoGIT} instance to a given
+ * {@link Request} by searching the geoserver catalog for the geogit datastore that matches the
+ * request's <code>{repository}</code> path step.
+ */
+public class CatalogRepositoryProvider implements RepositoryProvider {
 
-    public static Catalog getCatalog(Request request) {
-        Map<String, Object> attributes = request.getAttributes();
-        Catalog catalog = (Catalog) attributes.get("catalog");
-        Preconditions.checkState(catalog != null, "Catalog is not set as a request property");
+    private Catalog catalog;
+
+    public CatalogRepositoryProvider(Catalog catalog) {
+        this.catalog = catalog;
+    }
+
+    private Catalog getCatalog(Request request) {
         return catalog;
     }
 
-    public static Optional<String> getRepositoryName(Request request) {
-        final String repo = RESTUtils.getAttribute(request, "repository");
+    private Optional<String> getRepositoryName(Request request) {
+        final String repo = getStringAttribute(request, "repository");
         if (repo != null && !repo.contains(":")) {
             throw new IllegalArgumentException(
                     "Repository name should be of the form <workspace>:<datastore>: " + repo);
@@ -50,7 +56,7 @@ class GeogitResourceUtils {
         return Optional.fromNullable(repo);
     }
 
-    public static List<DataStoreInfo> findGeogitStores(Request request) {
+    public List<DataStoreInfo> findGeogitStores(Request request) {
         List<DataStoreInfo> geogitStores;
 
         Catalog catalog = getCatalog(request);
@@ -72,7 +78,7 @@ class GeogitResourceUtils {
         return geogitStores;
     }
 
-    public static Optional<GeoGIT> getGeogit(Request request) {
+    public Optional<GeoGIT> getGeogit(Request request) {
         Optional<String> repositoryName = getRepositoryName(request);
         if (!repositoryName.isPresent()) {
             return Optional.absent();
@@ -84,7 +90,7 @@ class GeogitResourceUtils {
         return Optional.of(dataStore.get().getGeogit());
     }
 
-    public static Optional<GeoGitDataStore> findDataStore(Request request, String repositoryName) {
+    private Optional<GeoGitDataStore> findDataStore(Request request, String repositoryName) {
         String[] wsds = repositoryName.split(":");
         String workspace = wsds[0];
         String datastore = wsds[1];

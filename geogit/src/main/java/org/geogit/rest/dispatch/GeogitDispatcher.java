@@ -11,29 +11,19 @@ import java.util.logging.Logger;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.geogit.rest.repository.AffectedFeaturesResource;
-import org.geogit.rest.repository.ApplyChangesResource;
-import org.geogit.rest.repository.BatchedObjectResource;
-import org.geogit.rest.repository.BeginPush;
+import org.geogit.rest.repository.CatalogRepositoryProvider;
 import org.geogit.rest.repository.CommandResource;
-import org.geogit.rest.repository.DepthResource;
-import org.geogit.rest.repository.EndPush;
-import org.geogit.rest.repository.FilteredChangesResource;
-import org.geogit.rest.repository.ManifestResource;
-import org.geogit.rest.repository.MergeFeatureResource;
-import org.geogit.rest.repository.ObjectExistsResource;
-import org.geogit.rest.repository.ObjectFinder;
-import org.geogit.rest.repository.ParentResource;
 import org.geogit.rest.repository.RepositoryListResource;
+import org.geogit.rest.repository.RepositoryProvider;
 import org.geogit.rest.repository.RepositoryResource;
-import org.geogit.rest.repository.SendObjectResource;
+import org.geogit.rest.repository.RepositoryRouter;
+import org.geogit.rest.repository.RestletException;
 import org.geoserver.catalog.Catalog;
 import org.geoserver.ows.util.ResponseUtils;
 import org.geoserver.rest.GeoServerServletConverter;
 import org.geoserver.rest.PageInfo;
 import org.geoserver.rest.RESTDispatcher;
 import org.geoserver.rest.RESTMapping;
-import org.geoserver.rest.RestletException;
 import org.geotools.util.logging.Logging;
 import org.restlet.Router;
 import org.restlet.data.Request;
@@ -64,7 +54,7 @@ public class GeogitDispatcher extends AbstractController {
      */
     static Logger LOG = Logging.getLogger(GeogitDispatcher.class);
 
-    private Catalog catalog;
+    private CatalogRepositoryProvider repositoryProvider;
 
     /**
      * converter for turning servlet requests into resetlet requests.
@@ -77,7 +67,7 @@ public class GeogitDispatcher extends AbstractController {
     private Router router;
 
     public GeogitDispatcher(final Catalog catalog) {
-        this.catalog = catalog;
+        this.repositoryProvider = new CatalogRepositoryProvider(catalog);
         setSupportedMethods(new String[] { METHOD_GET, METHOD_POST, METHOD_PUT, METHOD_DELETE,
                 METHOD_HEAD });
     }
@@ -102,22 +92,8 @@ public class GeogitDispatcher extends AbstractController {
         return router;
     }
 
-    private Router makeRepoRouter() {
-        Router router = new Router();
-        router.attach("/manifest", ManifestResource.class);
-        router.attach("/objects/{id}", new ObjectFinder());
-        router.attach("/batchobjects", new BatchedObjectResource());
-        router.attach("/sendobject", SendObjectResource.class);
-        router.attach("/exists", ObjectExistsResource.class);
-        router.attach("/beginpush", BeginPush.class);
-        router.attach("/endpush", EndPush.class);
-        router.attach("/getdepth", DepthResource.class);
-        router.attach("/getparents", ParentResource.class);
-        router.attach("/affectedfeatures", AffectedFeaturesResource.class);
-        router.attach("/filteredchanges", new FilteredChangesResource());
-        router.attach("/applychanges", new ApplyChangesResource());
-        router.attach("/mergefeature", MergeFeatureResource.class);
-        return router;
+    public static Router makeRepoRouter() {
+        return new RepositoryRouter();
     }
 
     @Override
@@ -170,7 +146,7 @@ public class GeogitDispatcher extends AbstractController {
                 if (!isStarted()) {
                     return;
                 }
-                request.getAttributes().put("catalog", catalog);
+                request.getAttributes().put(RepositoryProvider.KEY, repositoryProvider);
                 // set the page uri's
 
                 // http://host:port/appName
