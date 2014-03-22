@@ -137,15 +137,19 @@
             </goals>
             <configuration>
               <!-- exclude non used classes? -->
-              <minimizeJar>false</minimizeJar>
-              <!--filters>
+              <minimizeJar>false</minimizeJar> <!-- disabled, it misses classes nonetheless -->
+              <filters>
                 <filter>
+                   <!-- 
+                    This filter tells the shade plugin to include all geogit classes,
+                    so that "minimizeJar" above doesn't miss anything when removing unused classes.
+                    -->
                    <artifact>org.geogit:*</artifact>
                    <includes>
                        <include>**</include>
                    </includes>
                 </filter>
-              </filters-->
+              </filters>
               <shadedArtifactAttached>true</shadedArtifactAttached>
               <shadedClassifierName>shaded-plugin</shadedClassifierName> <!-- Any name that makes sense -->
               <transformers>
@@ -155,30 +159,40 @@
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
               </transformers>
               <artifactSet>
-                <!-- 
                 <includes>
+                <!-- 
                   <include>org.geogit:*</include>
                   <include>com.google.guava:guava</include>
                   <include>com.google.inject.extensions:guice-multibindings</include>
                   <include>com.ning:compress-lzf</include>
                   <include>com.google.code.findbugs:jsr305</include>
                   <include>com.sleepycat:je</include>
-                </includes>
                  -->
+                </includes>
                 <excludes>
                   <exclude>org.geotools:*</exclude>
                   <exclude>org.geotools.jdbc:*</exclude>
                   <exclude>org.geoserver:*</exclude>
                   <exclude>junit:junit</exclude>
+                  <exclude>com.google.code.findbugs:jsr305</exclude> <!-- javax.annotation, not needed at runtime -->
+                  <exclude>net.sourceforge.findbugs:jsr305</exclude> <!-- older javax.annotation from geoserver, not needed at runtime -->
+                  <exclude>postgresql:postgresql</exclude> <!-- same as geoserver's -->
+                  <exclude>com.beust:jcommander</exclude> <!-- transitive from geogit-cli, not used here -->
+                  <exclude>jline:jline</exclude> <!-- transitive from geogit-cli, not used here -->
+                  <exclude>com.vividsolutions:jts</exclude> <!-- same as geoserver's -->
+                  <exclude>org.codehaus.jettison:jettison</exclude> <!-- same as geoserver's -->
+                  <exclude>org.neo4j:*</exclude> <!-- we don't want this. Remove this line when geogit #640 is fixed -->
+                  <exclude>com.googlecode.json-simple:json-simple</exclude> <!-- transitive from gt-geojson -->
+
+                  <exclude>commons-configuration:commons-configuration</exclude>
+                  
                   <exclude>log4j:log4j:jar:</exclude>
                   <exclude>javax.servlet:servlet-api</exclude>
-                  <exclude>com.google.code.findbugs:jsr305</exclude> <!-- javax.annotation, not needed at runtime -->
-                  <exclude>net.sourceforge.findbugs:jsr305</exclude>
-                  <exclude>postgresql:postgresql</exclude>
-                  <exclude>javax.media:jai_core</exclude>
-                  <exclude>org.scala-lang:scala-library</exclude>
-                  <exclude>com.beust:jcommander</exclude>
-                  <exclude>jline:jline</exclude>
+                  <exclude>jgridshift:jgridshift</exclude>
+                  <exclude>jdom:jdom</exclude>
+                  <exclude>hsqldb:hsqldb</exclude>
+                  <exclude>net.java.dev.jsr-275</exclude>
+                  <exclude>java3d:vecmath</exclude>
                   <exclude>stax:stax-api</exclude>
                   <exclude>xml-apis:xml-apis</exclude>
                   <exclude>commons-collections:commons-collections</exclude>
@@ -187,27 +201,21 @@
                   <exclude>commons-digester:commons-digester</exclude>
                   <exclude>commons-dbcp:commons-dbcp</exclude>
                   <exclude>commons-lang:commons-lang</exclude>
-                  <exclude>hsqldb:hsqldb</exclude>
-                  <exclude>net.java.dev.jsr-275</exclude>
-                  <exclude>java3d:vecmath</exclude>
-                  <exclude>jdom:jdom</exclude>
-                  <exclude>com.vividsolutions:jts</exclude>
-                  <exclude>jgridshift:jgridshift</exclude>
-                  <exclude>org.neo4j:*</exclude>
+                  <exclude>javax.media:jai_core</exclude>
+                  <exclude>org.scala-lang:scala-library</exclude> <!-- from neo4j. Remove once we get rid of it -->
                 </excludes>
               </artifactSet>
               <relocations>
                 <relocation>
+                  <!-- 
+                    rename the guava package. Remove this relocation and add an exclude 
+                    once geoserver adopts the same guava version than geogit
+                   -->
                   <pattern>com.google.common</pattern>
                   <shadedPattern>shaded.com.google.common</shadedPattern>
-                  <!-- 
-                  <excludes>
-                    <exclude>org.codehaus.plexus.util.xml.Xpp3Dom</exclude>
-                    <exclude>org.codehaus.plexus.util.xml.pull.*</exclude>
-                  </excludes>
-                  -->
                 </relocation>
                 <relocation>
+                  <!-- version conflict with geoserver's -->
                   <pattern>org.slf4j</pattern>
                   <shadedPattern>shaded.org.slf4j</shadedPattern>
                 </relocation>
