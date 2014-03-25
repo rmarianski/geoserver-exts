@@ -482,6 +482,7 @@
     <module>printng</module>
     <module>web</module>
     <module>gsr</module>
+    <module>mongodb</module>
   </modules>
 
   <properties>
