@@ -18,7 +18,7 @@
   <dependencies>
     <dependency>
       <groupId>org.geoserver.importer</groupId>
-      <artifactId>importer-core</artifactId>
+      <artifactId>gs-importer-core</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -33,7 +33,7 @@
     </dependency>
     <dependency>
       <groupId>org.geoserver.importer</groupId>
-      <artifactId>importer-core</artifactId>
+      <artifactId>gs-importer-core</artifactId>
       <version>${project.version}</version>
       <classifier>tests</classifier>
       <scope>test</scope>

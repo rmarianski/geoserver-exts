@@ -23,21 +23,21 @@
 
   <dependency>
    <groupId>org.geoserver.web</groupId>
-   <artifactId>web-app</artifactId>
+   <artifactId>gs-web-app</artifactId>
   </dependency>
   <dependency>
    <groupId>org.geoserver.web</groupId>
-   <artifactId>web-security</artifactId>
+   <artifactId>gs-web-sec-core</artifactId>
   </dependency>
 
   <dependency>
    <groupId>org.geoserver.importer</groupId>
-   <artifactId>importer-web</artifactId>
+   <artifactId>gs-importer-web</artifactId>
    <version>${gs.version}</version>
   </dependency>
   <dependency>
    <groupId>org.geoserver.importer</groupId>
-   <artifactId>importer-rest</artifactId>
+   <artifactId>gs-importer-rest</artifactId>
    <version>${gs.version}</version>
   </dependency>
   <dependency>
@@ -119,7 +119,7 @@
      <dependencies>
        <dependency>
          <groupId>org.geoserver.extension</groupId>
-         <artifactId>control-flow</artifactId>
+         <artifactId>gs-control-flow</artifactId>
        </dependency>
      </dependencies>
    </profile>
@@ -128,7 +128,7 @@
      <dependencies>
        <dependency>
          <groupId>org.geoserver.community</groupId>
-         <artifactId>jdbcconfig</artifactId>
+         <artifactId>gs-jdbcconfig</artifactId>
        </dependency>
      </dependencies>
    </profile>
