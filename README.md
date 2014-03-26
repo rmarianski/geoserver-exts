@@ -20,6 +20,6 @@ Adding a new extension
     &lt;parent&gt;
       &lt;groupId&gt;org.opengeo&lt;/groupId&gt;
       &lt;artifactId&gt;geoserver-exts&lt;/artifactId&gt;
-      &lt;version&gt;2.4-SNAPSHOT&lt;/version&gt;
+      &lt;version&gt;2.5-SNAPSHOT&lt;/version&gt;
     &lt;/parent&gt;
     </pre>
