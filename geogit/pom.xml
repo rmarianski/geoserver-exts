@@ -32,23 +32,26 @@
 
     <dependency>
       <groupId>org.geogit</groupId>
+      <artifactId>geogit-core</artifactId>
+      <version>${geogit.version}</version>
+      <!--exclusions>
+        <exclusion>
+          <groupId>org.geotools</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions-->
+    </dependency>
+    <dependency>
+      <groupId>org.geogit</groupId>
       <artifactId>geogit-geotools</artifactId>
       <version>${geogit.version}</version>
       <exclusions>
         <exclusion>
-          <groupId>org.geotools.jdbc</groupId>
-          <artifactId>gt-jdbc-postgis</artifactId>
+          <groupId>org.geotools</groupId>
+          <artifactId>*</artifactId>
         </exclusion>
         <exclusion>
           <groupId>org.geotools.jdbc</groupId>
-          <artifactId>gt-jdbc-sqlserver</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.geotools.jdbc</groupId>
-          <artifactId>gt-jdbc-oracle</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.neo4j</groupId>
           <artifactId>*</artifactId>
         </exclusion>
       </exclusions>
@@ -58,6 +61,62 @@
       <artifactId>geogit-web-api</artifactId>
       <version>${geogit.version}</version>
     </dependency>
+
+    <!-- 
+      The following are geotools dependencies that geogit uses but we declare ecplicitly
+      here with a provided scope, since we excluded all geotools transitive dependencies
+      in the geogit entries above in order to avoid having duplicates when geogit is tied
+      to a different geotools version than this project.
+     -->
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-geojson</artifactId>
+      <version>${gt.version}</version>
+      <!-- scope>provided</scope--> <!-- not provided, we need it -->
+    </dependency>
+    <dependency>
+      <groupId>org.geotools.jdbc</groupId>
+      <artifactId>gt-jdbc-postgis</artifactId>
+      <version>${gt.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools.jdbc</groupId>
+      <artifactId>gt-jdbc-sqlserver</artifactId>
+      <version>${gt.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools.jdbc</groupId>
+      <artifactId>gt-jdbc-oracle</artifactId>
+      <version>${gt.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-referencing</artifactId>
+      <version>${gt.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-main</artifactId>
+      <version>${gt.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-cql</artifactId>
+      <version>${gt.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-epsg-hsql</artifactId>
+      <version>${gt.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
     <dependency>
       <groupId>org.geoserver</groupId>
       <artifactId>main</artifactId>
@@ -181,7 +240,6 @@
                   <exclude>jline:jline</exclude> <!-- transitive from geogit-cli, not used here -->
                   <exclude>com.vividsolutions:jts</exclude> <!-- same as geoserver's -->
                   <exclude>org.codehaus.jettison:jettison</exclude> <!-- same as geoserver's -->
-                  <exclude>org.neo4j:*</exclude> <!-- we don't want this. Remove this line when geogit #640 is fixed -->
                   <exclude>com.googlecode.json-simple:json-simple</exclude> <!-- transitive from gt-geojson -->
 
                   <exclude>commons-configuration:commons-configuration</exclude>
@@ -202,7 +260,6 @@
                   <exclude>commons-dbcp:commons-dbcp</exclude>
                   <exclude>commons-lang:commons-lang</exclude>
                   <exclude>javax.media:jai_core</exclude>
-                  <exclude>org.scala-lang:scala-library</exclude> <!-- from neo4j. Remove once we get rid of it -->
                 </excludes>
               </artifactSet>
               <relocations>
