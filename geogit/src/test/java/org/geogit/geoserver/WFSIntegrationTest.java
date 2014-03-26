@@ -379,7 +379,8 @@ public class WFSIntegrationTest extends WFSTestSupport {
 
         List<RevCommit> expected = ImmutableList.copyOf(geogit.command(LogOp.class).call());
 
-        File repoDir = helper.repositoryTempFolder.getRoot();
+        File repoDir = new File(helper.repositoryTempFolder.getRoot(), "repo");
+        assertTrue(repoDir.exists() && repoDir.isDirectory());
         // shut down server
         destroyGeoServer();
 
