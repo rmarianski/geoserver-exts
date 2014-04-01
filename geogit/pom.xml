@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.opengeo</groupId>
+    <artifactId>geoserver-exts</artifactId>
+    <version>2.5-SNAPSHOT</version>
+  </parent>
+
+  <groupId>org.opengeo.geoserver</groupId>
+  <artifactId>gs-geogit</artifactId>
+  <packaging>jar</packaging>
+  <name>GeoGit GeoServer integration</name>
+
+  <properties>
+    <geogit.version>0.8-SNAPSHOT</geogit.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+      <version>1.3.9</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>14.0.1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.geogit</groupId>
+      <artifactId>geogit-core</artifactId>
+      <version>${geogit.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.geogit</groupId>
+      <artifactId>geogit-geotools</artifactId>
+      <version>${geogit.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.geogit</groupId>
+      <artifactId>geogit-web-api</artifactId>
+      <version>${geogit.version}</version>
+    </dependency>
+
+    <!-- 
+      The following are geotools dependencies that geogit uses but we declare ecplicitly
+      here with a provided scope, since we excluded all geotools transitive dependencies
+      in the geogit entries above in order to avoid having duplicates when geogit is tied
+      to a different geotools version than this project.
+     -->
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-geojson</artifactId>
+      <version>${gt.version}</version>
+      <!-- scope>provided</scope--> <!-- not provided, we need it -->
+    </dependency>
+    <dependency>
+      <groupId>org.geotools.jdbc</groupId>
+      <artifactId>gt-jdbc-postgis</artifactId>
+      <version>${gt.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools.jdbc</groupId>
+      <artifactId>gt-jdbc-sqlserver</artifactId>
+      <version>${gt.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools.jdbc</groupId>
+      <artifactId>gt-jdbc-oracle</artifactId>
+      <version>${gt.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-referencing</artifactId>
+      <version>${gt.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-main</artifactId>
+      <version>${gt.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-cql</artifactId>
+      <version>${gt.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-epsg-hsql</artifactId>
+      <version>${gt.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools.jdbc</groupId>
+      <artifactId>gt-jdbc-spatialite</artifactId>
+      <version>${gt.version}</version>
+      <!-- scope>provided</scope-->
+    </dependency>
+
+    <dependency>
+      <groupId>org.geoserver</groupId>
+      <artifactId>gs-main</artifactId>
+      <version>${gs.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geoserver</groupId>
+      <artifactId>gs-ows</artifactId>
+      <version>${gs.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geoserver</groupId>
+      <artifactId>gs-rest</artifactId>
+      <version>${gs.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geoserver</groupId>
+      <artifactId>gs-wfs</artifactId>
+      <version>${gs.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geogit</groupId>
+      <artifactId>geogit-core</artifactId>
+      <version>${geogit.version}</version>
+      <classifier>tests</classifier>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geoserver</groupId>
+      <artifactId>gs-main</artifactId>
+      <version>${gs.version}</version>
+      <type>test-jar</type>
+      <classifier>tests</classifier>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.geoserver</groupId>
+      <artifactId>gs-wfs</artifactId>
+      <version>${gs.version}</version>
+      <type>test-jar</type>
+      <classifier>tests</classifier>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>xmlunit</groupId>
+      <artifactId>xmlunit</artifactId>
+      <scope>test</scope>
+    </dependency>    
+    <dependency>
+      <groupId>com.mockrunner</groupId>
+      <artifactId>mockrunner</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.2</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <!-- exclude non used classes? -->
+              <minimizeJar>false</minimizeJar> <!-- disabled, it misses classes nonetheless -->
+              <filters>
+                <filter>
+                   <!-- 
+                    This filter tells the shade plugin to include all geogit classes,
+                    so that "minimizeJar" above doesn't miss anything when removing unused classes.
+                    -->
+                   <artifact>org.geogit:*</artifact>
+                   <includes>
+                       <include>**</include>
+                   </includes>
+                </filter>
+              </filters>
+              <shadedArtifactAttached>true</shadedArtifactAttached>
+              <shadedClassifierName>shaded-plugin</shadedClassifierName> <!-- Any name that makes sense -->
+              <transformers>
+                <!-- 
+                  Merge the contents of META-INF/services files named the same from different jars
+                 -->
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              </transformers>
+              <artifactSet>
+                <includes>
+                  <include>org.geogit:*</include>
+                  <include>com.google.guava:guava</include>
+                  <include>com.google.inject.extensions:guice-multibindings</include>
+                  <include>org.slf4j:slf4j-api</include>
+                  <include>com.google.inject:guice</include>
+                  <include>javax.inject:javax.inject</include>
+                  <include>aopalliance:aopalliance</include>
+                  <include>com.google.inject.extensions:guice-multibindings</include>
+                  <include>com.google.code.gson:gson</include>
+                  <include>com.ning:compress-lzf</include>
+                  <include>com.tinkerpop.blueprints:blueprints-core</include>
+                  <include>com.fasterxml.jackson.datatype:jackson-datatype-json-org</include>
+                  <include>com.fasterxml.jackson.core:jackson-core</include>
+                  <include>com.fasterxml.jackson.core:jackson-databind</include>
+                  <include>com.fasterxml.jackson.core:jackson-annotations</include>
+                  <include>org.json:json</include>
+                  <include>colt:colt</include>
+                  <include>concurrent:concurrent</include>
+                  <include>commons-beanutils:commons-beanutils-core</include>
+                  <include>com.tinkerpop.gremlin:gremlin-java</include>
+                  <include>com.tinkerpop:pipes</include>
+                  <include>org.geogit:geogit-mongodb</include>
+                  <include>org.mongodb:mongo-java-driver</include>
+                  <include>org.geogit:geogit-sqlite-xerial</include>
+                  <include>org.geogit:geogit-sqlite-core</include>
+                  <include>org.xerial:sqlite-jdbc</include>
+                  <include>ch.qos.logback:logback-core</include>
+                  <include>ch.qos.logback:logback-classic</include>
+                  <include>org.slf4j:jul-to-slf4j</include>
+                  <include>net.sf.py4j:py4j</include>
+                  <include>com.sleepycat:je</include>
+                  <include>org.xerial:spatialite-jdbc</include>
+                  <include>org.geotools.jdbc:gt-jdbc-spatialite</include>
+                  <include>org.geotools:gt-geojson</include>
+                </includes>
+              </artifactSet>
+              <relocations>
+                <relocation>
+                  <!-- 
+                    rename the guava package. Remove this relocation and add an exclude 
+                    once geoserver adopts the same guava version than geogit
+                   -->
+                  <pattern>com.google.common</pattern>
+                  <shadedPattern>shaded.com.google.common</shadedPattern>
+                </relocation>
+                <relocation>
+                  <!-- version conflict with geoserver's -->
+                  <pattern>org.slf4j</pattern>
+                  <shadedPattern>shaded.org.slf4j</shadedPattern>
+                </relocation>
+              </relocations>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

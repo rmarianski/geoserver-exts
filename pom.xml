@@ -483,6 +483,7 @@
     <module>web</module>
     <module>gsr</module>
     <module>mongodb</module>
+    <module>geogit</module>
   </modules>
 
   <properties>
