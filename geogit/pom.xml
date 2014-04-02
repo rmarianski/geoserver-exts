@@ -235,9 +235,11 @@
                   <include>org.geogit:geogit-sqlite-xerial</include>
                   <include>org.geogit:geogit-sqlite-core</include>
                   <include>org.xerial:sqlite-jdbc</include>
+                  <!--
                   <include>ch.qos.logback:logback-core</include>
                   <include>ch.qos.logback:logback-classic</include>
                   <include>org.slf4j:jul-to-slf4j</include>
+                   -->
                   <include>net.sf.py4j:py4j</include>
                   <include>com.sleepycat:je</include>
                   <include>org.xerial:spatialite-jdbc</include>
