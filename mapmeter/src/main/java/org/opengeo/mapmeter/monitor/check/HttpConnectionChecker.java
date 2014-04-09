@@ -26,7 +26,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.io.CharStreams;
-import com.google.common.io.Closeables;
+import com.google.common.io.Closer;
 
 public class HttpConnectionChecker implements ConnectionChecker {
 
@@ -96,18 +96,18 @@ public class HttpConnectionChecker implements ConnectionChecker {
     }
 
     public String getResponseBody(GetMethod getMethod) throws IOException {
-        InputStream responseBodyAsStream = null;
-        InputStreamReader inputStreamReader = null;
-        String responseBodyAsString = null;
+        Closer closer = Closer.create();
         try {
-            responseBodyAsStream = getMethod.getResponseBodyAsStream();
-            inputStreamReader = new InputStreamReader(responseBodyAsStream, Charsets.UTF_8);
-            responseBodyAsString = CharStreams.toString(inputStreamReader);
+            InputStream responseBodyAsStream = closer.register(getMethod.getResponseBodyAsStream());
+            InputStreamReader inputStreamReader = closer.register(new InputStreamReader(
+                    responseBodyAsStream, Charsets.UTF_8));
+            String responseBodyAsString = CharStreams.toString(inputStreamReader);
+            return responseBodyAsString;
+        } catch (Throwable e) {
+            throw closer.rethrow(e);
         } finally {
-            Closeables.closeQuietly(inputStreamReader);
-            Closeables.closeQuietly(responseBodyAsStream);
+            closer.close();
         }
-        return responseBodyAsString;
     }
 
     private ConnectionResult createConnectionResultFromJson(int statusCode, JSONObject jsonObject) {

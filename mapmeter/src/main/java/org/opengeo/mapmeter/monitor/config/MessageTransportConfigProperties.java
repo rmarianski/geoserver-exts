@@ -15,7 +15,7 @@ import org.geotools.util.logging.Logging;
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
+import com.google.common.io.Closer;
 import com.google.common.io.Files;
 
 public class MessageTransportConfigProperties implements MessageTransportConfig {
@@ -60,44 +60,48 @@ public class MessageTransportConfigProperties implements MessageTransportConfig 
         Optional<String> systemUpdateUrl = Optional.absent();
         Optional<String> apiKey = Optional.absent();
 
-        BufferedReader fileReader = null;
-
         try {
-            Optional<File> propFile = findControllerPropertiesFile();
+            Closer closer = Closer.create();
+            try {
+                Optional<File> propFile = findControllerPropertiesFile();
 
-            if (propFile.isPresent()) {
-                Properties properties = new Properties();
-                fileReader = Files.newReader(propFile.get(), Charsets.UTF_8);
-                properties.load(fileReader);
+                if (propFile.isPresent()) {
+                    Properties properties = new Properties();
+                    BufferedReader fileReader = closer.register(Files.newReader(propFile.get(),
+                            Charsets.UTF_8));
+                    properties.load(fileReader);
 
-                String storageUrlString = (String) properties.get("url");
-                String checkUrlString = (String) properties.get("checkurl");
-                String systemUpdateUrlString = (String) properties.get("systemupdateurl");
-                String apiKeyString = (String) properties.get("apikey");
+                    String storageUrlString = (String) properties.get("url");
+                    String checkUrlString = (String) properties.get("checkurl");
+                    String systemUpdateUrlString = (String) properties.get("systemupdateurl");
+                    String apiKeyString = (String) properties.get("apikey");
 
-                if (apiKeyString != null) {
-                    apiKey = Optional.of(apiKeyString.trim());
-                } else {
-                    LOGGER.severe("Failure reading 'apikey' property from "
-                            + controllerPropertiesName);
+                    if (apiKeyString != null) {
+                        apiKey = Optional.of(apiKeyString.trim());
+                    } else {
+                        LOGGER.severe("Failure reading 'apikey' property from "
+                                + controllerPropertiesName);
+                    }
+                    if (storageUrlString != null) {
+                        storageUrl = Optional.of(storageUrlString.trim());
+                    }
+                    if (checkUrlString != null) {
+                        checkUrl = Optional.of(checkUrlString.trim());
+                    }
+                    if (systemUpdateUrlString != null) {
+                        systemUpdateUrl = Optional.of(systemUpdateUrlString.trim());
+                    }
                 }
-                if (storageUrlString != null) {
-                    storageUrl = Optional.of(storageUrlString.trim());
-                }
-                if (checkUrlString != null) {
-                    checkUrl = Optional.of(checkUrlString.trim());
-                }
-                if (systemUpdateUrlString != null) {
-                    systemUpdateUrl = Optional.of(systemUpdateUrlString.trim());
-                }
+            } catch (Throwable e) {
+                throw closer.rethrow(e);
+            } finally {
+                closer.close();
             }
         } catch (IOException e) {
             LOGGER.severe("Failure reading: " + controllerPropertiesRelPath + " from data dir");
             if (LOGGER.isLoggable(Level.INFO)) {
                 LOGGER.info(Throwables.getStackTraceAsString(e));
             }
-        } finally {
-            Closeables.closeQuietly(fileReader);
         }
 
         String apiKeyOverrideProperty = GeoServerExtensions.getProperty(MAPMETER_APIKEY_OVERRIDE_PROPERTY_NAME);
@@ -188,12 +192,12 @@ public class MessageTransportConfigProperties implements MessageTransportConfig 
             propFile = loader.createFile(controllerPropertiesRelPath);
         }
 
-        BufferedWriter out = null;
+        Closer closer = Closer.create();
         try {
-            out = Files.newWriter(propFile, Charsets.UTF_8);
+            BufferedWriter out = closer.register(Files.newWriter(propFile, Charsets.UTF_8));
             properties.store(out, null);
         } finally {
-            Closeables.closeQuietly(out);
+            closer.close();
         }
     }
 
