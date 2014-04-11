@@ -35,10 +35,11 @@
           depends-on="extensions">
       <constructor-arg value="monitoring" index="0"/>
       <constructor-arg value="controller.properties" index="1"/>
-      <constructor-arg value="https://app.mapmeter.com/controller/v1/message/store" index="2"/>
-      <constructor-arg value="https://app.mapmeter.com/controller/v1/message/check" index="3"/>
-      <constructor-arg value="https://app.mapmeter.com/controller/v1/server" index="4"/>
-      <constructor-arg ref="resourceLoader" index="5"/>
+      <constructor-arg value="https://app.mapmeter.com" index="2"/>
+      <constructor-arg value="/controller/v1/message/store" index="3"/>
+      <constructor-arg value="/controller/v1/message/check" index="4"/>
+      <constructor-arg value="/controller/v1/server" index="5"/>
+      <constructor-arg ref="resourceLoader" index="6"/>
     </bean>
 
     <bean id="mapmeterRequestDataMapping" class="java.util.concurrent.ConcurrentHashMap"></bean>
