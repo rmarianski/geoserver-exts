@@ -17,6 +17,7 @@ import java.net.URL;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.geogit.api.Context;
 import org.geogit.api.GeoGIT;
 import org.geogit.api.ObjectId;
 import org.geogit.api.Ref;
@@ -56,7 +57,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.inject.Guice;
-import com.google.inject.Injector;
 import com.google.inject.util.Modules;
 import com.mockrunner.mock.web.MockHttpServletResponse;
 
@@ -79,9 +79,10 @@ public class GeoServerRESTIntegrationTest extends GeoServerSystemTestSupport {
         helper = new RepositoryTestCase() {
 
             @Override
-            protected Injector createInjector() {
-                return Guice.createInjector(Modules.override(new GeogitModule(),
-                        new CachingModule()).with(new JEStorageModule()));
+            protected Context createInjector() {
+                return Guice.createInjector(
+                        Modules.override(new GeogitModule(), new CachingModule()).with(
+                                new JEStorageModule())).getInstance(Context.class);
             }
 
             @Override

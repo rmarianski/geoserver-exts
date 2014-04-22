@@ -16,6 +16,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.geogit.api.Context;
 import org.geogit.api.GeoGIT;
 import org.geogit.api.NodeRef;
 import org.geogit.api.RevCommit;
@@ -54,7 +55,6 @@ import org.w3c.dom.Document;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Guice;
-import com.google.inject.Injector;
 import com.google.inject.util.Modules;
 
 @TestSetup(run = TestSetupFrequency.REPEAT)
@@ -75,9 +75,10 @@ public class WFSIntegrationTest extends WFSTestSupport {
         helper = new RepositoryTestCase() {
 
             @Override
-            protected Injector createInjector() {
-                return Guice.createInjector(Modules.override(new GeogitModule(),
-                        new CachingModule()).with(new JEStorageModule()));
+            protected Context createInjector() {
+                return Guice.createInjector(
+                        Modules.override(new GeogitModule(), new CachingModule()).with(
+                                new JEStorageModule())).getInstance(Context.class);
             }
 
             @Override
