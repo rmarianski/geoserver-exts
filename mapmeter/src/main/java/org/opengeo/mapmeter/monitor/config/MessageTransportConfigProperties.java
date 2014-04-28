@@ -230,6 +230,8 @@ public class MessageTransportConfigProperties implements MessageTransportConfig 
         try {
             BufferedWriter out = closer.register(Files.newWriter(propFile, Charsets.UTF_8));
             properties.store(out, null);
+        } catch (Throwable e) {
+            throw closer.rethrow(e);
         } finally {
             closer.close();
         }
