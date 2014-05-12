@@ -83,6 +83,17 @@
       <constructor-arg ref="mapmeterSystemDataTransport" index="1"></constructor-arg>
     </bean>
 
+    <bean id="mapmeterSaasHttpClient" class="org.apache.commons.httpclient.HttpClient">
+    </bean>
+
+    <bean id="mapmeterSaasCredentialsDao" class="org.opengeo.mapmeter.monitor.saas.MapmeterSaasCredentialsDao">
+    </bean>
+
+    <bean id="mapmeterSaasService" class="org.opengeo.mapmeter.monitor.saas.MapmeterSaasServiceImpl">
+      <constructor-arg ref="mapmeterSaasHttpClient" index="0"></constructor-arg>
+      <constructor-arg ref="mapmeterSaasCredentialsDao" index="1"></constructor-arg>
+    </bean>
+
     <bean class="org.geoserver.web.MenuPageInfo" id="mapmeterMenuPageLink">
     <property name="id" value="mapmeterMenuPageId"/>
     <property name="titleKey" value="MapmeterPage.title"/>

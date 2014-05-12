@@ -22,6 +22,8 @@ import org.geotools.util.logging.Logging;
 import org.opengeo.mapmeter.monitor.check.ConnectionChecker;
 import org.opengeo.mapmeter.monitor.check.ConnectionResult;
 import org.opengeo.mapmeter.monitor.config.MessageTransportConfig;
+import org.opengeo.mapmeter.monitor.saas.MapmeterEnableResult;
+import org.opengeo.mapmeter.monitor.saas.MapmeterSaasService;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
@@ -36,6 +38,8 @@ public class MapmeterPage extends GeoServerSecuredPage {
 
     private final transient ConnectionChecker connectionChecker;
 
+    private final transient MapmeterSaasService mapmeterSaasService;
+
     public MapmeterPage() {
         GeoServerApplication geoServerApplication = getGeoServerApplication();
         this.messageTransportConfig = geoServerApplication.getBeanOfType(MessageTransportConfig.class);
@@ -45,6 +49,10 @@ public class MapmeterPage extends GeoServerSecuredPage {
         this.connectionChecker = geoServerApplication.getBeanOfType(ConnectionChecker.class);
         if (connectionChecker == null) {
             throw new IllegalStateException("Error finding ConnectionChecker bean");
+        }
+        this.mapmeterSaasService = geoServerApplication.getBeanOfType(MapmeterSaasService.class);
+        if (mapmeterSaasService == null) {
+            throw new IllegalStateException("Error finding MapmeterSaasService bean");
         }
         addElements();
     }
@@ -63,6 +71,9 @@ public class MapmeterPage extends GeoServerSecuredPage {
         addConnectionCheckForm();
         apiKeyForm.setVisible(!isApiKeyOverridden);
         apiWarning.setVisible(isApiKeyOverridden);
+
+        // TODO properly make this conditional
+        addMapmeterEnableForm();
     }
 
     private WebMarkupContainer addApiKeyEnvWarning(String apiKey) {
@@ -158,6 +169,33 @@ public class MapmeterPage extends GeoServerSecuredPage {
         add(apiKeyForm);
 
         return apiKeyForm;
+    }
+
+    public Form<?> addMapmeterEnableForm() {
+        Form<?> enableMapmeterForm = new Form<Void>("enable-mapmeter-form");
+        AjaxButton enableMapmeterButton = new IndicatingAjaxButton("enable-mapmeter-button") {
+
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            protected void onSubmit(AjaxRequestTarget target, Form<?> form) {
+                try {
+                    MapmeterEnableResult mapmeterEnableResult = mapmeterSaasService.enableMapmeter();
+                    if (mapmeterEnableResult.isError()) {
+                        Exception error = mapmeterEnableResult.getError();
+                        System.err.println(Throwables.getStackTraceAsString(error));
+                    } else {
+                        String apiKey = mapmeterEnableResult.getApiKey();
+                        System.err.println("Got api key from mapmeter service: " + apiKey);
+                    }
+                } catch (IOException e) {
+                    LOGGER.log(Level.SEVERE, e.getMessage(), e);
+                }
+            }
+        };
+        enableMapmeterForm.add(enableMapmeterButton);
+        add(enableMapmeterForm);
+        return enableMapmeterForm;
     }
 
     private void save(String apiKey) throws IOException {
