@@ -3,22 +3,15 @@ package org.opengeo.mapmeter.monitor.saas;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.util.Map;
 
 import net.sf.json.JSONObject;
 
-import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
-import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Closer;
 
@@ -26,12 +19,8 @@ public class MapmeterSaasServiceImpl implements MapmeterSaasService {
 
     private final HttpClient httpClient;
 
-    private final MapmeterSaasCredentialsDao mapmeterSaasCredentialsDao;
-
-    public MapmeterSaasServiceImpl(HttpClient httpClient,
-            MapmeterSaasCredentialsDao mapmeterSaasCredentialsDao) {
+    public MapmeterSaasServiceImpl(HttpClient httpClient) {
         this.httpClient = httpClient;
-        this.mapmeterSaasCredentialsDao = mapmeterSaasCredentialsDao;
     }
 
     private void closeIdleConnections() {
@@ -67,10 +56,6 @@ public class MapmeterSaasServiceImpl implements MapmeterSaasService {
             postMethod.releaseConnection();
             closeIdleConnections();
         }
-    }
-
-    @Override
-    public MapmeterEnableResult enableMapmeter() throws IOException {
     }
 
     @SuppressWarnings("unchecked")

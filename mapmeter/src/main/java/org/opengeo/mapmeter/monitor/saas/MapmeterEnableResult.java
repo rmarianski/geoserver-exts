@@ -1,36 +1,44 @@
 package org.opengeo.mapmeter.monitor.saas;
 
-import com.google.common.base.Optional;
-
 public class MapmeterEnableResult {
 
-    private final Optional<Exception> error;
+    private final String serverApiKey;
 
-    private final Optional<String> apiKey;
+    private final String username;
 
-    public MapmeterEnableResult(Optional<Exception> error, Optional<String> apiKey) {
-        this.error = error;
-        this.apiKey = apiKey;
+    private final String password;
+
+    private final String externalUserId;
+
+    private final String orgName;
+
+    public MapmeterEnableResult(String serverApiKey, String username, String password,
+            String externalUserId, String orgName) {
+        this.serverApiKey = serverApiKey;
+        this.username = username;
+        this.password = password;
+        this.externalUserId = externalUserId;
+        this.orgName = orgName;
     }
 
-    public static MapmeterEnableResult fromError(Exception error) {
-        return new MapmeterEnableResult(Optional.<Exception> of(error), Optional.<String> absent());
+    public String getServerApiKey() {
+        return serverApiKey;
     }
 
-    public static MapmeterEnableResult success(String apiKey) {
-        return new MapmeterEnableResult(Optional.<Exception> absent(), Optional.of(apiKey));
+    public String getUsername() {
+        return username;
     }
 
-    public boolean isError() {
-        return error.isPresent();
+    public String getPassword() {
+        return password;
     }
 
-    public Exception getError() {
-        return error.get();
+    public String getExternalUserId() {
+        return externalUserId;
     }
 
-    public String getApiKey() {
-        return apiKey.get();
+    public String getOrgName() {
+        return orgName;
     }
 
 }

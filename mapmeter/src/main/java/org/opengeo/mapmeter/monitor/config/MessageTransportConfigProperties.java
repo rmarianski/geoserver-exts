@@ -156,6 +156,11 @@ public class MessageTransportConfigProperties implements MessageTransportConfig 
     }
 
     @Override
+    public String getBaseUrl() {
+        return baseUrl.or(defaultBaseUrl);
+    }
+
+    @Override
     public String getStorageUrl() {
         return storageUrl.or(maybeUrlPrefix(storageSuffix)).or(defaultUrlPrefix(storageSuffix));
     }
@@ -242,10 +247,7 @@ public class MessageTransportConfigProperties implements MessageTransportConfig 
         return apiKeyOverride.isPresent();
     }
 
-    public Optional<String> getBaseUrl() {
-        return baseUrl;
-    }
-
+    @Override
     public void setBaseUrl(String baseUrl) {
         this.baseUrl = Optional.of(baseUrl);
     }

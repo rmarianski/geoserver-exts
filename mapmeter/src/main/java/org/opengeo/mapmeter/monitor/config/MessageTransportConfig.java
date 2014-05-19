@@ -6,6 +6,11 @@ import com.google.common.base.Optional;
 
 public interface MessageTransportConfig {
 
+    // base url for mapmeter service
+    String getBaseUrl();
+
+    void setBaseUrl(String baseUrl);
+
     // this is where messages will be persisted
     String getStorageUrl();
 

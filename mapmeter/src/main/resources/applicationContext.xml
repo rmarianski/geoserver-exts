@@ -91,7 +91,11 @@
 
     <bean id="mapmeterSaasService" class="org.opengeo.mapmeter.monitor.saas.MapmeterSaasServiceImpl">
       <constructor-arg ref="mapmeterSaasHttpClient" index="0"></constructor-arg>
-      <constructor-arg ref="mapmeterSaasCredentialsDao" index="1"></constructor-arg>
+    </bean>
+
+    <bean id="mapmeterService" class="org.opengeo.mapmeter.monitor.saas.MapmeterService">
+      <constructor-arg ref="mapmeterSaasService" index="0"></constructor-arg>
+      <constructor-arg ref="mapmeterMessageHttpTransportConfig" index="1"></constructor-arg>
     </bean>
 
     <bean class="org.geoserver.web.MenuPageInfo" id="mapmeterMenuPageLink">

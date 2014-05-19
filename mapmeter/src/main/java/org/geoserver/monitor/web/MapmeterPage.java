@@ -23,7 +23,8 @@ import org.opengeo.mapmeter.monitor.check.ConnectionChecker;
 import org.opengeo.mapmeter.monitor.check.ConnectionResult;
 import org.opengeo.mapmeter.monitor.config.MessageTransportConfig;
 import org.opengeo.mapmeter.monitor.saas.MapmeterEnableResult;
-import org.opengeo.mapmeter.monitor.saas.MapmeterSaasService;
+import org.opengeo.mapmeter.monitor.saas.MapmeterSaasException;
+import org.opengeo.mapmeter.monitor.saas.MapmeterService;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
@@ -38,7 +39,11 @@ public class MapmeterPage extends GeoServerSecuredPage {
 
     private final transient ConnectionChecker connectionChecker;
 
-    private final transient MapmeterSaasService mapmeterSaasService;
+    private final transient MapmeterService mapmeterService;
+
+    private RequiredTextField<String> apiKeyField;
+
+    private Form<?> apiKeyForm;
 
     public MapmeterPage() {
         GeoServerApplication geoServerApplication = getGeoServerApplication();
@@ -50,8 +55,8 @@ public class MapmeterPage extends GeoServerSecuredPage {
         if (connectionChecker == null) {
             throw new IllegalStateException("Error finding ConnectionChecker bean");
         }
-        this.mapmeterSaasService = geoServerApplication.getBeanOfType(MapmeterSaasService.class);
-        if (mapmeterSaasService == null) {
+        this.mapmeterService = geoServerApplication.getBeanOfType(MapmeterService.class);
+        if (mapmeterService == null) {
             throw new IllegalStateException("Error finding MapmeterSaasService bean");
         }
         addElements();
@@ -66,7 +71,7 @@ public class MapmeterPage extends GeoServerSecuredPage {
         }
         String apiKey = maybeApiKey.or("");
 
-        Form<?> apiKeyForm = addApiKeyForm(apiKey);
+        addApiKeyForm(apiKey);
         WebMarkupContainer apiWarning = addApiKeyEnvWarning(apiKey);
         addConnectionCheckForm();
         apiKeyForm.setVisible(!isApiKeyOverridden);
@@ -128,10 +133,10 @@ public class MapmeterPage extends GeoServerSecuredPage {
     }
 
     public Form<?> addApiKeyForm(String apiKey) {
-        Form<?> apiKeyForm = new Form<Void>("apikey-form");
+        apiKeyForm = new Form<Void>("apikey-form");
 
-        final RequiredTextField<String> apiKeyField = new RequiredTextField<String>("apikey-field",
-                Model.of(apiKey));
+        apiKeyField = new RequiredTextField<String>("apikey-field", Model.of(apiKey));
+        apiKeyField.setOutputMarkupId(true);
         apiKeyForm.add(apiKeyField);
 
         apiKeyForm.add(new FeedbackPanel("apikey-feedback"));
@@ -142,7 +147,7 @@ public class MapmeterPage extends GeoServerSecuredPage {
 
             @Override
             protected void onSubmit(AjaxRequestTarget target, Form<?> form) {
-                String apiKey = apiKeyField.getModelObject().trim();
+                String apiKey = apiKeyField.getModel().getObject().trim();
                 try {
                     save(apiKey);
                     form.info("API key saved");
@@ -180,16 +185,14 @@ public class MapmeterPage extends GeoServerSecuredPage {
             @Override
             protected void onSubmit(AjaxRequestTarget target, Form<?> form) {
                 try {
-                    MapmeterEnableResult mapmeterEnableResult = mapmeterSaasService.enableMapmeter();
-                    if (mapmeterEnableResult.isError()) {
-                        Exception error = mapmeterEnableResult.getError();
-                        System.err.println(Throwables.getStackTraceAsString(error));
-                    } else {
-                        String apiKey = mapmeterEnableResult.getApiKey();
-                        System.err.println("Got api key from mapmeter service: " + apiKey);
-                    }
+                    MapmeterEnableResult mapmeterEnableResult = mapmeterService.startFreeTrial();
+                    String apikey = mapmeterEnableResult.getServerApiKey();
+                    apiKeyField.getModel().setObject(apikey);
+                    target.addComponent(apiKeyField);
                 } catch (IOException e) {
                     LOGGER.log(Level.SEVERE, e.getMessage(), e);
+                } catch (MapmeterSaasException e) {
+                    LOGGER.log(Level.FINER, e.getMessage(), e);
                 }
             }
         };

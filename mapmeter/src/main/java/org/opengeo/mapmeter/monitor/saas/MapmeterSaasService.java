@@ -6,7 +6,4 @@ public interface MapmeterSaasService {
 
     MapmeterSaasResponse createAnonymousTrial() throws IOException;
 
-    // TODO move this to a separate wrapper interface
-    MapmeterEnableResult enableMapmeter() throws IOException;
-
 }
