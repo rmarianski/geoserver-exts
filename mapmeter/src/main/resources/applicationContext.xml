@@ -97,6 +97,21 @@
       <constructor-arg ref="mapmeterMessageHttpTransportConfig" index="1"></constructor-arg>
     </bean>
 
+    <bean id="mapmeterDataResource" class="org.geoserver.monitor.rest.MapmeterDataResource">
+      <constructor-arg ref="mapmeterService" index="0"></constructor-arg>
+    </bean>
+
+    <bean id="mapmeterRestMapping" class="org.geoserver.rest.RESTMapping">
+      <property name="routes">
+        <map>
+          <entry>
+            <key><value>/mapmeter/data.{format}</value></key>
+            <value>mapmeterDataResource</value>
+          </entry>
+        </map>
+      </property>
+    </bean>
+
     <bean class="org.geoserver.web.MenuPageInfo" id="mapmeterMenuPageLink">
     <property name="id" value="mapmeterMenuPageId"/>
     <property name="titleKey" value="MapmeterPage.title"/>

@@ -11,6 +11,7 @@ import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
 import org.apache.wicket.extensions.ajax.markup.html.IndicatingAjaxButton;
 import org.apache.wicket.extensions.ajax.markup.html.IndicatingAjaxLink;
+import org.apache.wicket.markup.html.CSSPackageResource;
 import org.apache.wicket.markup.html.JavascriptPackageResource;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
@@ -62,6 +63,8 @@ public class MapmeterPage extends GeoServerSecuredPage {
             throw new IllegalStateException("Error finding MapmeterSaasService bean");
         }
         addElements();
+        add(CSSPackageResource.getHeaderContribution(MapmeterPage.class, "mapmeter.css"));
+        add(JavascriptPackageResource.getHeaderContribution(MapmeterPage.class, "d3.js"));
         add(JavascriptPackageResource.getHeaderContribution(MapmeterPage.class, "mapmeter.js"));
     }
 
