@@ -1,6 +1,7 @@
 package org.geoserver.monitor.web;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -10,6 +11,7 @@ import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.ajax.markup.html.form.AjaxButton;
 import org.apache.wicket.extensions.ajax.markup.html.IndicatingAjaxButton;
 import org.apache.wicket.extensions.ajax.markup.html.IndicatingAjaxLink;
+import org.apache.wicket.markup.html.JavascriptPackageResource;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.Form;
@@ -60,6 +62,7 @@ public class MapmeterPage extends GeoServerSecuredPage {
             throw new IllegalStateException("Error finding MapmeterSaasService bean");
         }
         addElements();
+        add(JavascriptPackageResource.getHeaderContribution(MapmeterPage.class, "mapmeter.js"));
     }
 
     private void addElements() {
@@ -79,6 +82,28 @@ public class MapmeterPage extends GeoServerSecuredPage {
 
         // TODO properly make this conditional
         addMapmeterEnableForm();
+
+        // TODO testing
+        addTestFetchData();
+    }
+
+    private void addTestFetchData() {
+        Form<?> testMapmeterForm = new Form<Void>("test-mapmeter-form");
+        AjaxLink<?> testMapmeterButton = new IndicatingAjaxLink<Void>("test-mapmeter-button") {
+
+            @Override
+            public void onClick(AjaxRequestTarget target) {
+                try {
+                    Map<String, Object> mapmeterData = mapmeterService.fetchMapmeterData();
+                    System.err.println("got it!");
+                } catch (IOException e) {
+                    System.err.println("exception!");
+                    e.printStackTrace();
+                }
+            }
+        };
+        testMapmeterForm.add(testMapmeterButton);
+        add(testMapmeterForm);
     }
 
     private WebMarkupContainer addApiKeyEnvWarning(String apiKey) {

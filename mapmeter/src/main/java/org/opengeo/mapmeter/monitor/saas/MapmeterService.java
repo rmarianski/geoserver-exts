@@ -1,6 +1,7 @@
 package org.opengeo.mapmeter.monitor.saas;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.Map;
 
 import org.opengeo.mapmeter.monitor.config.MessageTransportConfig;
@@ -57,6 +58,21 @@ public class MapmeterService {
         }
 
         return new MapmeterEnableResult(apiKey, username, password, externalUserId, orgName);
+    }
+
+    public Map<String, Object> fetchMapmeterData() throws IOException {
+        // TODO
+        String apiKey = "8e7ef320-dfa1-11e3-9a37-57733ddc417f";
+        String username = "anonymous-721ce53b-b3ba-42b0-bee8-450a1d09ba8d@example.com";
+        String password = "49dbea5b-65c9-47f4-a173-19bef63511c0";
+        MapmeterSaasCredentials mapmeterSaasCredentials = new MapmeterSaasCredentials(username,
+                password);
+        Date end = new Date();
+        Date start = new Date(end.getTime() - (1000 * 60 * 60 * 24 * 14));
+        MapmeterSaasResponse saasResponse = mapmeterSaasService.fetchData(mapmeterSaasCredentials,
+                apiKey, start, end);
+        Map<String, Object> response = saasResponse.getResponse();
+        return response;
     }
 
 }

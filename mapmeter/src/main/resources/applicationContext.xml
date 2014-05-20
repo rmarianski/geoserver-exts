@@ -89,8 +89,7 @@
     <bean id="mapmeterSaasCredentialsDao" class="org.opengeo.mapmeter.monitor.saas.MapmeterSaasCredentialsDao">
     </bean>
 
-    <bean id="mapmeterSaasService" class="org.opengeo.mapmeter.monitor.saas.MapmeterSaasServiceImpl">
-      <constructor-arg ref="mapmeterSaasHttpClient" index="0"></constructor-arg>
+    <bean id="mapmeterSaasService" class="org.opengeo.mapmeter.monitor.saas.MapmeterSaasService">
     </bean>
 
     <bean id="mapmeterService" class="org.opengeo.mapmeter.monitor.saas.MapmeterService">
