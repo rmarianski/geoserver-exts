@@ -113,13 +113,65 @@
     </bean>
 
     <bean class="org.geoserver.web.MenuPageInfo" id="mapmeterMenuPageLink">
-    <property name="id" value="mapmeterMenuPageId"/>
-    <property name="titleKey" value="MapmeterPage.title"/>
-    <property name="descriptionKey" value="MapmeterPage.description"/>
-    <property name="componentClass" value="org.geoserver.monitor.web.MapmeterPage"/>
-<!--     <property name="icon" value="imgs/some-image.png"/> -->
-    <property name="category" ref="monitorCategory"/>
-    <property name="order" value="50"/>
-</bean>
+      <property name="id" value="mapmeterMenuPageId"/>
+      <property name="titleKey" value="MapmeterPage.title"/>
+      <property name="descriptionKey" value="MapmeterPage.description"/>
+      <property name="componentClass" value="org.geoserver.web.MapmeterPage"/>
+      <property name="category" ref="monitorCategory"/>
+      <property name="order" value="50"/>
+    </bean>
+
+    <bean id="mapmeterCss" class="org.geoserver.web.ClassLimitingHeaderContribution">
+      <constructor-arg>
+        <set>
+          <value>org.geoserver.web.GeoServerHomePage</value>
+          <value>org.geoserver.web.MapmeterPage</value>
+        </set>
+      </constructor-arg>
+      <property name="scope" value="org.geoserver.web.GeoServerHomePage"/>
+      <property name="CSSFilename" value="mapmeter.css"/>
+    </bean>
+
+    <bean id="mapmeterJsD3" class="org.geoserver.web.ClassLimitingHeaderContribution">
+      <constructor-arg>
+        <set>
+          <value>org.geoserver.web.GeoServerHomePage</value>
+          <value>org.geoserver.web.MapmeterPage</value>
+        </set>
+      </constructor-arg>
+      <property name="scope" value="org.geoserver.web.GeoServerHomePage"/>
+      <property name="javaScriptFilename" value="d3.js"/>
+    </bean>
+
+    <bean id="mapmeterJsMapmeter" class="org.geoserver.web.ClassLimitingHeaderContribution">
+      <constructor-arg>
+        <set>
+          <value>org.geoserver.web.GeoServerHomePage</value>
+          <value>org.geoserver.web.MapmeterPage</value>
+        </set>
+      </constructor-arg>
+      <property name="scope" value="org.geoserver.web.GeoServerHomePage"/>
+      <property name="javaScriptFilename" value="mapmeter.js"/>
+    </bean>
+
+    <bean id="mapmeterHomeJs" class="org.geoserver.web.ClassLimitingHeaderContribution">
+      <constructor-arg>
+        <set>
+          <value>org.geoserver.web.GeoServerHomePage</value>
+        </set>
+      </constructor-arg>
+      <property name="scope" value="org.geoserver.web.GeoServerHomePage"/>
+      <property name="javaScriptFilename" value="mapmeterHome.js"/>
+    </bean>
+
+    <bean id="mapmeterPageJs" class="org.geoserver.web.ClassLimitingHeaderContribution">
+      <constructor-arg>
+        <set>
+          <value>org.geoserver.web.MapmeterPage</value>
+        </set>
+      </constructor-arg>
+      <property name="scope" value="org.geoserver.web.GeoServerHomePage"/>
+      <property name="javaScriptFilename" value="mapmeterPage.js"/>
+    </bean>
 
 </beans>

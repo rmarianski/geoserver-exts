@@ -1,6 +1,7 @@
 #mapmeter-chart {
-    width: 100%;
-    height: 400px;
+    width: 500px;
+    height: 150px;
+    clear: both;
 }
 
 path.line {
@@ -10,11 +11,6 @@ path.line {
 }
 path.area {
   fill: #e7e7e7;
-}
-line.avg {
-  stroke: rgba(0, 0, 0, 0.4);
-  stroke-width: 2px;
-  stroke-dasharray: 2,3;
 }
 .axis {
   shape-rendering: crispEdges;
@@ -27,6 +23,7 @@ line.avg {
 }
 .x.axis path {
   stroke: #999;
+  fill: none;
 }
 .x.axis text,
 .y.axis text {

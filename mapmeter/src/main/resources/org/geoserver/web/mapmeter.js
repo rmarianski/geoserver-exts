@@ -1,18 +1,27 @@
 (function() {
 
-  var mapmeter = window.mapmeter || {};
+  var mapmeter = window.mapmeter = window.mapmeter || {};
+
+  mapmeter.fetchDataAndDrawChart = function(domElt) {
+    mapmeter.fetchData(function(mapmeterData) {
+      mapmeter.drawChart(domElt, mapmeterData);
+    });
+  };
 
   mapmeter.fetchData = function(cb) {
     $.getJSON('../rest/mapmeter/data.json', cb);
   };
 
   mapmeter.drawChart = function(domElt, mapmeterData) {
-    var stats = data;
+    var stats = mapmeterData;
 
     // TODO fix this
-    var eltSpec = '#mapmeter-chart';
-    var jqueryElt = $(eltSpec);
-    var d3Container = d3.select(eltSpec);
+    //var eltSpec = '#mapmeter-chart';
+    //var jqueryElt = $(eltSpec);
+    //var d3Container = d3.select(eltSpec);
+
+    var jqueryElt = $(domElt);
+    var d3Container = d3.select(domElt);
 
     // 1. set up the elements for the chart
     // 2. inject the data from the json response
@@ -23,19 +32,17 @@
     // set up all the elements needed for d3
     var xScale = d3.time.scale().range([0, width]),
         yScale = d3.scale.linear().range([height, 0]),
-        xAxis = d3.svg.axis().scale(xScale).ticks(4),
-        yAxis = d3.svg.axis().scale(yScale).ticks(3).orient('left');
+        xAxis = d3.svg.axis().scale(xScale).ticks(7),
+        yAxis = d3.svg.axis().scale(yScale).ticks(5).orient('left');
 
     var yFormat = d3.format(',f');
 
     var area = d3.svg.area()
-      .interpolate('monotone')
       .x(function(d) { return xScale(d.date); })
       .y0(height)
       .y1(function(d) { return yScale(d.value); });
 
     var line = d3.svg.line()
-      .interpolate('monotone')
       .x(function(d) { return xScale(d.date); })
       .y(function(d) { return yScale(d.value); });
 
@@ -105,5 +112,5 @@
     xAxisEl.call(xAxis);
     yAxisEl.call(yAxis);
     pathEl.attr('d', line(values));
-  }
+  };
 }());
