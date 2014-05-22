@@ -19,6 +19,10 @@ public class MapmeterSaasException extends Exception {
         this.message = message;
     }
 
+    public MapmeterSaasException(MapmeterSaasResponse mapmeterSaasResponse, String message) {
+        this(mapmeterSaasResponse.getStatusCode(), mapmeterSaasResponse.getResponse(), message);
+    }
+
     public static long getSerialversionuid() {
         return serialVersionUID;
     }

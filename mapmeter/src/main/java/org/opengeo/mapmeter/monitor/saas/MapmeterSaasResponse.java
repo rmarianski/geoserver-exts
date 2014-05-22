@@ -22,4 +22,8 @@ public class MapmeterSaasResponse {
         return response;
     }
 
+    public boolean isErrorStatus() {
+        return statusCode < 200 || statusCode >= 300;
+    }
+
 }

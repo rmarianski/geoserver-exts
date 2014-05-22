@@ -6,34 +6,47 @@ import java.util.Map;
 
 import org.opengeo.mapmeter.monitor.config.MessageTransportConfig;
 
+import com.google.common.base.Optional;
+
 public class MapmeterService {
 
     private final MapmeterSaasService mapmeterSaasService;
 
     private final MessageTransportConfig messageTransportConfig;
 
+    private final MapmeterSaasCredentialsDao mapmeterSaasCredentialsDao;
+
+    private final int daysOfDataToFetch;
+
     public MapmeterService(MapmeterSaasService mapmeterSaasService,
-            MessageTransportConfig messageTransportConfig) {
+            MessageTransportConfig messageTransportConfig,
+            MapmeterSaasCredentialsDao mapmeterSaasCredentialsDao, int daysOfDataToFetch) {
         this.mapmeterSaasService = mapmeterSaasService;
         this.messageTransportConfig = messageTransportConfig;
+        this.mapmeterSaasCredentialsDao = mapmeterSaasCredentialsDao;
+        this.daysOfDataToFetch = daysOfDataToFetch;
     }
 
-    // TODO void? callers can catch exceptions to handle problems
-    // this can also take care of saving the data everywhere it needs to
     public MapmeterEnableResult startFreeTrial() throws MapmeterSaasException, IOException {
-        // fetch user credentials
-        // if no user, call create anonymous user
-        // if no saved org, call create anonymous org
-        // if no saved server, call create server
-        // check if server is already active? and if so, throw exception?
+        String baseUrl;
+        synchronized (messageTransportConfig) {
+            Optional<String> existingApiKey = messageTransportConfig.getApiKey();
+            baseUrl = messageTransportConfig.getBaseUrl();
+            if (existingApiKey.isPresent()) {
+                // TODO
+                throw new IllegalStateException(
+                        "Mapmeter already configured but free trial requested.");
+            }
+        }
 
         // TODO sanity check on whether api key is already configured before proceeding?
-        MapmeterSaasResponse saasResponse = mapmeterSaasService.createAnonymousTrial();
-        int statusCode = saasResponse.getStatusCode();
-        Map<String, Object> response = saasResponse.getResponse();
-        if (statusCode < 200 || statusCode > 299) {
-            throw new MapmeterSaasException(statusCode, response, "Invalid status code");
+        MapmeterSaasResponse saasResponse = mapmeterSaasService.createAnonymousTrial(baseUrl);
+        if (saasResponse.isErrorStatus()) {
+            throw new MapmeterSaasException(saasResponse,
+                    "Error response from Mapmeter starting free trial.");
         }
+
+        Map<String, Object> response = saasResponse.getResponse();
 
         // TODO error checking on response
         @SuppressWarnings("unchecked")
@@ -51,26 +64,42 @@ public class MapmeterService {
 
         String apiKey = (String) server.get("apiKey");
 
-        // persist mapmeter external user id, username, and password
+        // TODO persist mapmeter external user id, username, and password
         synchronized (messageTransportConfig) {
             messageTransportConfig.setApiKey(apiKey);
             messageTransportConfig.save();
         }
 
+        MapmeterSaasCredentials mapmeterSaasCredentials = new MapmeterSaasCredentials(username,
+                password);
+        mapmeterSaasCredentialsDao.saveMapmeterCredentials(mapmeterSaasCredentials);
+
         return new MapmeterEnableResult(apiKey, username, password, externalUserId, orgName);
     }
 
     public Map<String, Object> fetchMapmeterData() throws IOException {
-        // TODO
-        String apiKey = "8e7ef320-dfa1-11e3-9a37-57733ddc417f";
-        String username = "anonymous-721ce53b-b3ba-42b0-bee8-450a1d09ba8d@example.com";
-        String password = "49dbea5b-65c9-47f4-a173-19bef63511c0";
-        MapmeterSaasCredentials mapmeterSaasCredentials = new MapmeterSaasCredentials(username,
-                password);
+        Optional<String> maybeApiKey;
+        String baseUrl;
+        synchronized (messageTransportConfig) {
+            baseUrl = messageTransportConfig.getBaseUrl();
+            maybeApiKey = messageTransportConfig.getApiKey();
+            if (!maybeApiKey.isPresent()) {
+                throw new IllegalStateException("No api key configured, but asked to fetch data.");
+            }
+        }
+        Optional<MapmeterSaasCredentials> maybeMapmeterCredentials = mapmeterSaasCredentialsDao.findMapmeterCredentials();
+        if (!maybeMapmeterCredentials.isPresent()) {
+            throw new IllegalStateException(
+                    "No mapmeter credentials found, but asked to fetch data.");
+        }
+
+        String apiKey = maybeApiKey.get();
+        MapmeterSaasCredentials mapmeterSaasCredentials = maybeMapmeterCredentials.get();
+
         Date end = new Date();
-        Date start = new Date(end.getTime() - (1000 * 60 * 60 * 24 * 14));
-        MapmeterSaasResponse saasResponse = mapmeterSaasService.fetchData(mapmeterSaasCredentials,
-                apiKey, start, end);
+        Date start = new Date(end.getTime() - (1000 * 60 * 60 * 24 * daysOfDataToFetch));
+        MapmeterSaasResponse saasResponse = mapmeterSaasService.fetchData(baseUrl,
+                mapmeterSaasCredentials, apiKey, start, end);
         Map<String, Object> response = saasResponse.getResponse();
         return response;
     }

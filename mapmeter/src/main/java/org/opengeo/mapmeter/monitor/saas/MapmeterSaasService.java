@@ -40,10 +40,8 @@ public class MapmeterSaasService {
         }
     }
 
-    public MapmeterSaasResponse createAnonymousTrial() throws IOException {
-        // TODO
+    public MapmeterSaasResponse createAnonymousTrial(String baseUrl) throws IOException {
         HttpClient httpClient = new HttpClient();
-        String baseUrl = "http://localhost:3000";
         PostMethod postMethod = new PostMethod(baseUrl + "/api/v2/anonymous-trial");
         return executeMethod(httpClient, postMethod);
     }
@@ -54,16 +52,15 @@ public class MapmeterSaasService {
         return jsonObject;
     }
 
-    public MapmeterSaasResponse fetchData(MapmeterSaasCredentials mapmeterSaasCredentials,
-            String apiKey, Date start, Date end) throws IOException {
+    public MapmeterSaasResponse fetchData(String baseUrl,
+            MapmeterSaasCredentials mapmeterSaasCredentials, String apiKey, Date start, Date end)
+            throws IOException {
         HttpClient httpClient = new HttpClient();
         httpClient.getParams().setAuthenticationPreemptive(true);
         httpClient.getState().setCredentials(
                 AuthScope.ANY,
                 new UsernamePasswordCredentials(mapmeterSaasCredentials.getUsername(),
                         mapmeterSaasCredentials.getPassword()));
-        // TODO
-        String baseUrl = "http://localhost:3000";
         String statsUrl = baseUrl + "/api/v1/stats";
         HttpURL httpURL = new HttpURL(statsUrl);
         String[] queryNames = new String[] { "api_key", "start_time", "end_time", "interval",
