@@ -17,7 +17,7 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.geotools.util.logging.Logging;
 import org.opengeo.mapmeter.monitor.MapmeterRequestData;
-import org.opengeo.mapmeter.monitor.config.MessageTransportConfig;
+import org.opengeo.mapmeter.monitor.config.MapmeterConfiguration;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
@@ -26,7 +26,7 @@ public class HttpMessageTransport implements MessageTransport {
 
     private static final Logger LOGGER = Logging.getLogger(HttpMessageTransport.class);
 
-    private final MessageTransportConfig config;
+    private final MapmeterConfiguration config;
 
     private final MessageSerializer mapmeterMessageSerializer;
 
@@ -36,7 +36,7 @@ public class HttpMessageTransport implements MessageTransport {
 
     private static final int idleConnectionTimeout = 1000;
 
-    public HttpMessageTransport(MessageTransportConfig config) {
+    public HttpMessageTransport(MapmeterConfiguration config) {
         if (!config.getApiKey().isPresent()) {
             LOGGER.warning("Missing mapmeter apikey. Will NOT send messages with no apikey.");
         }

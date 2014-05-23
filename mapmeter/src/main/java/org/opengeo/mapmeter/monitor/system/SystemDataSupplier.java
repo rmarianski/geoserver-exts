@@ -7,17 +7,17 @@ import java.util.Set;
 import org.geoserver.ManifestLoader;
 import org.geoserver.ManifestLoader.AboutModel;
 import org.geoserver.ManifestLoader.AboutModel.ManifestModel;
-import org.opengeo.mapmeter.monitor.config.MessageTransportConfig;
+import org.opengeo.mapmeter.monitor.config.MapmeterConfiguration;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Supplier;
 
 public class SystemDataSupplier implements Supplier<Optional<SystemData>> {
 
-    private final MessageTransportConfig config;
+    private final MapmeterConfiguration config;
 
     // takes a manifest loader to ensure that the constructor has already been called to set internal state
-    public SystemDataSupplier(MessageTransportConfig config, ManifestLoader manifestLoader) {
+    public SystemDataSupplier(MapmeterConfiguration config, ManifestLoader manifestLoader) {
         this.config = config;
     }
 

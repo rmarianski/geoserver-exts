@@ -20,7 +20,7 @@ import org.apache.wicket.model.Model;
 import org.geotools.util.logging.Logging;
 import org.opengeo.mapmeter.monitor.check.ConnectionChecker;
 import org.opengeo.mapmeter.monitor.check.ConnectionResult;
-import org.opengeo.mapmeter.monitor.config.MessageTransportConfig;
+import org.opengeo.mapmeter.monitor.config.MapmeterConfiguration;
 import org.opengeo.mapmeter.monitor.saas.MapmeterEnableResult;
 import org.opengeo.mapmeter.monitor.saas.MapmeterSaasException;
 import org.opengeo.mapmeter.monitor.saas.MapmeterService;
@@ -34,7 +34,7 @@ public class MapmeterPage extends GeoServerSecuredPage {
 
     private static final Logger LOGGER = Logging.getLogger(MapmeterPage.class);
 
-    private final transient MessageTransportConfig messageTransportConfig;
+    private final transient MapmeterConfiguration mapmeterConfiguration;
 
     private final transient ConnectionChecker connectionChecker;
 
@@ -46,9 +46,9 @@ public class MapmeterPage extends GeoServerSecuredPage {
 
     public MapmeterPage() {
         GeoServerApplication geoServerApplication = getGeoServerApplication();
-        this.messageTransportConfig = geoServerApplication.getBeanOfType(MessageTransportConfig.class);
-        if (messageTransportConfig == null) {
-            throw new IllegalStateException("Error finding MessageTransportConfig bean");
+        this.mapmeterConfiguration = geoServerApplication.getBeanOfType(MapmeterConfiguration.class);
+        if (mapmeterConfiguration == null) {
+            throw new IllegalStateException("Error finding MapmeterConfiguration bean");
         }
         this.connectionChecker = geoServerApplication.getBeanOfType(ConnectionChecker.class);
         if (connectionChecker == null) {
@@ -64,9 +64,11 @@ public class MapmeterPage extends GeoServerSecuredPage {
     private void addElements() {
         Optional<String> maybeApiKey;
         boolean isApiKeyOverridden;
-        synchronized (messageTransportConfig) {
-            maybeApiKey = messageTransportConfig.getApiKey();
-            isApiKeyOverridden = messageTransportConfig.isApiKeyOverridden();
+        boolean isOnPremise;
+        synchronized (mapmeterConfiguration) {
+            maybeApiKey = mapmeterConfiguration.getApiKey();
+            isApiKeyOverridden = mapmeterConfiguration.isApiKeyOverridden();
+            isOnPremise = mapmeterConfiguration.getIsOnPremise();
         }
         String apiKey = maybeApiKey.or("");
 
@@ -122,8 +124,8 @@ public class MapmeterPage extends GeoServerSecuredPage {
             public void onClick(AjaxRequestTarget target) {
                 target.addComponent(connectionCheckForm);
                 Optional<String> maybeApiKey;
-                synchronized (messageTransportConfig) {
-                    maybeApiKey = messageTransportConfig.getApiKey();
+                synchronized (mapmeterConfiguration) {
+                    maybeApiKey = mapmeterConfiguration.getApiKey();
                 }
                 if (maybeApiKey.isPresent()) {
                     ConnectionResult result = connectionChecker.checkConnection(maybeApiKey.get());
@@ -223,9 +225,9 @@ public class MapmeterPage extends GeoServerSecuredPage {
     }
 
     private void save(String apiKey) throws IOException {
-        synchronized (messageTransportConfig) {
-            messageTransportConfig.setApiKey(apiKey);
-            messageTransportConfig.save();
+        synchronized (mapmeterConfiguration) {
+            mapmeterConfiguration.setApiKey(apiKey);
+            mapmeterConfiguration.save();
         }
     }
 

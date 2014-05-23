@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
 
-import org.opengeo.mapmeter.monitor.config.MessageTransportConfig;
+import org.opengeo.mapmeter.monitor.config.MapmeterConfiguration;
 
 import com.google.common.base.Optional;
 
@@ -12,26 +12,26 @@ public class MapmeterService {
 
     private final MapmeterSaasService mapmeterSaasService;
 
-    private final MessageTransportConfig messageTransportConfig;
+    private final MapmeterConfiguration mapmeterConfiguration;
 
     private final MapmeterSaasCredentialsDao mapmeterSaasCredentialsDao;
 
     private final int daysOfDataToFetch;
 
     public MapmeterService(MapmeterSaasService mapmeterSaasService,
-            MessageTransportConfig messageTransportConfig,
+            MapmeterConfiguration mapmeterConfiguration,
             MapmeterSaasCredentialsDao mapmeterSaasCredentialsDao, int daysOfDataToFetch) {
         this.mapmeterSaasService = mapmeterSaasService;
-        this.messageTransportConfig = messageTransportConfig;
+        this.mapmeterConfiguration = mapmeterConfiguration;
         this.mapmeterSaasCredentialsDao = mapmeterSaasCredentialsDao;
         this.daysOfDataToFetch = daysOfDataToFetch;
     }
 
     public MapmeterEnableResult startFreeTrial() throws MapmeterSaasException, IOException {
         String baseUrl;
-        synchronized (messageTransportConfig) {
-            Optional<String> existingApiKey = messageTransportConfig.getApiKey();
-            baseUrl = messageTransportConfig.getBaseUrl();
+        synchronized (mapmeterConfiguration) {
+            Optional<String> existingApiKey = mapmeterConfiguration.getApiKey();
+            baseUrl = mapmeterConfiguration.getBaseUrl();
             if (existingApiKey.isPresent()) {
                 // TODO
                 throw new IllegalStateException(
@@ -65,9 +65,9 @@ public class MapmeterService {
         String apiKey = (String) server.get("apiKey");
 
         // TODO persist mapmeter external user id, username, and password
-        synchronized (messageTransportConfig) {
-            messageTransportConfig.setApiKey(apiKey);
-            messageTransportConfig.save();
+        synchronized (mapmeterConfiguration) {
+            mapmeterConfiguration.setApiKey(apiKey);
+            mapmeterConfiguration.save();
         }
 
         MapmeterSaasCredentials mapmeterSaasCredentials = new MapmeterSaasCredentials(username,
@@ -80,9 +80,9 @@ public class MapmeterService {
     public Map<String, Object> fetchMapmeterData() throws IOException {
         Optional<String> maybeApiKey;
         String baseUrl;
-        synchronized (messageTransportConfig) {
-            baseUrl = messageTransportConfig.getBaseUrl();
-            maybeApiKey = messageTransportConfig.getApiKey();
+        synchronized (mapmeterConfiguration) {
+            baseUrl = mapmeterConfiguration.getBaseUrl();
+            maybeApiKey = mapmeterConfiguration.getApiKey();
             if (!maybeApiKey.isPresent()) {
                 throw new IllegalStateException("No api key configured, but asked to fetch data.");
             }

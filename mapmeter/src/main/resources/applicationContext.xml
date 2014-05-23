@@ -27,14 +27,14 @@
     </bean>
 
     <bean id="mapmeterMonitorHttpTransport" class="org.opengeo.mapmeter.monitor.transport.HttpMessageTransport" >
-      <constructor-arg ref="mapmeterMessageHttpTransportConfig" index="0" />
+      <constructor-arg ref="mapmeterConfiguration" index="0" />
     </bean>
 
-    <bean id="mapmeterMessageHttpTransportConfig"
-          class="org.opengeo.mapmeter.monitor.config.MessageTransportConfigProperties"
+    <bean id="mapmeterConfiguration"
+          class="org.opengeo.mapmeter.monitor.config.MapmeterConfiguration"
           depends-on="extensions">
       <constructor-arg value="monitoring" index="0"/>
-      <constructor-arg value="controller.properties" index="1"/>
+      <constructor-arg value="mapmeter.properties" index="1"/>
       <constructor-arg value="https://app.mapmeter.com" index="2"/>
       <constructor-arg value="/controller/v1/message/store" index="3"/>
       <constructor-arg value="/controller/v1/message/check" index="4"/>
@@ -60,19 +60,19 @@
     <bean id="mapmeterJmxSystemMonitor" class="org.opengeo.mapmeter.monitor.JmxSystemMonitor" />
 
     <bean id="mapmeterConnectionChecker" class="org.opengeo.mapmeter.monitor.check.HttpConnectionChecker">
-      <constructor-arg ref="mapmeterMessageHttpTransportConfig" index="0" />
+      <constructor-arg ref="mapmeterConfiguration" index="0" />
       <!-- Connection timeout in milliseconds -->
       <constructor-arg value="30000" index="1" />
     </bean>
 
     <bean id="mapmeterSystemDataSupplier" class="org.opengeo.mapmeter.monitor.system.SystemDataSupplier">
-      <constructor-arg ref="mapmeterMessageHttpTransportConfig" index="0"></constructor-arg>
+      <constructor-arg ref="mapmeterConfiguration" index="0"></constructor-arg>
       <constructor-arg ref="manifestLoader" index="1"></constructor-arg>
     </bean>
 
     <bean id="mapmeterSystemDataTransport" class="org.opengeo.mapmeter.monitor.system.SystemDataTransport">
       <constructor-arg ref="mapmeterSystemDataSerializer" index="0"></constructor-arg>
-      <constructor-arg ref="mapmeterMessageHttpTransportConfig" index="1"></constructor-arg>
+      <constructor-arg ref="mapmeterConfiguration" index="1"></constructor-arg>
     </bean>
 
     <bean id="mapmeterSystemDataSerializer" class="org.opengeo.mapmeter.monitor.system.SystemDataSerializer">
@@ -97,7 +97,7 @@
 
     <bean id="mapmeterService" class="org.opengeo.mapmeter.monitor.saas.MapmeterService">
       <constructor-arg ref="mapmeterSaasService" index="0"></constructor-arg>
-      <constructor-arg ref="mapmeterMessageHttpTransportConfig" index="1"></constructor-arg>
+      <constructor-arg ref="mapmeterConfiguration" index="1"></constructor-arg>
       <constructor-arg ref="mapmeterSaasCredentialsDao" index="2"></constructor-arg>
       <constructor-arg value="7" index="3"></constructor-arg>
     </bean>

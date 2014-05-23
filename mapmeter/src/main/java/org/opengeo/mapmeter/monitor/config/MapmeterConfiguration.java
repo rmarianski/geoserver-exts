@@ -4,13 +4,17 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.util.Date;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.geoserver.platform.GeoServerExtensions;
 import org.geoserver.platform.GeoServerResourceLoader;
+import org.geoserver.security.GeoServerSecurityManager;
+import org.geoserver.security.password.GeoServerPBEPasswordEncoder;
 import org.geotools.util.logging.Logging;
+import org.opengeo.mapmeter.monitor.saas.MapmeterSaasCredentials;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -19,25 +23,23 @@ import com.google.common.base.Throwables;
 import com.google.common.io.Closer;
 import com.google.common.io.Files;
 
-public class MessageTransportConfigProperties implements MessageTransportConfig {
+public class MapmeterConfiguration {
 
     private static final String MAPMETER_APIKEY_OVERRIDE_PROPERTY_NAME = "MAPMETER_API_KEY";
 
-    private final static Logger LOGGER = Logging.getLogger(MessageTransportConfigProperties.class);
+    private final static Logger LOGGER = Logging.getLogger(MapmeterConfiguration.class);
 
-    private final String controllerPropertiesRelPath;
+    private final String mapmeterConfigRelPath;
 
     private final GeoServerResourceLoader loader;
-
-    private Optional<String> storageUrl;
-
-    private Optional<String> checkUrl;
-
-    private Optional<String> systemUpdateUrl;
 
     private Optional<String> apiKeyProperties;
 
     private Optional<String> baseUrl;
+
+    private Optional<Boolean> isOnPremise;
+
+    private Optional<MapmeterSaasCredentials> mapmeterSaasCredentials;
 
     private final Optional<String> apiKeyOverride;
 
@@ -49,28 +51,34 @@ public class MessageTransportConfigProperties implements MessageTransportConfig 
 
     private final String systemUpdateSuffix;
 
-    public MessageTransportConfigProperties(String monitoringDataDirName,
-            String controllerPropertiesName, String defaultBaseUrl, String storageSuffix,
-            String checkSuffix, String systemUpdateSuffix, GeoServerResourceLoader loader) {
+    private final GeoServerPBEPasswordEncoder geoServerPBEPasswordEncoder;
+
+    private final GeoServerSecurityManager geoServerSecurityManager;
+
+    public MapmeterConfiguration(String monitoringDataDirName, String configName,
+            String defaultBaseUrl, String storageSuffix, String checkSuffix,
+            String systemUpdateSuffix, GeoServerResourceLoader loader,
+            GeoServerPBEPasswordEncoder geoServerPBEPasswordEncoder,
+            GeoServerSecurityManager geoServerSecurityManager) {
 
         this.defaultBaseUrl = defaultBaseUrl;
         this.storageSuffix = storageSuffix;
         this.checkSuffix = checkSuffix;
         this.systemUpdateSuffix = systemUpdateSuffix;
         this.loader = loader;
-        this.controllerPropertiesRelPath = monitoringDataDirName + File.separatorChar
-                + controllerPropertiesName;
+        this.geoServerPBEPasswordEncoder = geoServerPBEPasswordEncoder;
+        this.geoServerSecurityManager = geoServerSecurityManager;
+        this.mapmeterConfigRelPath = monitoringDataDirName + File.separatorChar + configName;
 
-        Optional<String> storageUrl = Optional.absent();
-        Optional<String> checkUrl = Optional.absent();
-        Optional<String> systemUpdateUrl = Optional.absent();
         Optional<String> apiKey = Optional.absent();
         Optional<String> baseUrl = Optional.absent();
+        Optional<Boolean> isOnPremise = Optional.absent();
+        Optional<MapmeterSaasCredentials> mapmeterSaasCredentials = Optional.absent();
 
         try {
             Closer closer = Closer.create();
             try {
-                Optional<File> propFile = findControllerPropertiesFile();
+                Optional<File> propFile = findMapmeterConfigurationFile();
 
                 if (propFile.isPresent()) {
                     Properties properties = new Properties();
@@ -78,34 +86,38 @@ public class MessageTransportConfigProperties implements MessageTransportConfig 
                             Charsets.UTF_8));
                     properties.load(fileReader);
 
-                    String storageUrlString = (String) properties.get("url");
-                    String checkUrlString = (String) properties.get("checkurl");
-                    String systemUpdateUrlString = (String) properties.get("systemupdateurl");
                     String apiKeyString = (String) properties.get("apikey");
                     String baseUrlString = (String) properties.get("baseurl");
+                    String isOnPremiseString = (String) properties.get("onpremise");
+                    String usernameString = (String) properties.get("username");
+                    String encryptedPasswordString = (String) properties.get("password");
 
                     if (apiKeyString != null) {
                         apiKey = Optional.of(apiKeyString.trim());
                     } else {
-                        LOGGER.severe("Failure reading 'apikey' property from "
-                                + controllerPropertiesName);
+                        LOGGER.severe("Failure reading 'apikey' property from " + configName);
                     }
-                    if (storageUrlString != null) {
-                        storageUrl = Optional.of(storageUrlString.trim());
-                    }
-                    if (checkUrlString != null) {
-                        checkUrl = Optional.of(checkUrlString.trim());
-                    }
-                    if (systemUpdateUrlString != null) {
-                        systemUpdateUrl = Optional.of(systemUpdateUrlString.trim());
-                    }
-
                     if (baseUrlString != null) {
                         String prefix = baseUrlString.trim();
                         if (prefix.endsWith("/")) {
                             prefix = prefix.substring(0, prefix.length() - 1);
                         }
                         baseUrl = Optional.of(prefix);
+                    }
+                    if (isOnPremiseString != null) {
+                        isOnPremiseString = isOnPremiseString.trim().toLowerCase();
+                        if ("true".equals(isOnPremiseString) || "1".equals(isOnPremiseString)
+                                || "yes".equals(isOnPremiseString)) {
+                            isOnPremise = Optional.of(true);
+                        } else {
+                            isOnPremise = Optional.of(false);
+                        }
+                    }
+                    if (usernameString != null && encryptedPasswordString != null) {
+                        String username = usernameString.trim();
+                        String password = decrypt(encryptedPasswordString.trim());
+                        mapmeterSaasCredentials = Optional.of(new MapmeterSaasCredentials(username,
+                                password));
                     }
                 }
             } catch (Throwable e) {
@@ -114,7 +126,7 @@ public class MessageTransportConfigProperties implements MessageTransportConfig 
                 closer.close();
             }
         } catch (IOException e) {
-            LOGGER.severe("Failure reading: " + controllerPropertiesRelPath + " from data dir");
+            LOGGER.severe("Failure reading: " + mapmeterConfigRelPath + " from data dir");
             if (LOGGER.isLoggable(Level.INFO)) {
                 LOGGER.info(Throwables.getStackTraceAsString(e));
             }
@@ -123,18 +135,42 @@ public class MessageTransportConfigProperties implements MessageTransportConfig 
         String apiKeyOverrideProperty = GeoServerExtensions.getProperty(MAPMETER_APIKEY_OVERRIDE_PROPERTY_NAME);
         apiKeyOverride = Optional.fromNullable(apiKeyOverrideProperty);
 
-        this.storageUrl = storageUrl;
-        this.checkUrl = checkUrl;
-        this.systemUpdateUrl = systemUpdateUrl;
         this.apiKeyProperties = apiKey;
         this.baseUrl = baseUrl;
+        this.isOnPremise = isOnPremise;
+        this.mapmeterSaasCredentials = mapmeterSaasCredentials;
     }
 
-    public Optional<File> findControllerPropertiesFile() throws IOException {
-        File propFile = loader.find(controllerPropertiesRelPath);
+    private String decrypt(String encryptedPassword) {
+        try {
+            geoServerPBEPasswordEncoder.initialize(geoServerSecurityManager);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        String password = geoServerPBEPasswordEncoder.decode(encryptedPassword);
+        return password;
+    }
+
+    private String encrypt(String rawPassword) {
+        try {
+            geoServerPBEPasswordEncoder.initialize(geoServerSecurityManager);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        String encryptedPassword = geoServerPBEPasswordEncoder.encodePassword(rawPassword,
+                getSalt());
+        return encryptedPassword;
+    }
+
+    private Object getSalt() {
+        return new Date();
+    }
+
+    public Optional<File> findMapmeterConfigurationFile() throws IOException {
+        File propFile = loader.find(mapmeterConfigRelPath);
         if (propFile == null) {
             String msg = "Could not find controller properties file in data dir. Expected data dir location: "
-                    + controllerPropertiesRelPath;
+                    + mapmeterConfigRelPath;
             LOGGER.warning(msg);
             return Optional.absent();
         } else {
@@ -155,52 +191,30 @@ public class MessageTransportConfigProperties implements MessageTransportConfig 
         return defaultBaseUrl + suffix;
     }
 
-    @Override
     public String getBaseUrl() {
         return baseUrl.or(defaultBaseUrl);
     }
 
-    @Override
     public String getStorageUrl() {
-        return storageUrl.or(maybeUrlPrefix(storageSuffix)).or(defaultUrlPrefix(storageSuffix));
+        return maybeUrlPrefix(storageSuffix).or(defaultUrlPrefix(storageSuffix));
     }
 
-    @Override
     public String getCheckUrl() {
-        return checkUrl.or(maybeUrlPrefix(checkSuffix)).or(defaultUrlPrefix(checkSuffix));
+        return maybeUrlPrefix(checkSuffix).or(defaultUrlPrefix(checkSuffix));
     }
 
-    @Override
     public String getSystemUpdateUrl() {
-        return systemUpdateUrl.or(maybeUrlPrefix(systemUpdateSuffix)).or(
-                defaultUrlPrefix(systemUpdateSuffix));
+        return maybeUrlPrefix(systemUpdateSuffix).or(defaultUrlPrefix(systemUpdateSuffix));
     }
 
-    @Override
     public Optional<String> getApiKey() {
         return apiKeyOverride.or(apiKeyProperties);
     }
 
-    @Override
-    public void setStorageUrl(String storageUrl) {
-        this.storageUrl = Optional.of(storageUrl);
-    }
-
-    @Override
-    public void setCheckUrl(String checkUrl) {
-        this.checkUrl = Optional.of(checkUrl);
-    }
-
-    @Override
     public void setApiKey(String apiKey) {
         this.apiKeyProperties = Optional.of(apiKey);
     }
 
-    public void setSystemUpdateUrl(String systemUpdateUrl) {
-        this.systemUpdateUrl = Optional.of(systemUpdateUrl);
-    }
-
-    @Override
     public void save() throws IOException {
         Properties properties = new Properties();
         // it's possible that the api key is coming from an environment variable or servlet context (web.xml)
@@ -208,27 +222,26 @@ public class MessageTransportConfigProperties implements MessageTransportConfig 
         if (apiKeyProperties.isPresent()) {
             properties.setProperty("apikey", apiKeyProperties.get());
         }
-        // only persist the storage/check urls if they are set
-        if (storageUrl.isPresent()) {
-            properties.setProperty("url", storageUrl.get());
-        }
-        if (checkUrl.isPresent()) {
-            properties.setProperty("checkurl", checkUrl.get());
-        }
-        if (systemUpdateUrl.isPresent()) {
-            properties.setProperty("systemupdateurl", systemUpdateUrl.get());
-        }
         if (baseUrl.isPresent()) {
             properties.setProperty("baseurl", baseUrl.get());
         }
+        if (isOnPremise.isPresent()) {
+            properties.setProperty("onpremise", "" + isOnPremise.get());
+        }
+        if (mapmeterSaasCredentials.isPresent()) {
+            MapmeterSaasCredentials creds = mapmeterSaasCredentials.get();
+            String encryptedPassword = encrypt(creds.getPassword());
+            properties.setProperty("username", creds.getUsername());
+            properties.setProperty("password", encryptedPassword);
+        }
 
         File propFile = null;
-        Optional<File> maybePropFile = findControllerPropertiesFile();
+        Optional<File> maybePropFile = findMapmeterConfigurationFile();
         if (maybePropFile.isPresent()) {
             propFile = maybePropFile.get();
         } else {
-            LOGGER.warning("Creating controller properties: " + controllerPropertiesRelPath);
-            propFile = loader.createFile(controllerPropertiesRelPath);
+            LOGGER.warning("Creating controller properties: " + mapmeterConfigRelPath);
+            propFile = loader.createFile(mapmeterConfigRelPath);
         }
 
         Closer closer = Closer.create();
@@ -242,14 +255,20 @@ public class MessageTransportConfigProperties implements MessageTransportConfig 
         }
     }
 
-    @Override
     public boolean isApiKeyOverridden() {
         return apiKeyOverride.isPresent();
     }
 
-    @Override
     public void setBaseUrl(String baseUrl) {
         this.baseUrl = Optional.of(baseUrl);
+    }
+
+    public boolean getIsOnPremise() {
+        return isOnPremise.or(!defaultBaseUrl.equals(getBaseUrl()));
+    }
+
+    public void setIsOnPremise(boolean isOnPremise) {
+        this.isOnPremise = Optional.of(isOnPremise);
     }
 
 }

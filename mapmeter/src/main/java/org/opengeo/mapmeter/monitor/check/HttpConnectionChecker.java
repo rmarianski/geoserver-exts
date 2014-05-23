@@ -20,7 +20,7 @@ import org.apache.commons.httpclient.SimpleHttpConnectionManager;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.params.HttpClientParams;
 import org.geotools.util.logging.Logging;
-import org.opengeo.mapmeter.monitor.config.MessageTransportConfig;
+import org.opengeo.mapmeter.monitor.config.MapmeterConfiguration;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
@@ -32,13 +32,13 @@ public class HttpConnectionChecker implements ConnectionChecker {
 
     private static final Logger LOGGER = Logging.getLogger(HttpConnectionChecker.class);
 
-    private final MessageTransportConfig config;
+    private final MapmeterConfiguration config;
 
     private final HttpConnectionManager connectionManager;
 
     private final HttpClient client;
 
-    public HttpConnectionChecker(MessageTransportConfig config, int connectionTimeout) {
+    public HttpConnectionChecker(MapmeterConfiguration config, int connectionTimeout) {
         this.config = config;
         connectionManager = new SimpleHttpConnectionManager();
 
