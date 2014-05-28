@@ -13,14 +13,17 @@ import org.apache.wicket.extensions.ajax.markup.html.IndicatingAjaxLink;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.Form;
+import org.apache.wicket.markup.html.form.PasswordTextField;
 import org.apache.wicket.markup.html.form.RequiredTextField;
 import org.apache.wicket.markup.html.panel.FeedbackPanel;
 import org.apache.wicket.model.Model;
+import org.apache.wicket.util.lang.Objects;
 import org.geotools.util.logging.Logging;
 import org.opengeo.mapmeter.monitor.check.ConnectionChecker;
 import org.opengeo.mapmeter.monitor.check.ConnectionResult;
 import org.opengeo.mapmeter.monitor.config.MapmeterConfiguration;
 import org.opengeo.mapmeter.monitor.saas.MapmeterEnableResult;
+import org.opengeo.mapmeter.monitor.saas.MapmeterSaasCredentials;
 import org.opengeo.mapmeter.monitor.saas.MapmeterSaasException;
 import org.opengeo.mapmeter.monitor.saas.MapmeterService;
 
@@ -43,6 +46,8 @@ public class MapmeterPage extends GeoServerSecuredPage {
 
     private Form<?> apiKeyForm;
 
+    private Form<Void> credentialsConvertForm;
+
     public MapmeterPage() {
         GeoServerApplication geoServerApplication = getGeoServerApplication();
         this.mapmeterConfiguration = geoServerApplication.getBeanOfType(MapmeterConfiguration.class);
@@ -63,10 +68,12 @@ public class MapmeterPage extends GeoServerSecuredPage {
     private void addElements() {
         Optional<String> maybeApiKey;
         boolean isApiKeyOverridden;
+        String baseUrl;
         boolean isOnPremise;
         synchronized (mapmeterConfiguration) {
             maybeApiKey = mapmeterConfiguration.getApiKey();
             isApiKeyOverridden = mapmeterConfiguration.isApiKeyOverridden();
+            baseUrl = mapmeterConfiguration.getBaseUrl();
             isOnPremise = mapmeterConfiguration.getIsOnPremise();
         }
         String apiKey = maybeApiKey.or("");
@@ -78,8 +85,8 @@ public class MapmeterPage extends GeoServerSecuredPage {
         apiWarning.setVisible(isApiKeyOverridden);
 
         // TODO properly make these conditional
-        addMapmeterEnableForm();
-        addCredentialsConvertForm();
+        addMapmeterEnableForm(baseUrl);
+        addCredentialsConvertForm(baseUrl);
         addCredentialsSaveForm();
     }
 
@@ -178,8 +185,10 @@ public class MapmeterPage extends GeoServerSecuredPage {
         return apiKeyForm;
     }
 
-    public Form<?> addMapmeterEnableForm() {
-        Form<?> enableMapmeterForm = new Form<Void>("mapmeter-enable-form");
+    private Form<?> addMapmeterEnableForm(String baseUrl) {
+        final Form<?> enableMapmeterForm = new Form<Void>("mapmeter-enable-form");
+        final FeedbackPanel feedbackPanel = new FeedbackPanel("mapmeter-enable-feedback");
+        feedbackPanel.setOutputMarkupId(true);
         AjaxButton enableMapmeterButton = new IndicatingAjaxButton("mapmeter-enable-button") {
 
             private static final long serialVersionUID = 1L;
@@ -190,24 +199,44 @@ public class MapmeterPage extends GeoServerSecuredPage {
                     MapmeterEnableResult mapmeterEnableResult = mapmeterService.startFreeTrial();
                     String apikey = mapmeterEnableResult.getServerApiKey();
                     apiKeyField.getModel().setObject(apikey);
+                    apiKeyForm.info("Mapmeter trial activated");
+                    enableMapmeterForm.setVisible(false);
+                    credentialsConvertForm.setVisible(true);
                     target.addComponent(apiKeyField);
+                    target.addComponent(apiKeyForm);
+                    target.addComponent(enableMapmeterForm);
+                    target.addComponent(credentialsConvertForm);
                 } catch (IOException e) {
+                    form.error("IO Error activating mapmeter: " + e.getLocalizedMessage());
                     LOGGER.log(Level.SEVERE, e.getMessage(), e);
+                    target.addComponent(feedbackPanel);
                 } catch (MapmeterSaasException e) {
-                    LOGGER.log(Level.FINER, e.getMessage(), e);
+                    form.error("Error activating mapmeter: " + e.getLocalizedMessage());
+                    LOGGER.log(Level.SEVERE, e.getMessage(), e);
+                    target.addComponent(feedbackPanel);
                 }
             }
         };
+        enableMapmeterForm.add(new Label("mapmeter-enable-baseurl", baseUrl));
+        enableMapmeterForm.add(feedbackPanel);
         enableMapmeterForm.add(enableMapmeterButton);
         add(enableMapmeterForm);
         return enableMapmeterForm;
     }
 
-    private void addCredentialsConvertForm() {
-        Form<?> credentialsConvertForm = new Form<Void>("mapmeter-credentials-convert-form");
+    private void addCredentialsConvertForm(String baseUrl) {
+        credentialsConvertForm = new Form<Void>("mapmeter-credentials-convert-form");
         final FeedbackPanel feedbackPanel = new FeedbackPanel(
                 "mapmeter-credentials-convert-feedback");
         feedbackPanel.setOutputMarkupId(true);
+
+        final RequiredTextField<String> mapmeterCredentialsUsername = new RequiredTextField<String>(
+                "mapmeter-credentials-convert-username", Model.of(""));
+        final PasswordTextField mapmeterCredentialsPassword1 = new PasswordTextField(
+                "mapmeter-credentials-convert-password1", Model.of(""));
+        final PasswordTextField mapmeterCredentialsPassword2 = new PasswordTextField(
+                "mapmeter-credentials-convert-password2", Model.of(""));
+
         IndicatingAjaxButton credentialsConvertButton = new IndicatingAjaxButton(
                 "mapmeter-credentials-convert-button") {
 
@@ -216,8 +245,23 @@ public class MapmeterPage extends GeoServerSecuredPage {
 
             @Override
             protected void onSubmit(AjaxRequestTarget target, Form<?> form) {
-                form.info("Credentials converted");
                 target.addComponent(feedbackPanel);
+                String username = mapmeterCredentialsUsername.getModel().getObject().trim();
+                String password1 = mapmeterCredentialsPassword1.getModel().getObject().trim();
+                String password2 = mapmeterCredentialsPassword2.getModel().getObject().trim();
+                if (!Objects.equal(password1, password2)) {
+                    form.error("Password fields are not the same");
+                    return;
+                }
+                MapmeterSaasCredentials newCredentials = new MapmeterSaasCredentials(username,
+                        password2);
+                try {
+                    mapmeterService.convertMapmeterCredentials(newCredentials);
+                    form.info("Mapmeter credentials converted");
+                } catch (IOException e) {
+                    form.error("Error converting mapmeter credentials: " + e.getMessage());
+                    LOGGER.log(Level.SEVERE, e.getMessage(), e);
+                }
             }
 
             @Override
@@ -226,13 +270,8 @@ public class MapmeterPage extends GeoServerSecuredPage {
                 target.addComponent(feedbackPanel);
             }
         };
-        RequiredTextField<String> mapmeterCredentialsUsername = new RequiredTextField<String>(
-                "mapmeter-credentials-convert-username", Model.of(""));
-        RequiredTextField<String> mapmeterCredentialsPassword1 = new RequiredTextField<String>(
-                "mapmeter-credentials-convert-password1", Model.of(""));
-        RequiredTextField<String> mapmeterCredentialsPassword2 = new RequiredTextField<String>(
-                "mapmeter-credentials-convert-password2", Model.of(""));
 
+        credentialsConvertForm.add(new Label("mapmeter-credentials-convert-baseurl", baseUrl));
         credentialsConvertForm.add(mapmeterCredentialsUsername);
         credentialsConvertForm.add(mapmeterCredentialsPassword1);
         credentialsConvertForm.add(mapmeterCredentialsPassword2);
@@ -246,6 +285,14 @@ public class MapmeterPage extends GeoServerSecuredPage {
         Form<?> credentialsSaveForm = new Form<Void>("mapmeter-credentials-save-form");
         final FeedbackPanel feedbackPanel = new FeedbackPanel("mapmeter-credentials-save-feedback");
         feedbackPanel.setOutputMarkupId(true);
+
+        final RequiredTextField<String> mapmeterCredentialsUsername = new RequiredTextField<String>(
+                "mapmeter-credentials-save-username", Model.of(""));
+        final PasswordTextField mapmeterCredentialsPassword1 = new PasswordTextField(
+                "mapmeter-credentials-save-password1", Model.of(""));
+        final PasswordTextField mapmeterCredentialsPassword2 = new PasswordTextField(
+                "mapmeter-credentials-save-password2", Model.of(""));
+
         IndicatingAjaxButton credentialsSaveButton = new IndicatingAjaxButton(
                 "mapmeter-credentials-save-button") {
 
@@ -254,8 +301,27 @@ public class MapmeterPage extends GeoServerSecuredPage {
 
             @Override
             protected void onSubmit(AjaxRequestTarget target, Form<?> form) {
-                form.info("Credentials saved");
                 target.addComponent(feedbackPanel);
+                String username = mapmeterCredentialsUsername.getModel().getObject().trim();
+                String password1 = mapmeterCredentialsPassword1.getModel().getObject().trim();
+                String password2 = mapmeterCredentialsPassword2.getModel().getObject().trim();
+                if (!Objects.equal(password1, password2)) {
+                    form.error("Password fields are not the same");
+                    return;
+                }
+                MapmeterSaasCredentials mapmeterSaasCredentials = new MapmeterSaasCredentials(
+                        username, password2);
+                synchronized (mapmeterConfiguration) {
+                    mapmeterConfiguration.setMapmeterSaasCredentials(mapmeterSaasCredentials);
+                    try {
+                        mapmeterConfiguration.save();
+                        form.info("Credentials saved");
+                    } catch (IOException e) {
+                        LOGGER.log(Level.SEVERE, e.getMessage(), e);
+                        form.error("Failure saving mapmeter credentials: "
+                                + e.getLocalizedMessage());
+                    }
+                }
             }
 
             @Override
@@ -264,13 +330,6 @@ public class MapmeterPage extends GeoServerSecuredPage {
                 target.addComponent(feedbackPanel);
             }
         };
-        RequiredTextField<String> mapmeterCredentialsUsername = new RequiredTextField<String>(
-                "mapmeter-credentials-save-username", Model.of(""));
-        RequiredTextField<String> mapmeterCredentialsPassword1 = new RequiredTextField<String>(
-                "mapmeter-credentials-save-password1", Model.of(""));
-        RequiredTextField<String> mapmeterCredentialsPassword2 = new RequiredTextField<String>(
-                "mapmeter-credentials-save-password2", Model.of(""));
-
         credentialsSaveForm.add(mapmeterCredentialsUsername);
         credentialsSaveForm.add(mapmeterCredentialsPassword1);
         credentialsSaveForm.add(mapmeterCredentialsPassword2);

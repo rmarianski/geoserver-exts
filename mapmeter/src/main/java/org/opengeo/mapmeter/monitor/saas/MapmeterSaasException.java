@@ -36,7 +36,11 @@ public class MapmeterSaasException extends Exception {
     }
 
     public String getMessage() {
-        return message;
+        String responseError = (String) response.get("message");
+        if (responseError == null) {
+            responseError = "";
+        }
+        return message + " " + statusCode + " " + responseError;
     }
 
 }

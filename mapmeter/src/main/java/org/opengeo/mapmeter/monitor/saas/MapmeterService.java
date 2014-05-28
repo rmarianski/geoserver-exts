@@ -14,16 +14,12 @@ public class MapmeterService {
 
     private final MapmeterConfiguration mapmeterConfiguration;
 
-    private final MapmeterSaasCredentialsDao mapmeterSaasCredentialsDao;
-
     private final int daysOfDataToFetch;
 
     public MapmeterService(MapmeterSaasService mapmeterSaasService,
-            MapmeterConfiguration mapmeterConfiguration,
-            MapmeterSaasCredentialsDao mapmeterSaasCredentialsDao, int daysOfDataToFetch) {
+            MapmeterConfiguration mapmeterConfiguration, int daysOfDataToFetch) {
         this.mapmeterSaasService = mapmeterSaasService;
         this.mapmeterConfiguration = mapmeterConfiguration;
-        this.mapmeterSaasCredentialsDao = mapmeterSaasCredentialsDao;
         this.daysOfDataToFetch = daysOfDataToFetch;
     }
 
@@ -65,14 +61,13 @@ public class MapmeterService {
         String apiKey = (String) server.get("apiKey");
 
         // TODO persist mapmeter external user id, username, and password
-        synchronized (mapmeterConfiguration) {
-            mapmeterConfiguration.setApiKey(apiKey);
-            mapmeterConfiguration.save();
-        }
-
         MapmeterSaasCredentials mapmeterSaasCredentials = new MapmeterSaasCredentials(username,
                 password);
-        mapmeterSaasCredentialsDao.saveMapmeterCredentials(mapmeterSaasCredentials);
+        synchronized (mapmeterConfiguration) {
+            mapmeterConfiguration.setApiKey(apiKey);
+            mapmeterConfiguration.setMapmeterSaasCredentials(mapmeterSaasCredentials);
+            mapmeterConfiguration.save();
+        }
 
         return new MapmeterEnableResult(apiKey, username, password, externalUserId, orgName);
     }
@@ -80,14 +75,15 @@ public class MapmeterService {
     public Map<String, Object> fetchMapmeterData() throws IOException {
         Optional<String> maybeApiKey;
         String baseUrl;
+        Optional<MapmeterSaasCredentials> maybeMapmeterCredentials;
         synchronized (mapmeterConfiguration) {
             baseUrl = mapmeterConfiguration.getBaseUrl();
             maybeApiKey = mapmeterConfiguration.getApiKey();
-            if (!maybeApiKey.isPresent()) {
-                throw new IllegalStateException("No api key configured, but asked to fetch data.");
-            }
+            maybeMapmeterCredentials = mapmeterConfiguration.getMapmeterSaasCredentials();
         }
-        Optional<MapmeterSaasCredentials> maybeMapmeterCredentials = mapmeterSaasCredentialsDao.findMapmeterCredentials();
+        if (!maybeApiKey.isPresent()) {
+            throw new IllegalStateException("No api key configured, but asked to fetch data.");
+        }
         if (!maybeMapmeterCredentials.isPresent()) {
             throw new IllegalStateException(
                     "No mapmeter credentials found, but asked to fetch data.");
@@ -101,6 +97,27 @@ public class MapmeterService {
         MapmeterSaasResponse saasResponse = mapmeterSaasService.fetchData(baseUrl,
                 mapmeterSaasCredentials, apiKey, start, end);
         Map<String, Object> response = saasResponse.getResponse();
+        // TODO error checking
+        return response;
+    }
+
+    public Map<String, Object> convertMapmeterCredentials(
+            MapmeterSaasCredentials newMapmeterSaasCredentials) throws IOException {
+        String baseUrl;
+        Optional<MapmeterSaasCredentials> maybeExistingMapmeterSaasCredentials;
+        synchronized (mapmeterConfiguration) {
+            baseUrl = mapmeterConfiguration.getBaseUrl();
+            maybeExistingMapmeterSaasCredentials = mapmeterConfiguration.getMapmeterSaasCredentials();
+        }
+        if (!maybeExistingMapmeterSaasCredentials.isPresent()) {
+            throw new IllegalStateException(
+                    "No existing mapmeter credentials, but asked to convert");
+        }
+        MapmeterSaasCredentials existingMapmeterSaasCredentials = maybeExistingMapmeterSaasCredentials.get();
+        MapmeterSaasResponse saasResponse = mapmeterSaasService.convertCredentials(baseUrl,
+                existingMapmeterSaasCredentials, newMapmeterSaasCredentials);
+        Map<String, Object> response = saasResponse.getResponse();
+        // TODO error checking
         return response;
     }
 

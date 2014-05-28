@@ -18,6 +18,7 @@ import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.StringRequestEntity;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
@@ -76,6 +77,29 @@ public class MapmeterSaasService {
         System.err.println(url);
         GetMethod getMethod = new GetMethod(url);
         return executeMethod(httpClient, getMethod);
+    }
+
+    public MapmeterSaasResponse convertCredentials(String baseUrl,
+            MapmeterSaasCredentials existingMapmeterSaasCredentials,
+            MapmeterSaasCredentials newMapmeterSaasCredentials) throws IOException {
+        HttpClient httpClient = new HttpClient();
+        httpClient.getParams().setAuthenticationPreemptive(true);
+        httpClient.getState().setCredentials(
+                AuthScope.ANY,
+                new UsernamePasswordCredentials(existingMapmeterSaasCredentials.getUsername(),
+                        existingMapmeterSaasCredentials.getPassword()));
+        String convertCredentialsUrl = baseUrl + "/api/v1/anonymous-trial/convert-credentials";
+        HttpURL httpURL = new HttpURL(convertCredentialsUrl);
+        String url = httpURL.getURI();
+
+        JSONObject payload = new JSONObject();
+        payload.put("username", newMapmeterSaasCredentials.getUsername());
+        payload.put("password", newMapmeterSaasCredentials.getPassword());
+
+        PostMethod postMethod = new PostMethod(url);
+        postMethod.setRequestEntity(new StringRequestEntity(payload.toString(), "application/json",
+                Charsets.UTF_8.toString()));
+        return executeMethod(httpClient, postMethod);
     }
 
     private MapmeterSaasResponse executeMethod(HttpClient httpClient, HttpMethod httpMethod)

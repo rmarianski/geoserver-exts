@@ -2,6 +2,10 @@
   margin: 2em 0;
 }
 
+.mapmeter-container .apikey-field {
+  width: 350px;
+}
+
 #mapmeter-chart {
   width: 500px;
   height: 150px;

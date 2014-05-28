@@ -88,20 +88,13 @@
     <bean id="mapmeterSaasHttpClient" class="org.apache.commons.httpclient.HttpClient">
     </bean>
 
-    <bean id="mapmeterSaasCredentialsDao" class="org.opengeo.mapmeter.monitor.saas.MapmeterSaasCredentialsDao">
-      <constructor-arg ref="resourceLoader" index="0"></constructor-arg>
-      <constructor-arg ref="pbePasswordEncoder" index="1"></constructor-arg>
-      <constructor-arg ref="geoServerSecurityManager" index="2"></constructor-arg>
-    </bean>
-
     <bean id="mapmeterSaasService" class="org.opengeo.mapmeter.monitor.saas.MapmeterSaasService">
     </bean>
 
     <bean id="mapmeterService" class="org.opengeo.mapmeter.monitor.saas.MapmeterService">
       <constructor-arg ref="mapmeterSaasService" index="0"></constructor-arg>
       <constructor-arg ref="mapmeterConfiguration" index="1"></constructor-arg>
-      <constructor-arg ref="mapmeterSaasCredentialsDao" index="2"></constructor-arg>
-      <constructor-arg value="7" index="3"></constructor-arg>
+      <constructor-arg value="7" index="2"></constructor-arg>
     </bean>
 
     <bean id="mapmeterDataResource" class="org.geoserver.monitor.rest.MapmeterDataResource">

@@ -271,4 +271,12 @@ public class MapmeterConfiguration {
         this.isOnPremise = Optional.of(isOnPremise);
     }
 
+    public Optional<MapmeterSaasCredentials> getMapmeterSaasCredentials() {
+        return mapmeterSaasCredentials;
+    }
+
+    public void setMapmeterSaasCredentials(MapmeterSaasCredentials mapmeterSaasCredentials) {
+        this.mapmeterSaasCredentials = Optional.of(mapmeterSaasCredentials);
+    }
+
 }

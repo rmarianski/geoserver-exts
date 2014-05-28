@@ -16,7 +16,7 @@
     <ul>
       <li>
       <label for="apikey-field"><wicket:message key="MapmeterPage.field.apikey">API Key</wicket:message></label>
-      <input style="width: 350px" wicket:id="apikey-field" type="text" />
+      <input wicket:id="apikey-field" class="apikey-field" type="text" />
       </li>
       <li>
         <div wicket:id="apikey-feedback"></div>
@@ -53,6 +53,8 @@
     <fieldset>
       <legend>Start Mapmeter Trial</legend>
     </fieldset>
+    <p>This will create an anonymous mapmeter account on <span wicket:id="mapmeter-enable-baseurl">https://app.mapmeter.com</span>, and configure geoserver with the corresponding api key. This will start a two week trial period.</p>
+    <div wicket:id="mapmeter-enable-feedback"></div>
     <div class="button-group selfclear">
       <a href="#" wicket:id="mapmeter-enable-button">Activate Mapmeter Trial</a>
     </div>
@@ -60,9 +62,9 @@
 
   <form wicket:id="mapmeter-credentials-convert-form">
     <fieldset>
-      <legend>Convent Anonymous Mapmeter Account</legend>
+      <legend>Convert Anonymous Mapmeter Account</legend>
     </fieldset>
-    <p>Your account is currently anonymous. To view your data on app.mapmeter.com, set a username and password below.</p>
+    <p>Your account is currently anonymous. To view your data on <span wicket:id="mapmeter-credentials-convert-baseurl"></span>, set a username and password below.</p>
     <ul>
       <li>
         <label for="mapmeter-credentials-convert-username">Username</label>
@@ -70,11 +72,11 @@
       </li>
       <li>
         <label for="mapmeter-credentials-convert-password1">Password</label>
-        <input wicket:id="mapmeter-credentials-convert-password1" type="text" />
+        <input wicket:id="mapmeter-credentials-convert-password1" type="password" />
       </li>
       <li>
         <label for="mapmeter-credentials-convert-password2">Password Again</label>
-        <input wicket:id="mapmeter-credentials-convert-password2" type="text" />
+        <input wicket:id="mapmeter-credentials-convert-password2" type="password" />
       </li>
       <li>
         <div wicket:id="mapmeter-credentials-convert-feedback"></div>
@@ -97,11 +99,11 @@
       </li>
       <li>
         <label for="mapmeter-credentials-save-password1">Password</label>
-        <input wicket:id="mapmeter-credentials-save-password1" type="text" />
+        <input wicket:id="mapmeter-credentials-save-password1" type="password" />
       </li>
       <li>
         <label for="mapmeter-credentials-save-password2">Password Again</label>
-        <input wicket:id="mapmeter-credentials-save-password2" type="text" />
+        <input wicket:id="mapmeter-credentials-save-password2" type="password" />
       </li>
       <li>
         <div wicket:id="mapmeter-credentials-save-feedback"></div>
