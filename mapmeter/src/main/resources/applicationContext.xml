@@ -40,6 +40,8 @@
       <constructor-arg value="/controller/v1/message/check" index="4"/>
       <constructor-arg value="/controller/v1/server" index="5"/>
       <constructor-arg ref="resourceLoader" index="6"/>
+      <constructor-arg ref="pbePasswordEncoder" index="7"/>
+      <constructor-arg ref="geoServerSecurityManager" index="8"/>
     </bean>
 
     <bean id="mapmeterRequestDataMapping" class="java.util.concurrent.ConcurrentHashMap"></bean>
