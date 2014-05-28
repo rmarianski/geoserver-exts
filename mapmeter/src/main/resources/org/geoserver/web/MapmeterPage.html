@@ -7,6 +7,8 @@
   <body>
   <wicket:extend>
 
+  <div class="mapmeter-container">
+
   <form wicket:id="apikey-form" method="POST">
     <fieldset>
       <legend><wicket:message key="MapmeterPage.legend.EditApiKey">Edit API Key</wicket:message></legend>
@@ -31,6 +33,7 @@
     <p><strong wicket:id="active-apikey"></strong></p>
   </div>
 
+  <!--
   <form wicket:id="connection-check-form" method="GET" style="margin-top: 50px">
     <fieldset>
       <legend>Check Connection</legend>
@@ -44,23 +47,74 @@
       <a href="#" wicket:id="connection-check-button">Check</a>
     </div>
   </form>
+  -->
 
-  <form wicket:id="enable-mapmeter-form">
+  <form wicket:id="mapmeter-enable-form">
     <fieldset>
-      <legend>Enable Mapmeter</legend>
+      <legend>Start Mapmeter Trial</legend>
     </fieldset>
     <div class="button-group selfclear">
-      <a href="#" wicket:id="enable-mapmeter-button">Enable Mapmeter</a>
+      <a href="#" wicket:id="mapmeter-enable-button">Activate Mapmeter Trial</a>
     </div>
   </form>
 
-  <form wicket:id="test-mapmeter-form">
+  <form wicket:id="mapmeter-credentials-convert-form">
+    <fieldset>
+      <legend>Convent Anonymous Mapmeter Account</legend>
+    </fieldset>
+    <p>Your account is currently anonymous. To view your data on app.mapmeter.com, set a username and password below.</p>
+    <ul>
+      <li>
+        <label for="mapmeter-credentials-convert-username">Username</label>
+        <input wicket:id="mapmeter-credentials-convert-username" type="text" />
+      </li>
+      <li>
+        <label for="mapmeter-credentials-convert-password1">Password</label>
+        <input wicket:id="mapmeter-credentials-convert-password1" type="text" />
+      </li>
+      <li>
+        <label for="mapmeter-credentials-convert-password2">Password Again</label>
+        <input wicket:id="mapmeter-credentials-convert-password2" type="text" />
+      </li>
+      <li>
+        <div wicket:id="mapmeter-credentials-convert-feedback"></div>
+      </li>
+    </ul>
     <div class="button-group selfclear">
-      <a href="#" wicket:id="test-mapmeter-button">Test fetch data</a>
+      <a href="#" wicket:id="mapmeter-credentials-convert-button">Save</a>
     </div>
   </form>
 
-  <div style="margin-top: 2em" id="mapmeter-chart">
+  <form wicket:id="mapmeter-credentials-save-form">
+      <fieldset>
+      <legend>Update Mapmeter Credentials</legend>
+    </fieldset>
+    <p>Update the Mapmeter credentials used.</p>
+    <ul>
+      <li>
+        <label for="mapmeter-credentials-save-username">Username</label>
+        <input wicket:id="mapmeter-credentials-save-username" type="text" />
+      </li>
+      <li>
+        <label for="mapmeter-credentials-save-password1">Password</label>
+        <input wicket:id="mapmeter-credentials-save-password1" type="text" />
+      </li>
+      <li>
+        <label for="mapmeter-credentials-save-password2">Password Again</label>
+        <input wicket:id="mapmeter-credentials-save-password2" type="text" />
+      </li>
+      <li>
+        <div wicket:id="mapmeter-credentials-save-feedback"></div>
+      </li>
+    </ul>
+    <div class="button-group selfclear">
+      <a href="#" wicket:id="mapmeter-credentials-save-button">Save</a>
+    </div>
+  </form>
+
+  <div id="mapmeter-chart">
+  </div>
+
   </div>
 
   </wicket:extend>

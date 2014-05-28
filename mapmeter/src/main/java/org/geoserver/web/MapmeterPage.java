@@ -1,7 +1,6 @@
 package org.geoserver.web;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -74,34 +73,14 @@ public class MapmeterPage extends GeoServerSecuredPage {
 
         addApiKeyForm(apiKey);
         WebMarkupContainer apiWarning = addApiKeyEnvWarning(apiKey);
-        addConnectionCheckForm();
+        // addConnectionCheckForm();
         apiKeyForm.setVisible(!isApiKeyOverridden);
         apiWarning.setVisible(isApiKeyOverridden);
 
-        // TODO properly make this conditional
+        // TODO properly make these conditional
         addMapmeterEnableForm();
-
-        // TODO testing
-        addTestFetchData();
-    }
-
-    private void addTestFetchData() {
-        Form<?> testMapmeterForm = new Form<Void>("test-mapmeter-form");
-        AjaxLink<?> testMapmeterButton = new IndicatingAjaxLink<Void>("test-mapmeter-button") {
-
-            @Override
-            public void onClick(AjaxRequestTarget target) {
-                try {
-                    Map<String, Object> mapmeterData = mapmeterService.fetchMapmeterData();
-                    System.err.println("got it!");
-                } catch (IOException e) {
-                    System.err.println("exception!");
-                    e.printStackTrace();
-                }
-            }
-        };
-        testMapmeterForm.add(testMapmeterButton);
-        add(testMapmeterForm);
+        addCredentialsConvertForm();
+        addCredentialsSaveForm();
     }
 
     private WebMarkupContainer addApiKeyEnvWarning(String apiKey) {
@@ -200,8 +179,8 @@ public class MapmeterPage extends GeoServerSecuredPage {
     }
 
     public Form<?> addMapmeterEnableForm() {
-        Form<?> enableMapmeterForm = new Form<Void>("enable-mapmeter-form");
-        AjaxButton enableMapmeterButton = new IndicatingAjaxButton("enable-mapmeter-button") {
+        Form<?> enableMapmeterForm = new Form<Void>("mapmeter-enable-form");
+        AjaxButton enableMapmeterButton = new IndicatingAjaxButton("mapmeter-enable-button") {
 
             private static final long serialVersionUID = 1L;
 
@@ -222,6 +201,83 @@ public class MapmeterPage extends GeoServerSecuredPage {
         enableMapmeterForm.add(enableMapmeterButton);
         add(enableMapmeterForm);
         return enableMapmeterForm;
+    }
+
+    private void addCredentialsConvertForm() {
+        Form<?> credentialsConvertForm = new Form<Void>("mapmeter-credentials-convert-form");
+        final FeedbackPanel feedbackPanel = new FeedbackPanel(
+                "mapmeter-credentials-convert-feedback");
+        feedbackPanel.setOutputMarkupId(true);
+        IndicatingAjaxButton credentialsConvertButton = new IndicatingAjaxButton(
+                "mapmeter-credentials-convert-button") {
+
+            /** serialVersionUID */
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            protected void onSubmit(AjaxRequestTarget target, Form<?> form) {
+                form.info("Credentials converted");
+                target.addComponent(feedbackPanel);
+            }
+
+            @Override
+            protected void onError(AjaxRequestTarget target, Form<?> form) {
+                super.onError(target, form);
+                target.addComponent(feedbackPanel);
+            }
+        };
+        RequiredTextField<String> mapmeterCredentialsUsername = new RequiredTextField<String>(
+                "mapmeter-credentials-convert-username", Model.of(""));
+        RequiredTextField<String> mapmeterCredentialsPassword1 = new RequiredTextField<String>(
+                "mapmeter-credentials-convert-password1", Model.of(""));
+        RequiredTextField<String> mapmeterCredentialsPassword2 = new RequiredTextField<String>(
+                "mapmeter-credentials-convert-password2", Model.of(""));
+
+        credentialsConvertForm.add(mapmeterCredentialsUsername);
+        credentialsConvertForm.add(mapmeterCredentialsPassword1);
+        credentialsConvertForm.add(mapmeterCredentialsPassword2);
+        credentialsConvertForm.add(feedbackPanel);
+        credentialsConvertForm.add(credentialsConvertButton);
+
+        add(credentialsConvertForm);
+    }
+
+    private void addCredentialsSaveForm() {
+        Form<?> credentialsSaveForm = new Form<Void>("mapmeter-credentials-save-form");
+        final FeedbackPanel feedbackPanel = new FeedbackPanel("mapmeter-credentials-save-feedback");
+        feedbackPanel.setOutputMarkupId(true);
+        IndicatingAjaxButton credentialsSaveButton = new IndicatingAjaxButton(
+                "mapmeter-credentials-save-button") {
+
+            /** serialVersionUID */
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            protected void onSubmit(AjaxRequestTarget target, Form<?> form) {
+                form.info("Credentials saved");
+                target.addComponent(feedbackPanel);
+            }
+
+            @Override
+            protected void onError(AjaxRequestTarget target, Form<?> form) {
+                super.onError(target, form);
+                target.addComponent(feedbackPanel);
+            }
+        };
+        RequiredTextField<String> mapmeterCredentialsUsername = new RequiredTextField<String>(
+                "mapmeter-credentials-save-username", Model.of(""));
+        RequiredTextField<String> mapmeterCredentialsPassword1 = new RequiredTextField<String>(
+                "mapmeter-credentials-save-password1", Model.of(""));
+        RequiredTextField<String> mapmeterCredentialsPassword2 = new RequiredTextField<String>(
+                "mapmeter-credentials-save-password2", Model.of(""));
+
+        credentialsSaveForm.add(mapmeterCredentialsUsername);
+        credentialsSaveForm.add(mapmeterCredentialsPassword1);
+        credentialsSaveForm.add(mapmeterCredentialsPassword2);
+        credentialsSaveForm.add(feedbackPanel);
+        credentialsSaveForm.add(credentialsSaveButton);
+
+        add(credentialsSaveForm);
     }
 
     private void save(String apiKey) throws IOException {

@@ -1,7 +1,12 @@
+.mapmeter-container form {
+  margin: 2em 0;
+}
+
 #mapmeter-chart {
-    width: 500px;
-    height: 150px;
-    clear: both;
+  width: 500px;
+  height: 150px;
+  clear: both;
+  margin: 2em 0;
 }
 
 path.line {
