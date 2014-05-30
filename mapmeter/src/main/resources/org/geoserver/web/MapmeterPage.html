@@ -9,6 +9,8 @@
 
   <div class="mapmeter-container">
 
+  <div wicket:id="mapmeter-feedback"></div>
+
   <form wicket:id="apikey-form" method="POST">
     <fieldset>
       <legend><wicket:message key="MapmeterPage.legend.EditApiKey">Edit API Key</wicket:message></legend>
@@ -17,9 +19,6 @@
       <li>
       <label for="apikey-field"><wicket:message key="MapmeterPage.field.apikey">API Key</wicket:message></label>
       <input wicket:id="apikey-field" class="apikey-field" type="text" />
-      </li>
-      <li>
-        <div wicket:id="apikey-feedback"></div>
       </li>
     </ul>
     <div class="button-group selfclear">
@@ -38,11 +37,6 @@
     <fieldset>
       <legend>Check Connection</legend>
     </fieldset>
-    <ul>
-      <li>
-        <div wicket:id="connection-check-feedback"></div>
-      </li>
-    </ul>
     <div class="button-group selfclear">
       <a href="#" wicket:id="connection-check-button">Check</a>
     </div>
@@ -54,7 +48,6 @@
       <legend>Start Mapmeter Trial</legend>
     </fieldset>
     <p>This will create an anonymous mapmeter account on <span wicket:id="mapmeter-enable-baseurl">https://app.mapmeter.com</span>, and configure geoserver with the corresponding api key. This will start a two week trial period.</p>
-    <div wicket:id="mapmeter-enable-feedback"></div>
     <div class="button-group selfclear">
       <a href="#" wicket:id="mapmeter-enable-button">Activate Mapmeter Trial</a>
     </div>
@@ -67,19 +60,16 @@
     <p>Your account is currently anonymous. To view your data on <span wicket:id="mapmeter-credentials-convert-baseurl"></span>, set a username and password below.</p>
     <ul>
       <li>
-        <label for="mapmeter-credentials-convert-username">Username</label>
+        <label for="mapmeter-credentials-convert-username">Username (must be a valid email address)</label>
         <input wicket:id="mapmeter-credentials-convert-username" type="text" />
       </li>
       <li>
-        <label for="mapmeter-credentials-convert-password1">Password</label>
+        <label for="mapmeter-credentials-convert-password1">Password (must be at least 8 characters long, contain at least one number, and contain upper and lower case characters)</label>
         <input wicket:id="mapmeter-credentials-convert-password1" type="password" />
       </li>
       <li>
         <label for="mapmeter-credentials-convert-password2">Password Again</label>
         <input wicket:id="mapmeter-credentials-convert-password2" type="password" />
-      </li>
-      <li>
-        <div wicket:id="mapmeter-credentials-convert-feedback"></div>
       </li>
     </ul>
     <div class="button-group selfclear">
@@ -91,28 +81,32 @@
       <fieldset>
       <legend>Update Mapmeter Credentials</legend>
     </fieldset>
-    <p>Update the Mapmeter credentials used.</p>
+    <p wicket:id="mapmeter-credentials-save-invalid-credentials" class="invalid-credentials">The currently configured Mapmeter credentials are invalid.</p>
+    <p>Update the Mapmeter credentials used to fetch data.</p>
     <ul>
       <li>
-        <label for="mapmeter-credentials-save-username">Username</label>
+        <label for="mapmeter-credentials-save-username">Username (must be a valid email address)</label>
         <input wicket:id="mapmeter-credentials-save-username" type="text" />
       </li>
       <li>
-        <label for="mapmeter-credentials-save-password1">Password</label>
+        <label for="mapmeter-credentials-save-password1">Password (must be at least 8 characters long, contain at least one number, and contain upper and lower case characters)</label>
         <input wicket:id="mapmeter-credentials-save-password1" type="password" />
       </li>
       <li>
         <label for="mapmeter-credentials-save-password2">Password Again</label>
         <input wicket:id="mapmeter-credentials-save-password2" type="password" />
       </li>
-      <li>
-        <div wicket:id="mapmeter-credentials-save-feedback"></div>
-      </li>
     </ul>
     <div class="button-group selfclear">
       <a href="#" wicket:id="mapmeter-credentials-save-button">Save</a>
     </div>
   </form>
+
+<!--   <form wicket:id="testing"> -->
+<!--     <div class="button-group selfclear"> -->
+<!--       <a href="#" wicket:id="testing-button">Clear config</a> -->
+<!--     </div> -->
+<!--   </form> -->
 
   <div id="mapmeter-chart">
   </div>

@@ -2,6 +2,8 @@ package org.opengeo.mapmeter.monitor.saas;
 
 import java.util.Map;
 
+import com.google.common.base.Optional;
+
 public class MapmeterSaasException extends Exception {
 
     /** serialVersionUID */
@@ -36,11 +38,22 @@ public class MapmeterSaasException extends Exception {
     }
 
     public String getMessage() {
+        return message;
+    }
+
+    @Override
+    public String toString() {
         String responseError = (String) response.get("message");
         if (responseError == null) {
             responseError = "";
         }
         return message + " " + statusCode + " " + responseError;
     }
+
+    public Optional<String> getErrorMessage() {
+        String errorMessage = (String) response.get("message");
+        Optional<String> maybeErrorMessage = Optional.fromNullable(errorMessage);
+        return maybeErrorMessage;
+    };
 
 }

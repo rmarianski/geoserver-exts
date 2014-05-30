@@ -2,9 +2,23 @@
 
   var mapmeter = window.mapmeter = window.mapmeter || {};
 
+  function log(msg) {
+    if (console && console.log) {
+      console.log(msg);
+    }
+  }
+
   mapmeter.fetchDataAndDrawChart = function(domElt) {
     mapmeter.fetchData(function(mapmeterData) {
-      mapmeter.drawChart(domElt, mapmeterData);
+      if (!mapmeterData) {
+        log('No mapmeter data returned');
+      } else if (mapmeterData.error) {
+        log('Error fetching mapmeter data: ' + mapmeterData.error);
+      } else if (mapmeterData.data) {
+        mapmeter.drawChart(domElt, mapmeterData);
+      } else {
+        log('Unknown response when fetching mapmeter data');
+      }
     });
   };
 
@@ -14,11 +28,6 @@
 
   mapmeter.drawChart = function(domElt, mapmeterData) {
     var stats = mapmeterData;
-
-    // TODO fix this
-    //var eltSpec = '#mapmeter-chart';
-    //var jqueryElt = $(eltSpec);
-    //var d3Container = d3.select(eltSpec);
 
     var jqueryElt = $(domElt);
     var d3Container = d3.select(domElt);
@@ -93,7 +102,6 @@
       for (key in metrics) {
         context[key] = metrics[key][i];
       }
-      // TODO figure out what is supposed to be happening here
       // value = $parse(attrs.expression)(scope, context) || 0;
       value = context.request_count;
       values[i] = {

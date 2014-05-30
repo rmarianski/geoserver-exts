@@ -6,6 +6,11 @@
   width: 350px;
 }
 
+.mapmeter-container .invalid-credentials {
+  color: red;
+  font-weight: bold;
+}
+
 #mapmeter-chart {
   width: 500px;
   height: 150px;

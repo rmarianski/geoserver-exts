@@ -279,4 +279,8 @@ public class MapmeterConfiguration {
         this.mapmeterSaasCredentials = Optional.of(mapmeterSaasCredentials);
     }
 
+    // public void clearConfigForTesting() {
+    // this.mapmeterSaasCredentials = Optional.absent();
+    // this.apiKeyProperties = Optional.absent();
+    // }
 }

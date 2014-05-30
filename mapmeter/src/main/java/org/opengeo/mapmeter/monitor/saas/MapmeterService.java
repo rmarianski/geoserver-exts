@@ -29,7 +29,6 @@ public class MapmeterService {
             Optional<String> existingApiKey = mapmeterConfiguration.getApiKey();
             baseUrl = mapmeterConfiguration.getBaseUrl();
             if (existingApiKey.isPresent()) {
-                // TODO
                 throw new IllegalStateException(
                         "Mapmeter already configured but free trial requested.");
             }
@@ -72,7 +71,8 @@ public class MapmeterService {
         return new MapmeterEnableResult(apiKey, username, password, externalUserId, orgName);
     }
 
-    public Map<String, Object> fetchMapmeterData() throws IOException {
+    public Map<String, Object> fetchMapmeterData() throws IOException,
+            MissingMapmeterApiKeyException, MissingMapmeterSaasCredentialsException {
         Optional<String> maybeApiKey;
         String baseUrl;
         Optional<MapmeterSaasCredentials> maybeMapmeterCredentials;
@@ -82,10 +82,11 @@ public class MapmeterService {
             maybeMapmeterCredentials = mapmeterConfiguration.getMapmeterSaasCredentials();
         }
         if (!maybeApiKey.isPresent()) {
-            throw new IllegalStateException("No api key configured, but asked to fetch data.");
+            throw new MissingMapmeterApiKeyException(
+                    "No api key configured, but asked to fetch data.");
         }
         if (!maybeMapmeterCredentials.isPresent()) {
-            throw new IllegalStateException(
+            throw new MissingMapmeterSaasCredentialsException(
                     "No mapmeter credentials found, but asked to fetch data.");
         }
 
@@ -101,8 +102,8 @@ public class MapmeterService {
         return response;
     }
 
-    public Map<String, Object> convertMapmeterCredentials(
-            MapmeterSaasCredentials newMapmeterSaasCredentials) throws IOException {
+    public void convertMapmeterCredentials(MapmeterSaasCredentials newMapmeterSaasCredentials)
+            throws IOException, MapmeterSaasException {
         String baseUrl;
         Optional<MapmeterSaasCredentials> maybeExistingMapmeterSaasCredentials;
         synchronized (mapmeterConfiguration) {
@@ -114,11 +115,59 @@ public class MapmeterService {
                     "No existing mapmeter credentials, but asked to convert");
         }
         MapmeterSaasCredentials existingMapmeterSaasCredentials = maybeExistingMapmeterSaasCredentials.get();
-        MapmeterSaasResponse saasResponse = mapmeterSaasService.convertCredentials(baseUrl,
+
+        MapmeterSaasResponse userLookupSaasResponse = mapmeterSaasService.lookupUser(baseUrl,
+                existingMapmeterSaasCredentials);
+        if (userLookupSaasResponse.isErrorStatus()) {
+            throw new MapmeterSaasException(userLookupSaasResponse,
+                    "Failure looking up user in mapmeter");
+        }
+        Map<String, Object> userLookupResponse = userLookupSaasResponse.getResponse();
+        String userId = (String) userLookupResponse.get("id");
+        if (userId == null) {
+            throw new MapmeterSaasException(userLookupSaasResponse,
+                    "Unexpected user lookup response ... no id found");
+        }
+
+        MapmeterSaasResponse saasResponse = mapmeterSaasService.convertCredentials(baseUrl, userId,
                 existingMapmeterSaasCredentials, newMapmeterSaasCredentials);
+        if (saasResponse.isErrorStatus()) {
+            throw new MapmeterSaasException(saasResponse, "Error converting mapmeter credentials");
+        }
+        synchronized (mapmeterConfiguration) {
+            mapmeterConfiguration.setMapmeterSaasCredentials(newMapmeterSaasCredentials);
+            mapmeterConfiguration.save();
+        }
+    }
+
+    public MapmeterSaasUserState findUserState() throws IOException, MapmeterSaasException,
+            MissingMapmeterSaasCredentialsException {
+        String baseUrl;
+        Optional<MapmeterSaasCredentials> maybeMapmeterSaasCredentials;
+        synchronized (mapmeterConfiguration) {
+            baseUrl = mapmeterConfiguration.getBaseUrl();
+            maybeMapmeterSaasCredentials = mapmeterConfiguration.getMapmeterSaasCredentials();
+        }
+        if (!maybeMapmeterSaasCredentials.isPresent()) {
+            throw new MissingMapmeterSaasCredentialsException(
+                    "No existing mapmeter credentials, but asked to check if user is anonymous");
+        }
+        MapmeterSaasCredentials mapmeterSaasCredentials = maybeMapmeterSaasCredentials.get();
+        MapmeterSaasResponse saasResponse = mapmeterSaasService.lookupUser(baseUrl,
+                mapmeterSaasCredentials);
+        if (saasResponse.isErrorStatus()) {
+            throw new MapmeterSaasException(saasResponse, "Failure looking up user in mapmeter: "
+                    + mapmeterSaasCredentials.getUsername());
+        }
         Map<String, Object> response = saasResponse.getResponse();
-        // TODO error checking
-        return response;
+        Boolean isAnonymousSignup = (Boolean) response.get("isAnonymousSignup");
+        if (isAnonymousSignup != null && isAnonymousSignup) {
+            Boolean isConverted = (Boolean) response.get("isAnonymousCredentialsConverted");
+            return (isConverted != null && isConverted) ? MapmeterSaasUserState.CONVERTED
+                    : MapmeterSaasUserState.ANONYMOUS;
+        } else {
+            return MapmeterSaasUserState.NORMAL;
+        }
     }
 
 }

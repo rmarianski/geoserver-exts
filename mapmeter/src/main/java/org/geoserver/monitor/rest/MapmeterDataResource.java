@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.geoserver.rest.AbstractResource;
@@ -11,10 +12,10 @@ import org.geoserver.rest.format.DataFormat;
 import org.geoserver.rest.format.MapJSONFormat;
 import org.geotools.util.logging.Logging;
 import org.opengeo.mapmeter.monitor.saas.MapmeterService;
+import org.opengeo.mapmeter.monitor.saas.MissingMapmeterApiKeyException;
+import org.opengeo.mapmeter.monitor.saas.MissingMapmeterSaasCredentialsException;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
-
-import com.google.common.base.Throwables;
 
 public class MapmeterDataResource extends AbstractResource {
 
@@ -42,13 +43,17 @@ public class MapmeterDataResource extends AbstractResource {
             Map<String, Object> result = mapmeterService.fetchMapmeterData();
             return result;
         } catch (IOException e) {
-            return createIOErrorResponse(e);
+            LOGGER.log(Level.WARNING, e.getMessage(), e);
+            return Collections.<String, Object> singletonMap("error", e.getLocalizedMessage());
+        } catch (MissingMapmeterApiKeyException e) {
+            String errMsg = "No mapmeter api key configured";
+            LOGGER.log(Level.INFO, errMsg, e);
+            return Collections.<String, Object> singletonMap("error", errMsg);
+        } catch (MissingMapmeterSaasCredentialsException e) {
+            String errMsg = "No mapmeter saas credentials configured";
+            LOGGER.log(Level.WARNING, errMsg, e);
+            return Collections.<String, Object> singletonMap("error", errMsg);
         }
-    }
-
-    private Map<String, Object> createIOErrorResponse(IOException e) {
-        LOGGER.warning(Throwables.getStackTraceAsString(e));
-        return Collections.<String, Object> singletonMap("error", e.getLocalizedMessage());
     }
 
 }
