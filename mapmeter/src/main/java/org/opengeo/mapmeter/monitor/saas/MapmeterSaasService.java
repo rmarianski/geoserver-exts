@@ -11,22 +11,27 @@ import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpConnectionManager;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpURL;
-import org.apache.commons.httpclient.SimpleHttpConnectionManager;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
-import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Closer;
 
 public class MapmeterSaasService {
+
+    private final HttpConnectionManager connectionManager;
+
+    public MapmeterSaasService(HttpConnectionManager connectionManager) {
+        this.connectionManager = connectionManager;
+    }
 
     private String getResponseBody(HttpMethod method) throws IOException {
         Closer closer = Closer.create();
@@ -48,15 +53,6 @@ public class MapmeterSaasService {
     }
 
     private HttpClient createEphemeralHttpClient() {
-        // TODO make this into a spring bean and re-use these timeouts across all http clients
-        HttpConnectionManagerParams httpConnectionManagerParams = new HttpConnectionManagerParams();
-        int connectionTimeoutMillis = 5000;
-        httpConnectionManagerParams.setConnectionTimeout(connectionTimeoutMillis);
-        httpConnectionManagerParams.setSoTimeout(connectionTimeoutMillis);
-
-        SimpleHttpConnectionManager connectionManager = new SimpleHttpConnectionManager();
-        connectionManager.setParams(httpConnectionManagerParams);
-
         HttpClient httpClient = new HttpClient(connectionManager);
         return httpClient;
     }

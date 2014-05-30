@@ -20,6 +20,15 @@
       <constructor-arg ref="mapmeterRequestDataFactory" index="1"/>
     </bean>
 
+    <bean id="mapmeterHttpTimeoutParams" class="org.apache.commons.httpclient.params.HttpConnectionManagerParams">
+      <property name="connectionTimeout" value="5000"/>
+      <property name="soTimeout" value="5000"/>
+    </bean>
+
+    <bean id="mapmeterHttpSimpleConnectionManager" class="org.apache.commons.httpclient.SimpleHttpConnectionManager">
+      <property name="params" ref="mapmeterHttpTimeoutParams"/>
+    </bean>
+
     <bean id="mapmeterMonitorTransport" class="org.opengeo.mapmeter.monitor.transport.QueuedMessageTransport">
       <constructor-arg ref="mapmeterMonitorHttpTransport" index="0"/>
       <!-- Seconds delay between transports -->
@@ -28,6 +37,7 @@
 
     <bean id="mapmeterMonitorHttpTransport" class="org.opengeo.mapmeter.monitor.transport.HttpMessageTransport" >
       <constructor-arg ref="mapmeterConfiguration" index="0" />
+      <constructor-arg ref="mapmeterHttpTimeoutParams" index="1" />
     </bean>
 
     <bean id="mapmeterConfiguration"
@@ -75,6 +85,7 @@
     <bean id="mapmeterSystemDataTransport" class="org.opengeo.mapmeter.monitor.system.SystemDataTransport">
       <constructor-arg ref="mapmeterSystemDataSerializer" index="0"></constructor-arg>
       <constructor-arg ref="mapmeterConfiguration" index="1"></constructor-arg>
+      <constructor-arg ref="mapmeterHttpSimpleConnectionManager" index="2"></constructor-arg>
     </bean>
 
     <bean id="mapmeterSystemDataSerializer" class="org.opengeo.mapmeter.monitor.system.SystemDataSerializer">
@@ -89,6 +100,7 @@
     </bean>
 
     <bean id="mapmeterSaasService" class="org.opengeo.mapmeter.monitor.saas.MapmeterSaasService">
+      <constructor-arg ref="mapmeterHttpSimpleConnectionManager" index="0"></constructor-arg>
     </bean>
 
     <bean id="mapmeterService" class="org.opengeo.mapmeter.monitor.saas.MapmeterService">
