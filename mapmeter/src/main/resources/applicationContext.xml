@@ -113,12 +113,20 @@
       <constructor-arg ref="mapmeterService" index="0"></constructor-arg>
     </bean>
 
+    <bean id="mapmeterConfigurationResource" class="org.geoserver.monitor.rest.MapmeterConfigurationResource">
+      <constructor-arg ref="mapmeterConfiguration" index="0"></constructor-arg>
+    </bean>
+
     <bean id="mapmeterRestMapping" class="org.geoserver.rest.RESTMapping">
       <property name="routes">
         <map>
           <entry>
             <key><value>/mapmeter/data.{format}</value></key>
             <value>mapmeterDataResource</value>
+          </entry>
+          <entry>
+            <key><value>/mapmeter/configuration.{format}</value></key>
+            <value>mapmeterConfigurationResource</value>
           </entry>
         </map>
       </property>

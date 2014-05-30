@@ -33,6 +33,11 @@ public class MapmeterDataResource extends AbstractResource {
     }
 
     @Override
+    public boolean allowGet() {
+        return true;
+    }
+
+    @Override
     public void handleGet() {
         DataFormat format = getFormatGet();
         getResponse().setEntity(format.toRepresentation(fetchResponse()));
