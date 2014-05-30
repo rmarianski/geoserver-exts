@@ -18,6 +18,7 @@ import org.opengeo.mapmeter.monitor.saas.MapmeterSaasCredentials;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closer;
@@ -277,6 +278,19 @@ public class MapmeterConfiguration {
 
     public void setMapmeterSaasCredentials(MapmeterSaasCredentials mapmeterSaasCredentials) {
         this.mapmeterSaasCredentials = Optional.of(mapmeterSaasCredentials);
+    }
+
+    @Override
+    public String toString() {
+        return Objects.toStringHelper(MapmeterConfiguration.class)
+                .add("apikeyOverride", apiKeyOverride.orNull())
+                .add("apikey", apiKeyProperties.orNull())
+                .add("baseurl", getBaseUrl())
+                .add("onpremise", getIsOnPremise())
+                .add("credentials",
+                        mapmeterSaasCredentials.isPresent() ? mapmeterSaasCredentials.get()
+                                .toString() : null)
+                .toString();
     }
 
     // public void clearConfigForTesting() {
