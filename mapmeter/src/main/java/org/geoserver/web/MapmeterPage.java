@@ -82,6 +82,7 @@ public class MapmeterPage extends GeoServerSecuredPage {
             maybeMapmeterSaasCredentials = mapmeterConfiguration.getMapmeterSaasCredentials();
         }
         String apiKey = maybeApiKey.or("");
+        String currentUsername = "";
 
         boolean shouldDisplayMapmeterEnableForm = false;
         boolean shouldDisplayConvertForm = false;
@@ -99,6 +100,8 @@ public class MapmeterPage extends GeoServerSecuredPage {
                         shouldDisplayConvertForm = true;
                     } else {
                         shouldDisplayCredentialsUpdateForm = true;
+                        MapmeterSaasCredentials mapmeterSaasCredentials = maybeMapmeterSaasCredentials.get();
+                        currentUsername = mapmeterSaasCredentials.getUsername();
                     }
                 } catch (Exception e) {
                     shouldDisplayCredentialsUpdateForm = true;
@@ -119,7 +122,7 @@ public class MapmeterPage extends GeoServerSecuredPage {
 
         addMapmeterEnableForm(baseUrl);
         addCredentialsConvertForm(baseUrl);
-        addCredentialsSaveForm(isInvalidMapmeterCredentials);
+        addCredentialsSaveForm(isInvalidMapmeterCredentials, currentUsername);
 
         enableMapmeterForm.setOutputMarkupId(true);
         enableMapmeterForm.setOutputMarkupPlaceholderTag(true);
@@ -353,11 +356,11 @@ public class MapmeterPage extends GeoServerSecuredPage {
         add(credentialsConvertForm);
     }
 
-    private void addCredentialsSaveForm(boolean isInvalidMapmeterCredentials) {
+    private void addCredentialsSaveForm(boolean isInvalidMapmeterCredentials, String currentUsername) {
         credentialsSaveForm = new Form<Void>("mapmeter-credentials-save-form");
 
         final RequiredTextField<String> mapmeterCredentialsUsername = new RequiredTextField<String>(
-                "mapmeter-credentials-save-username", Model.of(""));
+                "mapmeter-credentials-save-username", Model.of(currentUsername));
         final PasswordTextField mapmeterCredentialsPassword1 = new PasswordTextField(
                 "mapmeter-credentials-save-password1", Model.of(""));
         final PasswordTextField mapmeterCredentialsPassword2 = new PasswordTextField(
