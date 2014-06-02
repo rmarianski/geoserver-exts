@@ -1,14 +1,20 @@
 package org.opengeo.mapmeter.monitor.saas;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import org.geotools.util.logging.Logging;
 import org.opengeo.mapmeter.monitor.config.MapmeterConfiguration;
 
 import com.google.common.base.Optional;
 
 public class MapmeterService {
+
+    private static final Logger LOGGER = Logging.getLogger(MapmeterService.class);
 
     private final MapmeterSaasService mapmeterSaasService;
 
@@ -42,21 +48,35 @@ public class MapmeterService {
 
         Map<String, Object> response = saasResponse.getResponse();
 
-        // TODO error checking on response
-        @SuppressWarnings("unchecked")
-        Map<String, Object> user = (Map<String, Object>) response.get("user");
-        @SuppressWarnings("unchecked")
-        Map<String, Object> org = (Map<String, Object>) response.get("organization");
-        @SuppressWarnings("unchecked")
-        Map<String, Object> server = (Map<String, Object>) response.get("server");
+        String username;
+        String password;
+        String externalUserId;
+        String orgName;
+        String apiKey;
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> user = (Map<String, Object>) response.get("user");
+            @SuppressWarnings("unchecked")
+            Map<String, Object> org = (Map<String, Object>) response.get("organization");
+            @SuppressWarnings("unchecked")
+            Map<String, Object> server = (Map<String, Object>) response.get("server");
 
-        String externalUserId = (String) user.get("id");
-        String username = (String) user.get("email");
-        String password = (String) user.get("password");
+            externalUserId = (String) user.get("id");
+            username = (String) user.get("email");
+            password = (String) user.get("password");
 
-        String orgName = (String) org.get("name");
+            orgName = (String) org.get("name");
 
-        String apiKey = (String) server.get("apiKey");
+            apiKey = (String) server.get("apiKey");
+
+            if (username == null || password == null || apiKey == null || externalUserId == null
+                    || orgName == null) {
+                throw throwUnexpectedResponse(response);
+            }
+        } catch (ClassCastException e) {
+            LOGGER.log(Level.SEVERE, "Unexpected mapmeter saas response", e);
+            throw throwUnexpectedResponse(response);
+        }
 
         MapmeterSaasCredentials mapmeterSaasCredentials = new MapmeterSaasCredentials(username,
                 password);
@@ -67,6 +87,13 @@ public class MapmeterService {
         }
 
         return new MapmeterEnableResult(apiKey, username, password, externalUserId, orgName);
+    }
+
+    public MapmeterSaasException throwUnexpectedResponse(Map<String, Object> response)
+            throws MapmeterSaasException {
+        LOGGER.log(Level.SEVERE, response.toString());
+        throw new MapmeterSaasException(200, Collections.<String, Object> singletonMap("error",
+                "Unexpected json response from mapmeter saas"), "Unexpected mapmeter saas response");
     }
 
     public Map<String, Object> fetchMapmeterData() throws IOException,
