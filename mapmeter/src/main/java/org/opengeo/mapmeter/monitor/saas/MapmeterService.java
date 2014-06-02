@@ -34,7 +34,6 @@ public class MapmeterService {
             }
         }
 
-        // TODO sanity check on whether api key is already configured before proceeding?
         MapmeterSaasResponse saasResponse = mapmeterSaasService.createAnonymousTrial(baseUrl);
         if (saasResponse.isErrorStatus()) {
             throw new MapmeterSaasException(saasResponse,
@@ -59,7 +58,6 @@ public class MapmeterService {
 
         String apiKey = (String) server.get("apiKey");
 
-        // TODO persist mapmeter external user id, username, and password
         MapmeterSaasCredentials mapmeterSaasCredentials = new MapmeterSaasCredentials(username,
                 password);
         synchronized (mapmeterConfiguration) {
