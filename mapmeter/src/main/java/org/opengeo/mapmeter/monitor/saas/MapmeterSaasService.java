@@ -22,6 +22,7 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Optional;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Closer;
 
@@ -78,10 +79,12 @@ public class MapmeterSaasService {
     }
 
     public MapmeterSaasResponse fetchData(String baseUrl,
-            MapmeterSaasCredentials mapmeterSaasCredentials, String apiKey, Date start, Date end)
-            throws IOException {
+            Optional<MapmeterSaasCredentials> maybeMapmeterSaasCredentials, String apiKey,
+            Date start, Date end) throws IOException {
         HttpClient httpClient = createEphemeralHttpClient();
-        addBasicAuth(httpClient, mapmeterSaasCredentials);
+        if (maybeMapmeterSaasCredentials.isPresent()) {
+            addBasicAuth(httpClient, maybeMapmeterSaasCredentials.get());
+        }
 
         String statsUrl = baseUrl + "/api/v1/stats";
         GetMethod getMethod = new GetMethod(statsUrl);

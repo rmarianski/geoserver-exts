@@ -72,13 +72,13 @@ public class MapmeterPage extends GeoServerSecuredPage {
         Optional<String> maybeApiKey;
         boolean isApiKeyOverridden;
         String baseUrl;
-        // boolean isOnPremise;
+        boolean isOnPremise;
         Optional<MapmeterSaasCredentials> maybeMapmeterSaasCredentials;
         synchronized (mapmeterConfiguration) {
             maybeApiKey = mapmeterConfiguration.getApiKey();
             isApiKeyOverridden = mapmeterConfiguration.isApiKeyOverridden();
             baseUrl = mapmeterConfiguration.getBaseUrl();
-            // isOnPremise = mapmeterConfiguration.getIsOnPremise();
+            isOnPremise = mapmeterConfiguration.getIsOnPremise();
             maybeMapmeterSaasCredentials = mapmeterConfiguration.getMapmeterSaasCredentials();
         }
         String apiKey = maybeApiKey.or("");
@@ -88,24 +88,27 @@ public class MapmeterPage extends GeoServerSecuredPage {
         boolean shouldDisplayConvertForm = false;
         boolean shouldDisplayCredentialsUpdateForm = false;
         boolean isInvalidMapmeterCredentials = false;
-        if (!maybeApiKey.isPresent()) {
-            shouldDisplayMapmeterEnableForm = true;
-        } else {
-            if (!maybeMapmeterSaasCredentials.isPresent()) {
-                shouldDisplayCredentialsUpdateForm = true;
+
+        if (!isOnPremise) {
+            if (!maybeApiKey.isPresent()) {
+                shouldDisplayMapmeterEnableForm = true;
             } else {
-                try {
-                    MapmeterSaasUserState mapmeterSaasUserState = mapmeterService.findUserState();
-                    if (mapmeterSaasUserState == MapmeterSaasUserState.ANONYMOUS) {
-                        shouldDisplayConvertForm = true;
-                    } else {
-                        shouldDisplayCredentialsUpdateForm = true;
-                        MapmeterSaasCredentials mapmeterSaasCredentials = maybeMapmeterSaasCredentials.get();
-                        currentUsername = mapmeterSaasCredentials.getUsername();
-                    }
-                } catch (Exception e) {
+                if (!maybeMapmeterSaasCredentials.isPresent()) {
                     shouldDisplayCredentialsUpdateForm = true;
-                    isInvalidMapmeterCredentials = true;
+                } else {
+                    try {
+                        MapmeterSaasUserState mapmeterSaasUserState = mapmeterService.findUserState();
+                        if (mapmeterSaasUserState == MapmeterSaasUserState.ANONYMOUS) {
+                            shouldDisplayConvertForm = true;
+                        } else {
+                            shouldDisplayCredentialsUpdateForm = true;
+                            MapmeterSaasCredentials mapmeterSaasCredentials = maybeMapmeterSaasCredentials.get();
+                            currentUsername = mapmeterSaasCredentials.getUsername();
+                        }
+                    } catch (Exception e) {
+                        shouldDisplayCredentialsUpdateForm = true;
+                        isInvalidMapmeterCredentials = true;
+                    }
                 }
             }
         }

@@ -75,27 +75,29 @@ public class MapmeterService {
         Optional<String> maybeApiKey;
         String baseUrl;
         Optional<MapmeterSaasCredentials> maybeMapmeterCredentials;
+        boolean isOnPremise;
         synchronized (mapmeterConfiguration) {
             baseUrl = mapmeterConfiguration.getBaseUrl();
             maybeApiKey = mapmeterConfiguration.getApiKey();
             maybeMapmeterCredentials = mapmeterConfiguration.getMapmeterSaasCredentials();
+            isOnPremise = mapmeterConfiguration.getIsOnPremise();
         }
         if (!maybeApiKey.isPresent()) {
             throw new MissingMapmeterApiKeyException(
                     "No api key configured, but asked to fetch data.");
         }
-        if (!maybeMapmeterCredentials.isPresent()) {
+        if (!isOnPremise && !maybeMapmeterCredentials.isPresent()) {
             throw new MissingMapmeterSaasCredentialsException(
                     "No mapmeter credentials found, but asked to fetch data.");
         }
 
         String apiKey = maybeApiKey.get();
-        MapmeterSaasCredentials mapmeterSaasCredentials = maybeMapmeterCredentials.get();
 
         Date end = new Date();
         Date start = new Date(end.getTime() - (1000 * 60 * 60 * 24 * daysOfDataToFetch));
+
         MapmeterSaasResponse saasResponse = mapmeterSaasService.fetchData(baseUrl,
-                mapmeterSaasCredentials, apiKey, start, end);
+                maybeMapmeterCredentials, apiKey, start, end);
         if (saasResponse.isErrorStatus()) {
             throw new MapmeterSaasException(saasResponse, "Error fetching mapmeter data");
         }
