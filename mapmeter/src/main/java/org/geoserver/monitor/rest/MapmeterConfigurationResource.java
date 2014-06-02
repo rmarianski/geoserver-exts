@@ -15,6 +15,7 @@ import org.geoserver.rest.format.DataFormat;
 import org.geoserver.rest.format.MapJSONFormat;
 import org.geotools.util.logging.Logging;
 import org.opengeo.mapmeter.monitor.config.MapmeterConfiguration;
+import org.opengeo.mapmeter.monitor.saas.MapmeterSaasCredentials;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
@@ -96,6 +97,17 @@ public class MapmeterConfigurationResource extends AbstractResource {
                         mapmeterConfiguration.setApiKey(apiKey);
                         haveChanges = true;
                     }
+                    Object usernameObject = jsonGetOrNull(jsonObject, "username");
+                    Object passwordObject = jsonGetOrNull(jsonObject, "password");
+                    if (usernameObject != null && passwordObject != null) {
+                        String username = (String) usernameObject;
+                        String password = (String) passwordObject;
+                        MapmeterSaasCredentials mapmeterSaasCredentials = new MapmeterSaasCredentials(
+                                username, password);
+                        mapmeterConfiguration.setMapmeterSaasCredentials(mapmeterSaasCredentials);
+                        haveChanges = true;
+
+                    }
                 } catch (ClassCastException e) {
                     LOGGER.log(Level.WARNING, "Invalid json request", e);
                     response.setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
@@ -119,17 +131,24 @@ public class MapmeterConfigurationResource extends AbstractResource {
         Optional<String> maybeApiKey;
         String baseUrl;
         boolean isOnPremise;
+        Optional<MapmeterSaasCredentials> maybeMapmeterSaasCredentials;
 
         synchronized (mapmeterConfiguration) {
             maybeApiKey = mapmeterConfiguration.getApiKey();
             baseUrl = mapmeterConfiguration.getBaseUrl();
             isOnPremise = mapmeterConfiguration.getIsOnPremise();
+            maybeMapmeterSaasCredentials = mapmeterConfiguration.getMapmeterSaasCredentials();
         }
 
-        Map<String, String> result = new HashMap<String, String>(3);
+        Map<String, String> result = new HashMap<String, String>();
         result.put("apikey", maybeApiKey.orNull());
         result.put("baseurl", baseUrl);
         result.put("onpremise", "" + isOnPremise);
+        if (maybeMapmeterSaasCredentials.isPresent()) {
+            MapmeterSaasCredentials mapmeterSaasCredentials = maybeMapmeterSaasCredentials.get();
+            result.put("username", mapmeterSaasCredentials.getUsername());
+            result.put("password", mapmeterSaasCredentials.getPassword());
+        }
 
         return result;
     }
