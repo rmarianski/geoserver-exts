@@ -14,7 +14,7 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpConnectionManager;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.HttpURL;
+import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -82,17 +82,18 @@ public class MapmeterSaasService {
             throws IOException {
         HttpClient httpClient = createEphemeralHttpClient();
         addBasicAuth(httpClient, mapmeterSaasCredentials);
+
         String statsUrl = baseUrl + "/api/v1/stats";
-        HttpURL httpURL = new HttpURL(statsUrl);
-        String[] queryNames = new String[] { "api_key", "start_time", "end_time", "interval",
-                "stats" };
+        GetMethod getMethod = new GetMethod(statsUrl);
+
         long startSeconds = start.getTime() / 1000;
         long endSeconds = end.getTime() / 1000;
-        String[] queryValues = new String[] { apiKey, "" + startSeconds, "" + endSeconds, "day",
-                "request_count" };
-        httpURL.setQuery(queryNames, queryValues);
-        String url = httpURL.getURI();
-        GetMethod getMethod = new GetMethod(url);
+        NameValuePair[] queryParams = new NameValuePair[] { new NameValuePair("api_key", apiKey),
+                new NameValuePair("start_time", "" + startSeconds),
+                new NameValuePair("end_time", "" + endSeconds),
+                new NameValuePair("interval", "day"), new NameValuePair("stats", "request_count") };
+        getMethod.setQueryString(queryParams);
+
         return executeMethod(httpClient, getMethod);
     }
 
@@ -103,14 +104,12 @@ public class MapmeterSaasService {
         addBasicAuth(httpClient, existingMapmeterSaasCredentials);
         String convertCredentialsUrl = baseUrl + "/api/v2/anonymous-trial/convert-credentials/"
                 + userId;
-        HttpURL httpURL = new HttpURL(convertCredentialsUrl);
-        String url = httpURL.getURI();
 
         JSONObject payload = new JSONObject();
         payload.put("email", newMapmeterSaasCredentials.getUsername());
         payload.put("password", newMapmeterSaasCredentials.getPassword());
 
-        PostMethod postMethod = new PostMethod(url);
+        PostMethod postMethod = new PostMethod(convertCredentialsUrl);
         postMethod.setRequestEntity(new StringRequestEntity(payload.toString(), "application/json",
                 Charsets.UTF_8.toString()));
         return executeMethod(httpClient, postMethod);
@@ -122,11 +121,12 @@ public class MapmeterSaasService {
         addBasicAuth(httpClient, mapmeterSaasCredentials);
 
         String lookupUserUrl = baseUrl + "/api/v2/users/lookup";
-        HttpURL httpURL = new HttpURL(lookupUserUrl);
-        httpURL.setQuery("email", mapmeterSaasCredentials.getUsername());
-        String url = httpURL.getURI();
+        GetMethod getMethod = new GetMethod(lookupUserUrl);
 
-        GetMethod getMethod = new GetMethod(url);
+        NameValuePair[] queryParams = new NameValuePair[] { new NameValuePair("email",
+                mapmeterSaasCredentials.getUsername()) };
+        getMethod.setQueryString(queryParams);
+
         return executeMethod(httpClient, getMethod);
     }
 
