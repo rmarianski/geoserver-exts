@@ -70,7 +70,8 @@ public class MapmeterService {
     }
 
     public Map<String, Object> fetchMapmeterData() throws IOException,
-            MissingMapmeterApiKeyException, MissingMapmeterSaasCredentialsException {
+            MissingMapmeterApiKeyException, MissingMapmeterSaasCredentialsException,
+            MapmeterSaasException {
         Optional<String> maybeApiKey;
         String baseUrl;
         Optional<MapmeterSaasCredentials> maybeMapmeterCredentials;
@@ -95,8 +96,10 @@ public class MapmeterService {
         Date start = new Date(end.getTime() - (1000 * 60 * 60 * 24 * daysOfDataToFetch));
         MapmeterSaasResponse saasResponse = mapmeterSaasService.fetchData(baseUrl,
                 mapmeterSaasCredentials, apiKey, start, end);
+        if (saasResponse.isErrorStatus()) {
+            throw new MapmeterSaasException(saasResponse, "Error fetching mapmeter data");
+        }
         Map<String, Object> response = saasResponse.getResponse();
-        // TODO error checking
         return response;
     }
 

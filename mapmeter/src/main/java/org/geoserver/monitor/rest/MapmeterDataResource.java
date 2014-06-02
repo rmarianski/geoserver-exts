@@ -2,6 +2,7 @@ package org.geoserver.monitor.rest;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -11,6 +12,7 @@ import org.geoserver.rest.AbstractResource;
 import org.geoserver.rest.format.DataFormat;
 import org.geoserver.rest.format.MapJSONFormat;
 import org.geotools.util.logging.Logging;
+import org.opengeo.mapmeter.monitor.saas.MapmeterSaasException;
 import org.opengeo.mapmeter.monitor.saas.MapmeterService;
 import org.opengeo.mapmeter.monitor.saas.MissingMapmeterApiKeyException;
 import org.opengeo.mapmeter.monitor.saas.MissingMapmeterSaasCredentialsException;
@@ -58,6 +60,16 @@ public class MapmeterDataResource extends AbstractResource {
             String errMsg = "No mapmeter saas credentials configured";
             LOGGER.log(Level.WARNING, errMsg, e);
             return Collections.<String, Object> singletonMap("error", errMsg);
+        } catch (MapmeterSaasException e) {
+            LOGGER.log(Level.WARNING, "Failure fetching mapmeter data", e);
+            if (e.getStatusCode() == 403) {
+                Map<String, Object> result = new HashMap<String, Object>();
+                result.put("accessDenied", true);
+                result.put("error", e.getMessage());
+                return result;
+            } else {
+                return Collections.<String, Object> singletonMap("error", e.getMessage());
+            }
         }
     }
 

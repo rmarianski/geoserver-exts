@@ -12,6 +12,8 @@
     mapmeter.fetchData(function(mapmeterData) {
       if (!mapmeterData) {
         log('No mapmeter data returned');
+      } else if (mapmeterData.accessDenied) {
+        mapmeter.displayAccessDeniedMessage(domElt);
       } else if (mapmeterData.error) {
         log('Error fetching mapmeter data: ' + mapmeterData.error);
       } else if (mapmeterData.data) {
@@ -20,6 +22,17 @@
         log('Unknown response when fetching mapmeter data');
       }
     });
+  };
+
+  mapmeter.displayAccessDeniedMessage = function(domElt) {
+    $('<div></div>')
+      .attr('class', 'access-denied')
+      .append(
+        $('<p></p>')
+          .html('You no longer have access to view server data. ' +
+                'Please contact: <a href="mailto:accounts@mapmeter.com">' +
+                'accounts@mapmeter.com</a> to resume access.'))
+      .appendTo(domElt);
   };
 
   mapmeter.fetchData = function(cb) {
