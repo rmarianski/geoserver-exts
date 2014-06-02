@@ -293,8 +293,12 @@ public class MapmeterConfiguration {
                 .toString();
     }
 
-    // public void clearConfigForTesting() {
-    // this.mapmeterSaasCredentials = Optional.absent();
-    // this.apiKeyProperties = Optional.absent();
-    // }
+    // clear all configuration settings
+    public void clearConfig() {
+        apiKeyProperties = Optional.absent();
+        baseUrl = Optional.absent();
+        isOnPremise = Optional.absent();
+        mapmeterSaasCredentials = Optional.absent();
+    }
+
 }

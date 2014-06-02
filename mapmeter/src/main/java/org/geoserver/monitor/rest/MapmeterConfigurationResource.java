@@ -50,9 +50,27 @@ public class MapmeterConfigurationResource extends AbstractResource {
     }
 
     @Override
+    public boolean allowDelete() {
+        return true;
+    }
+
+    @Override
     public void handleGet() {
         DataFormat format = getFormatGet();
         getResponse().setEntity(format.toRepresentation(serializeMapmeterConfiguration()));
+    }
+
+    @Override
+    public void handleDelete() {
+        try {
+            synchronized (mapmeterConfiguration) {
+                mapmeterConfiguration.clearConfig();
+                mapmeterConfiguration.save();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        handleGet();
     }
 
     private Object jsonGetOrNull(JSONObject jsonObject, String key) {
