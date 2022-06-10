@@ -14,7 +14,7 @@
  <name>GeoServer Test Web App Module</name>
 
  <properties>
-  <jetty.version>6.1.8</jetty.version>
+  <jetty.version>6.1.23</jetty.version>
   <warSourceDirectory>${basedir}/src/main/webapp</warSourceDirectory>
   <webappSourceDirectory>${basedir}/src/main/webapp</webappSourceDirectory>
  </properties>
