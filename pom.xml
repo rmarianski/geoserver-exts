@@ -408,7 +408,7 @@
     <gt.version>8-SNAPSHOT</gt.version>
     <spring.version>3.1.1.RELEASE</spring.version>
     <spring.security.version>3.1.0.RELEASE</spring.security.version>
-    <jetty.version>6.1.8</jetty.version>
+    <jetty.version>6.1.23</jetty.version>
     <ant.version>1.6.5</ant.version>
     <dashboard.version>1.0.0</dashboard.version>
     <build.profile></build.profile>
